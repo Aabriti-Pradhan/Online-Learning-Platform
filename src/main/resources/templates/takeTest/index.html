@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Take Test</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #FFF9F9;
+            font-family: 'Gabarito', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid px-4 py-3">
+
+    <div th:replace="navigation/index :: topbar"></div>
+
+    <div class="row align-items-stretch">
+
+        <!-- SIDEBAR -->
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col ms-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
+                <h2 class="fw-bold">Take Test</h2>
+                <button style="background-color: transparent; border-color: transparent;"><i class="bi bi-plus fs-1"></i></button>
+            </div>
+
+            <div>
+                <section class="hero-section">
+                    <h3 class="page-title"><i class="bi bi-mortarboard"></i> Test Yourself</h3>
+                    <button class="btn-primary" onclick="window.location.href='/create-test/new'">
+                        <i class="bi bi-magic"></i> Generate
+                    </button>
+                </section>
+
+                <!-- RESOURCE GRID -->
+                <div class="d-flex flex-wrap gap-4">
+
+                    <!-- duplicate cards -->
+                    <div th:each="i : ${#numbers.sequence(1,4)}">
+                        <div class="test-card" onclick="window.location.href='/test/1'">
+                            <div class="test-card-icon">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <i class="bi bi-justify-left"></i>
+                            </div>
+                            <div class="test-card-content">
+                                <h4 class="test-title">Test Title</h4>
+                                <div class="test-meta">
+                                    <span class="test-attempts">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg> By XYZ
+                                    </span>
+                                    <span class="test-difficulty easy">Easy</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px;">
+                <section class="hero-section">
+                    <h3 class="page-title"><i class="bi bi-clock-history"></i> History</h3>
+                </section>
+
+                <!-- RESOURCE GRID -->
+                <div class="d-flex flex-wrap gap-4">
+
+                    <!-- duplicate cards -->
+                    <div th:each="i : ${#numbers.sequence(1,4)}">
+                        <div class="test-card" onclick="window.location.href='/test/1'">
+                            <div class="test-card-icon">
+                                <i class="bi bi-file-earmark-text"></i>
+                                <i class="bi bi-justify-left"></i>
+                            </div>
+                            <div class="test-card-content">
+                                <h4 class="test-title">Test Title</h4>
+                                <div class="test-meta">
+                                    <span class="test-attempts">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg> By XYZ
+                                    </span>
+                                    <span class="test-difficulty hard">Hard</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="footer/index :: footer"></div>
+
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+
+</body>
+</html>

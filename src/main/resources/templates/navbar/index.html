@@ -1,0 +1,49 @@
+<nav th:fragment="navbar" id="mainNavbar" class="navbar navbar-expand-lg py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+
+        <div>
+            <a class="navbar-brand fw-bold fs-3" th:href="@{/}">
+                <img th:src="@{/images/logo.png}" alt="Logo" style="height: 80px; margin-right: 10px;">
+                <span class="text-dark">PrepHunt</span>
+            </a>
+        </div>
+
+        <div th:if="${page != 'login' and page != 'register'}"
+                class="d-flex align-items-center justify-content-center mx-auto fixed-bottom w-25 mb-4">
+            <div class="d-flex align-items-center px-4 py-2 rounded-4 shadow-sm bg-black"
+                 style="min-width: 650px; justify-content: space-evenly; flex-wrap: nowrap; white-space: nowrap;">
+
+                <ul class="navbar-nav d-flex flex-row gap-4 fs-5 mb-0">
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium text-white" href="/#hero"> Home</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium text-white" href="/#about">About</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium text-white" href="/#services">Services</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium text-white" href="/#contact">Contact</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium text-white" href="/resources">Repository</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div th:if="${page != 'login' and page != 'register'}"
+                class="ms-4">
+            <a class="btn btn-dark px-4 py-2 rounded-3"
+               th:href="@{/login}">
+                Get Started
+            </a>
+        </div>
+    </div>
+</nav>

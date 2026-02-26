@@ -1,0 +1,43 @@
+<nav th:fragment="topbar" id="topbar">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a class="navbar-brand fw-bold fs-3" th:href="@{/}">
+                <img th:src="@{/images/logo.png}" alt="Logo" style="height: 80px; margin-right: 10px;">
+                <span class="text-dark">PrepHunt</span>
+            </a>
+        </div>
+
+        <div class="text-muted small">
+            <span id="dateTime"></span>
+        </div>
+
+        <div class="btn btn-dark px-4 py-2 rounded-3">
+            <a onclick="window.location.href='http://localhost:8081/logout'">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        function updateDateTime() {
+            const now = new Date();
+
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+
+            const date = now.toLocaleDateString('en-GB', options);
+            const time = now.toLocaleTimeString('en-GB');
+
+            document.getElementById('dateTime').textContent = `${date} | ${time}`;
+        }
+
+        // Run once immediately
+        updateDateTime();
+
+        // Update every second
+        setInterval(updateDateTime, 1000);
+    </script>
+</nav>

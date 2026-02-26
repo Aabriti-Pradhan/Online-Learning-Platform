@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <header th:fragment="topbar" class="page-header"> <!-- class="page-header" -->
+        <div class="sidebar-header">
+            <img th:src="@{/images/logo.png}" alt="Logo" style="height: 80px; margin-right: 10px;" class="logo">
+            <h1 class="brand-name">PrepHunt</h1>
+        </div>
+
+        <div class="header-left">
+            <h1 class="page-title">Create Test</h1>
+        </div>
+        <div class="header-right">
+            <span class="date-time">10th December, 2025</span>
+            <span class="time">23:45 pm</span>
+        </div>
+        <div class="header-right">
+            <button onclick="window.location.href='http://localhost:8081/logout'">Logout</button>
+        </div>
+    </header>
+</body>
+</html>
