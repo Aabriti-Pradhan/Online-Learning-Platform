@@ -2,6 +2,7 @@ package com.finalyearproject.fyp.controller;
 
 import com.finalyearproject.fyp.dto.RegisterDTO;
 import com.finalyearproject.fyp.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,14 +21,21 @@ public class RegisterController {
     }
 
     @GetMapping("/register")
-    public String registerPage(Model model) {
+    public String registerPage(HttpSession session, Model model) {
+        if (session.getAttribute("selectedRole") == null) {
+            return "redirect:/select-role";
+        }
         model.addAttribute("page", "register");
         model.addAttribute("registerDTO", new RegisterDTO("", "", "", "", ""));
         return "register/index";
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute("registerDTO") RegisterDTO dto, BindingResult result, Model model) {
+    public String register(
+            @Valid @ModelAttribute("registerDTO") RegisterDTO dto,
+            BindingResult result,
+            HttpSession session,
+            Model model) {
         try {
             if (result.hasErrors()) {
                 model.addAttribute("error", "Please correct the errors in the form");
@@ -41,8 +49,22 @@ public class RegisterController {
                 model.addAttribute("error", "Email already registered");
                 return "register/index";
             }
-            userService.registerUser(dto);
+
+            String role = (String) session.getAttribute("selectedRole");
+            if (role == null) return "redirect:/select-role";
+
+            RegisterDTO dtoWithRole = new RegisterDTO(
+                    dto.username(),
+                    dto.email(),
+                    dto.password(),
+                    dto.confirmPassword(),
+                    role
+            );
+
+            userService.registerUser(dtoWithRole);
+            session.removeAttribute("selectedRole");
             return "redirect:/login?success";
+
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             return "register/index";

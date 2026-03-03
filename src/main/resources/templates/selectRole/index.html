@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PrepHunt</title>
+    <link href="/images/logo.png" rel="icon" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<!--<body class="d-flex flex-column min-vh-100 justify-content-center align-items-center bg-light">-->
+
+<body style="
+            background-color: #FFF9F9;
+            height: 100vh;">
+
+<div th:replace="navbar/index :: navbar"></div>
+
+<div class="text-center mb-5">
+    <h2 class="fw-bold">Join as...</h2>
+    <p class="text-muted">Choose your role to get started</p>
+</div>
+
+<form class="d-flex justify-content-center gap-4 mt-5" method="post" th:action="@{/select-role}">
+    <button class="btn btn-outline-dark px-5 py-4 rounded-4 fs-5 fw-semibold" name="role" type="submit"
+            value="STUDENT">
+        <i class="bi bi-mortarboard"></i> Student
+    </button>
+    <button class="btn btn-outline-dark px-5 py-4 rounded-4 fs-5 fw-semibold" name="role" type="submit"
+            value="TEACHER">
+        <i class="bi bi-person-workspace"></i> Teacher
+    </button>
+</form>
+
+<p class="text-danger mt-3" th:if="${param.error}">Invalid role selected.</p>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="eng">
 <head>
     <meta charset="UTF-8">
 </head>
@@ -21,7 +22,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <div class="nav-section">
+                <div class="nav-section" sec:authorize="hasRole('STUDENT')">
                     <div class="nav-label">Main</div>
 
                     <div class="nav-group">
@@ -126,6 +127,103 @@
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                         </svg>
                         <span>Friends</span>
+                    </a>
+                </div>
+
+                <div class="nav-section" sec:authorize="hasRole('TEACHER')">
+                    <div class="nav-label">Main</div>
+
+                    <div class="nav-group">
+                        <a href="/your-courses" class="nav-item nav-subitem"
+                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                            <span>Your Courses</span>
+                        </a>
+
+                        <div class="nav-item collapsible">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                            <span>Course A</span>
+                        </div>
+                        <div class="nav-subitems">
+                            <a href="/course-resources" class="nav-subitem"
+                               th:classappend="${currentPath == '/course-resources'} ? ' active' : ''">
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                </svg>
+                                <span>Resources</span>
+                            </a>
+                            <a href="/create-test" class="nav-subitem"
+                               th:classappend="${currentPath == '/create-test'} ? ' active' : ''">
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                                <span>Create Test</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="nav-group">
+                        <div class="nav-item collapsible">
+                            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                            </svg>
+                            <span>Course B</span>
+                        </div>
+                        <div class="nav-subitems">
+                            <a href="/resources-b" class="nav-subitem">
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                </svg>
+                                <span>Resources</span>
+                            </a>
+                            <a href="/create-test" class="nav-subitem"
+                               th:classappend="${currentPath == '/create-test'} ? ' active' : ''">
+                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                                <span>Create Test</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="/progress" class="nav-item"
+                       th:classappend="${currentPath == '/progress'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                        </svg>
+                        <span>Progress Tracker</span>
+                    </a>
+
+                    <a href="/chat" class="nav-item"
+                       th:classappend="${currentPath == '/chat'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Chat AI</span>
+                    </a>
+
+                    <a href="/friends" class="nav-item"
+                       th:classappend="${currentPath == '/friends'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Students</span>
                     </a>
                 </div>
             </nav>

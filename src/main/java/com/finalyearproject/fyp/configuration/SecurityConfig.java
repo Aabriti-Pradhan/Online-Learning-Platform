@@ -2,7 +2,7 @@ package com.finalyearproject.fyp.configuration;
 
 import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.service.UserService;
-import com.finalyearproject.fyp.service.serviceImpl.CustomOAuth2UserService;
+import com.finalyearproject.fyp.service.serviceImpl.CustomOidcUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.List;
@@ -24,29 +25,43 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
     private final UserService userService;
+    private final CustomOidcUserService customOidcUserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        System.out.println(customOAuth2UserService.getClass());
 
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/login", "/register",
+                                "/", "/login", "/register", "/select-role",
                                 "/css/**", "/js/**", "/images/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
-                        .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
+                        .userInfoEndpoint(user -> user
+                                .oidcUserService(customOidcUserService)
+                        )
                         .successHandler((request, response, authentication) -> {
                             System.out.println("OAuth success triggered");
-                            response.sendRedirect("/your-resources");
+                            OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+                            String email = oauthUser.getAttribute("email");
+
+                            User existingUser = userService.findByEmail(email);
+
+                            if (existingUser == null) {
+                                response.sendRedirect("/select-role");
+                            } else {
+                                if ("TEACHER".equals(existingUser.getRole())) {
+                                    response.sendRedirect("/your-courses");
+                                } else {
+                                    response.sendRedirect("/your-resources");
+                                }
+                            }
                         })
                 )
                 .logout(logout -> logout
