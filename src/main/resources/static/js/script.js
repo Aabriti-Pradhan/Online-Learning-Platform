@@ -461,6 +461,8 @@ async function uploadPDF(button) {
     const response = await fetch("/upload-drive", {
         method: "POST",
         body: formData
+    }).then(response => {
+        location.reload();
     });
 
     progressBar.style.width = "100%";

@@ -1,5 +1,7 @@
 package com.finalyearproject.fyp.controller;
 
+import com.finalyearproject.fyp.entity.Resource;
+import com.finalyearproject.fyp.service.ResourceService;
 import com.finalyearproject.fyp.service.serviceImpl.GoogleDriveService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -15,18 +17,25 @@ public class YourResourcesController {
 
     private final GoogleDriveService googleDriveService;
 
-    public YourResourcesController(GoogleDriveService driveService) {
+    private final ResourceService resourceService;
+
+    public YourResourcesController(GoogleDriveService driveService,
+                                   ResourceService resourceService) {
         this.googleDriveService = driveService;
+        this.resourceService = resourceService;
     }
 
     @GetMapping("/your-resources")
-    public String resourcesPage(HttpServletRequest request, Model model, OAuth2AuthenticationToken auth) throws Exception {
+    public String resourcesPage(HttpServletRequest request,
+                                Model model,
+                                OAuth2AuthenticationToken auth) {
 
-        List<File> pdfs = googleDriveService.listPDFs(auth);
+        List<Resource> pdfs = resourceService.getUserResources(auth.getPrincipal().getAttribute("email"));
 
         model.addAttribute("pdfs", pdfs);
         model.addAttribute("page", "resources");
         model.addAttribute("currentPath", request.getRequestURI());
+
         return "yourResources/index";
     }
 }

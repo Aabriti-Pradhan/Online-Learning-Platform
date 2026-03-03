@@ -25,7 +25,7 @@ public class GoogleDriveService {
     @Autowired
     private OAuth2AuthorizedClientService clientService;
 
-    public void uploadToDrive(MultipartFile multipartFile) throws Exception {
+    public String uploadToDrive(MultipartFile multipartFile) throws Exception {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
@@ -67,10 +67,12 @@ public class GoogleDriveService {
                 multipartFile.getInputStream()
         );
 
-        drive.files()
+        File uploadedFile = drive.files()
                 .create(fileMeta, content)
                 .setFields("id")
                 .execute();
+
+        return uploadedFile.getId();
     }
 
     private String createFolderIfNotExists(Drive drive,

@@ -98,21 +98,24 @@
 
                 <!-- duplicate cards -->
                 <div th:each="pdf : ${pdfs}">
-                    <a class="test-attempts" th:href="'https://drive.google.com/file/d/' + ${pdf.id} + '/view'" target="_blank">
+                    <a class="test-attempts"
+                       th:href="'https://drive.google.com/file/d/' + ${pdf.resourceId} + '/view'"
+                       target="_blank">
+
                         <div class="test-card">
-                                <div class="test-card-icon">
-                                    <div>
-                                        <i class="bi bi-file-earmark-pdf fs-2"></i>
-                                        <div class="fw-semibold">PDF</div>
-                                    </div>
-                                    <i class="bi bi-list fs-3"></i>
+                            <div class="test-card-icon">
+                                <div>
+                                    <i class="bi bi-file-earmark-pdf fs-2"></i>
+                                    <div class="fw-semibold">PDF</div>
                                 </div>
-                                <div class="test-card-content">
-                                    <div class="test-meta">
-                                        <span class="test-attempts" th:text="${pdf.name}">PDF Name</span>
-                                        <span class="test-difficulty easy"><i class="bi bi-pencil"></i></span>
-                                    </div>
+                                <i class="bi bi-list fs-3"></i>
+                            </div>
+
+                            <div class="test-card-content">
+                                <div class="test-meta">
+                                    <span th:text="${pdf.resourceName}">PDF Name</span>
                                 </div>
+                            </div>
                         </div>
                     </a>
                 </div>

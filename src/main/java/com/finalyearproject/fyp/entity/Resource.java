@@ -21,6 +21,7 @@ public class Resource {
     private String resourceType;
     private String resourcePath;
     private LocalDateTime uploadedAt;
+    private String resourceName;
 
     @OneToMany(mappedBy = "resource")
     private List<UserCourseResource> userCourseResources;
