@@ -34,7 +34,7 @@
         <div class="col ms-4">
 
             <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
-                <h2 class="fw-bold">Course A Resources</h2>
+                <h2 th:text="${course.courseName}" class="fw-bold mb-4"></h2>
                 <button onclick="location.href='/notes-editor'"
                         style="background:transparent;border:none;">
                     <i class="bi bi-plus fs-1"></i>
@@ -45,22 +45,26 @@
             <div class="d-flex flex-wrap gap-4">
 
                 <!-- duplicate cards -->
-                <div th:each="i : ${#numbers.sequence(1,8)}">
-                    <div class="test-card" onclick="window.location.href='/test/1'">
-                        <div class="test-card-icon">
-                            <div>
-                                <i class="bi bi-file-earmark-pdf fs-2"></i>
-                                <div class="fw-semibold">PDF</div>
+                <div th:each="file : ${files}">
+                    <a th:href="${file.webViewLink}" target="_blank"
+                       class="test-attempts">
+
+                        <div class="test-card">
+                            <div class="test-card-icon">
+                                <div>
+                                    <i class="bi bi-file-earmark fs-2"></i>
+                                    <div class="fw-semibold">FILE</div>
+                                </div>
                             </div>
-                            <i class="bi bi-list fs-3"></i>
-                        </div>
-                        <div class="test-card-content">
-                            <div class="test-meta">
-                                <span class="test-attempts">PDF Name</span>
-                                <span class="test-difficulty easy"><i class="bi bi-pencil"></i></span>
+
+                            <div class="test-card-content">
+                                <div class="test-meta">
+                                    <span th:text="${file.name}"></span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                    </a>
                 </div>
 
             </div>

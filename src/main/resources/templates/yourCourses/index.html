@@ -38,35 +38,79 @@
                 <h2 class="fw-bold">Your Courses</h2>
                 <div class="dropdown">
                     <button class="btn p-0 border-0 bg-transparent"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
+                            data-bs-toggle="modal"
+                            data-bs-target="#createCourseModal">
                         <i class="bi bi-plus fs-1"></i>
                     </button>
+                </div>
+            </div>
 
-                    <ul class="dropdown-menu dropdown-menu-end shadow p-3" style="min-width:250px;">
-                        <li>
-                            <a class="dropdown-item" href="/notes-editor">
-                                <i class="bi bi-pencil-square me-2"></i> Take Notes
-                            </a>
-                        </li>
+            <!-- Create Course Modal -->
+            <div class="modal fade" id="createCourseModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content rounded-4">
 
-                        <li><hr class="dropdown-divider"></li>
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold">Create Course</h5>
+                            <button type="button" class="btn-close"
+                                    data-bs-dismiss="modal"></button>
+                        </div>
 
-                        <li>
-                            <input type="file"
-                                   id="pdfFile"
-                                   accept="application/pdf"
-                                   class="form-control mb-2">
-                        </li>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <input type="text"
+                                       id="courseNameInput"
+                                       class="form-control"
+                                       placeholder="Enter Course Name">
+                            </div>
 
-                        <li>
+                            <div>
+                                <textarea id="courseDescInput"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="Enter Course Description"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
                             <button class="btn btn-dark w-100"
-                                    onclick="uploadPDF(this)">
-                                <i class="bi bi-upload me-2"></i> Upload PDF
+                                    onclick="createCourse()">
+                                Create
                             </button>
-                        </li>
-                    </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteCourseModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4">
+
+                        <div class="modal-header border-0">
+                            <h5 class="modal-title fw-bold">Delete Course</h5>
+                            <button type="button" class="btn-close"
+                                    data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <p class="mb-0">Are you sure you want to delete this course?</p>
+                            <small class="text-danger">This action cannot be undone.</small>
+                        </div>
+
+                        <div class="modal-footer border-0">
+                            <button class="btn btn-light"
+                                    data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button id="confirmDeleteBtn"
+                                    class="btn btn-dark">
+                                Delete
+                            </button>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -98,27 +142,33 @@
             <div class="d-flex flex-wrap gap-4">
 
                 <!-- duplicate cards -->
-                <div th:each="pdf : ${pdfs}">
-                    <a class="test-attempts"
-                       th:href="'https://drive.google.com/file/d/' + ${pdf.resourceId} + '/view'"
-                       target="_blank">
+                <div th:each="course : ${courses}">
+                    <div class="test-attempts test-card-wrapper"
+                         th:data-url="@{'/your-courses/' + ${course.courseId} + '/resources'}">
 
                         <div class="test-card">
+                            <div class="menu">
+                                <button class="dropdown-btn btn p-0 border-0 bg-transparent"><i class="bi bi-three-dots-vertical"></i></button>
+                                <div class="dropdown-content p-0 border-0">
+                                    <button class="delete-course-btn"
+                                            th:data-course-id="${course.courseId}">Delete</button>
+                                </div>
+                            </div>
                             <div class="test-card-icon">
                                 <div>
-                                    <i class="bi bi-file-earmark-pdf fs-2"></i>
-                                    <div class="fw-semibold">PDF</div>
+                                    <i class="bi bi-folder fs-2"></i>
+                                    <div class="fw-semibold">COURSE</div>
                                 </div>
                                 <i class="bi bi-list fs-3"></i>
                             </div>
 
                             <div class="test-card-content">
                                 <div class="test-meta">
-                                    <span th:text="${pdf.resourceName}">PDF Name</span>
+                                    <span th:text="${course.courseName}"></span>
                                 </div>
                             </div>
                         </div>
-                    </a>
+                    </div>
                 </div>
 
             </div>
@@ -131,5 +181,76 @@
 
 <script th:src="@{/js/script.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+    document.querySelectorAll('.test-card-wrapper').forEach(card => {
+        card.addEventListener('click', function (e) {
+
+            if (e.target.closest('.menu')) {
+                return;
+            }
+
+            window.location.href = this.getAttribute('data-url');
+        });
+    });
+
+    let selectedCourseId = null;
+
+    const deleteModal = new bootstrap.Modal(
+        document.getElementById('deleteCourseModal')
+    );
+
+    const toastElement = document.getElementById('uploadToast');
+    const toast = new bootstrap.Toast(toastElement);
+
+    const toastMessage = document.getElementById('toastMessage');
+    const progressBar = document.getElementById('uploadProgress');
+
+    document.querySelectorAll('.delete-course-btn').forEach(button => {
+
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // prevents card redirect
+
+            selectedCourseId = button.getAttribute('data-course-id');
+            deleteModal.show();
+        });
+    });
+
+    document.getElementById('confirmDeleteBtn')
+        .addEventListener('click', () => {
+
+            deleteModal.hide();
+
+            toastMessage.innerText = "Deleting course...";
+            progressBar.style.width = "30%";
+            toast.show();
+
+            fetch(`/delete-course/${selectedCourseId}`, {
+                method: 'DELETE'
+            })
+                .then(res => {
+
+                    progressBar.style.width = "70%";
+
+                    if(res.ok) {
+
+                        setTimeout(() => {
+                            progressBar.style.width = "100%";
+                            toastMessage.innerText = "Course deleted successfully!";
+
+                            setTimeout(() => {
+                                location.reload();
+                            }, 800);
+
+                        }, 500);
+
+                    } else {
+                        toastMessage.innerText = "Failed to delete course.";
+                        progressBar.style.width = "100%";
+                    }
+                });
+        });
+</script>
 </body>
 </html>

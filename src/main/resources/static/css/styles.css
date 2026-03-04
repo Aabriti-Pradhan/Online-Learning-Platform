@@ -1139,3 +1139,49 @@ body {
 #editorjs {
     background-color: white;
 }
+
+.menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    min-width: 100px;
+    z-index: 10;
+}
+
+.menu:hover .dropdown-content {
+    display: block;
+}
+
+/* Style for the delete button on course cards */
+.delete-course-btn {
+    position: absolute;
+    right: 2px;
+    background-color: white; /* Transparent background */
+    border: 2px solid black;             /* Remove default button border */
+    color: #ff4d4f;           /* Red color for delete action */
+    font-size: 15px;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.2s ease;
+}
+
+/* Hover effect */
+.delete-course-btn:hover {
+    background-color: #ff4d4f; /* Red background on hover */
+    color: #fff;               /* White X icon */
+    transform: scale(1.1);     /* Slight zoom effect */
+}
+
+/* Optional: Use icon inside button instead of text */
+.delete-course-btn::before {
+    content: "\2716";          /* Unicode for ✖ */
+    font-weight: bold;
+}

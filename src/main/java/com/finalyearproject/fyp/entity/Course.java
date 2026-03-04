@@ -20,6 +20,7 @@ public class Course {
     private String courseName;
     private String courseDesc;
     private LocalDateTime createdAt;
+    private String driveFolderId;
 
     @OneToMany(mappedBy = "course")
     private List<UserCourse> userCourses;

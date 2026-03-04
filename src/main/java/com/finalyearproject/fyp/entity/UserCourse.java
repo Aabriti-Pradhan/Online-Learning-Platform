@@ -9,20 +9,17 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "user_course")
-@IdClass(UserCourseId.class)
 public class UserCourse {
-    @Id
-    private Long courseId;
 
     @Id
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "courseId", insertable = false, updatable = false)
-    private Course course;
-
-    @ManyToOne
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 }

@@ -494,3 +494,24 @@ document.getElementById('testModal').addEventListener('click', function (event) 
         closeTestModal();
     }
 });
+
+function createCourse() {
+
+    const courseName = document.getElementById("courseNameInput").value;
+    const courseDesc = document.getElementById("courseDescInput").value;
+
+    fetch("/create-course", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+            courseName: courseName,
+            courseDesc: courseDesc
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            location.reload();
+        });
+}
