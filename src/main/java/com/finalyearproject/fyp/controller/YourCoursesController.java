@@ -3,6 +3,7 @@ package com.finalyearproject.fyp.controller;
 import com.finalyearproject.fyp.entity.Course;
 import com.finalyearproject.fyp.entity.Resource;
 import com.finalyearproject.fyp.repository.CourseRepository;
+import com.finalyearproject.fyp.service.ResourceService;
 import com.finalyearproject.fyp.service.serviceImpl.CourseDriveService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class YourCoursesController {
 
     private final CourseRepository courseRepository;
     private final CourseDriveService courseDriveService;
+    private final ResourceService resourceService;
 
     @GetMapping("/your-courses")
     public String coursesPage(Model model) {
@@ -45,6 +47,9 @@ public class YourCoursesController {
                         oauthToken
                 );
 
+        List<Resource> pdfs = resourceService.getUserResources(oauthToken.getPrincipal().getAttribute("email"));
+
+        model.addAttribute("pdfs", pdfs);
         model.addAttribute("currentPath", request.getRequestURI());
         model.addAttribute("course", course);
         model.addAttribute("files", files);

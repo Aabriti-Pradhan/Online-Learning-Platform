@@ -433,6 +433,16 @@ function openUploadOptions() {
 
 async function uploadPDF(button) {
 
+    const courseId = button.getAttribute("data-course-id");
+
+    if (!courseId) {
+        console.error("Course ID is missing!");
+        return;
+    }
+    else{
+        console.log("course id is " + courseId);
+    }
+
     const fileInput = document.getElementById("pdfFile");
 
     if (fileInput.files.length === 0) {
@@ -440,12 +450,17 @@ async function uploadPDF(button) {
     }
 
     const file = fileInput.files[0];
+
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("courseId", courseId);
 
-    // Close dropdown
-    const dropdown = bootstrap.Dropdown.getInstance(button.closest('.dropdown').querySelector('[data-bs-toggle="dropdown"]'));
-    dropdown.hide();
+    console.log("Sending courseId:", courseId); // DEBUG
+
+    // Close dropdown safely
+    const toggle = button.closest('.dropdown')?.querySelector('[data-bs-toggle="dropdown"]');
+    const dropdown = toggle ? bootstrap.Dropdown.getInstance(toggle) : null;
+    if (dropdown) dropdown.hide();
 
     // Show toast
     const toastEl = document.getElementById("uploadToast");
@@ -458,19 +473,27 @@ async function uploadPDF(button) {
     toastMessage.innerText = "Uploading PDF...";
     progressBar.style.width = "30%";
 
-    const response = await fetch("/upload-drive", {
-        method: "POST",
-        body: formData
-    }).then(response => {
-        location.reload();
-    });
+    try {
 
-    progressBar.style.width = "100%";
+        const response = await fetch("/upload-drive", {
+            method: "POST",
+            body: formData
+        });
 
-    if (response.ok) {
-        toastMessage.innerText = "PDF uploaded successfully!";
-    } else {
-        toastMessage.innerText = "Upload failed.";
+        progressBar.style.width = "100%";
+
+        if (response.ok) {
+            toastMessage.innerText = "PDF uploaded successfully!";
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const errorText = await response.text();
+            console.error("Server error:", errorText);
+            toastMessage.innerText = "Upload failed.";
+        }
+
+    } catch (error) {
+        console.error("Network error:", error);
+        toastMessage.innerText = "Upload failed (network error).";
     }
 
     setTimeout(() => {
@@ -478,6 +501,75 @@ async function uploadPDF(button) {
         progressBar.style.width = "0%";
     }, 2500);
 }
+
+// function uploadPDF(button, courseId) {
+//     const fileInput = document.getElementById("pdfFile");
+//     if (fileInput.files.length === 0) return;
+//
+//     const file = fileInput.files[0];
+//     const formData = new FormData();
+//     formData.append("file", file);
+//     formData.append("courseId", courseId);
+//
+//     // Close dropdown
+//     const dropdown = bootstrap.Dropdown.getInstance(
+//         button.closest('.dropdown').querySelector('[data-bs-toggle="dropdown"]')
+//     );
+//     dropdown.hide();
+//
+//     // Show toast
+//     const toastEl = document.getElementById("uploadToast");
+//     const toast = new bootstrap.Toast(toastEl);
+//     toast.show();
+//
+//     const progressBar = document.getElementById("uploadProgress");
+//     const toastMessage = document.getElementById("toastMessage");
+//
+//     toastMessage.innerText = "Uploading PDF...";
+//     progressBar.style.width = "0%";
+//
+//     // Use XMLHttpRequest to track upload progress
+//     const xhr = new XMLHttpRequest();
+//     xhr.open("POST", "/upload-drive", true);
+//
+//     // Update progress bar
+//     xhr.upload.onprogress = function(e) {
+//         if (e.lengthComputable) {
+//             const percent = (e.loaded / e.total) * 100;
+//             progressBar.style.width = percent + "%";
+//         }
+//     };
+//
+//     // When upload is done
+//     xhr.onload = function() {
+//         if (xhr.status === 200) {
+//             toastMessage.innerText = "PDF uploaded successfully!";
+//             progressBar.style.width = "100%";
+//
+//             // reload after 1s to show new PDF
+//             setTimeout(() => location.reload(), 1000);
+//         } else {
+//             toastMessage.innerText = "Upload failed. Try again.";
+//         }
+//
+//         // hide toast after 2.5s
+//         setTimeout(() => {
+//             toast.hide();
+//             progressBar.style.width = "0%";
+//         }, 2500);
+//     };
+//
+//     // Handle network error
+//     xhr.onerror = function() {
+//         toastMessage.innerText = "Network error. Upload failed.";
+//         setTimeout(() => {
+//             toast.hide();
+//             progressBar.style.width = "0%";
+//         }, 2500);
+//     };
+//
+//     xhr.send(formData);
+// }
 
 // Close dropdowns when clicking outside
 document.addEventListener('click', function (event) {

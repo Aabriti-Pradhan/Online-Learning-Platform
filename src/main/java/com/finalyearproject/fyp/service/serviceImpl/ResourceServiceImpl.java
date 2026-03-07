@@ -1,9 +1,6 @@
 package com.finalyearproject.fyp.service.serviceImpl;
 
-import com.finalyearproject.fyp.entity.Course;
-import com.finalyearproject.fyp.entity.Resource;
-import com.finalyearproject.fyp.entity.User;
-import com.finalyearproject.fyp.entity.UserCourseResource;
+import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.CourseRepository;
 import com.finalyearproject.fyp.repository.ResourceRepository;
 import com.finalyearproject.fyp.repository.UserCourseResourceRepository;
@@ -46,16 +43,22 @@ public class ResourceServiceImpl implements ResourceService {
 
         resourceRepository.save(resource);
 
-        Long resourceId = resource.getResourceId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
         UserCourseResource ucr = new UserCourseResource();
-        System.out.println(resourceId);
-        ucr.setResourceId(resourceId);
-//        userCourseResourceRepository.save(ucr);
-        ucr.setUser(userRepository.findById(userId).orElseThrow());
-//        ucr.setCourse(courseRepository.findById(courseId).orElseThrow());
-        Optional<Course> courseOpt = courseRepository.findById(1L); // temp course ID
-        courseOpt.ifPresent(ucr::setCourse);
+        ucr.setId(new UserCourseResourceId(
+                resource.getResourceId(),
+                courseId,
+                userId
+        ));
+
+        ucr.setResource(resource);
+        ucr.setUser(user);
+        ucr.setCourse(course);
 
         userCourseResourceRepository.save(ucr);
     }

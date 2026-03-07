@@ -35,35 +35,89 @@
 
             <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
                 <h2 th:text="${course.courseName}" class="fw-bold mb-4"></h2>
-                <button onclick="location.href='/notes-editor'"
-                        style="background:transparent;border:none;">
-                    <i class="bi bi-plus fs-1"></i>
-                </button>
+                <div class="dropdown">
+                    <button class="btn p-0 border-0 bg-transparent"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <i class="bi bi-plus fs-1"></i>
+                    </button>
+
+                    <ul class="dropdown-menu dropdown-menu-end shadow p-3" style="min-width:250px;">
+                        <li>
+                            <a class="dropdown-item" href="/notes-editor">
+                                <i class="bi bi-pencil-square me-2"></i> Take Notes
+                            </a>
+                        </li>
+
+                        <li><hr class="dropdown-divider"></li>
+
+                        <li>
+                            <input type="file"
+                                   id="pdfFile"
+                                   accept="application/pdf"
+                                   class="form-control mb-2">
+                        </li>
+
+                        <li>
+                            <button class="btn btn-dark w-100"
+                                    th:attr="data-course-id=${course.courseId}"
+                                    onclick="uploadPDF(this)">
+                                <i class="bi bi-upload me-2"></i> Upload PDF
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Toast Message -->
+
+            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                <div id="uploadToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body w-100">
+                            <div id="toastMessage">Uploading...</div>
+
+                            <div class="progress mt-2" style="height:5px;">
+                                <div id="uploadProgress"
+                                     class="progress-bar"
+                                     role="progressbar"
+                                     style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="btn-close btn-close-white me-2 m-auto"
+                                data-bs-dismiss="toast">
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- RESOURCE GRID -->
             <div class="d-flex flex-wrap gap-4">
 
                 <!-- duplicate cards -->
-                <div th:each="file : ${files}">
-                    <a th:href="${file.webViewLink}" target="_blank"
-                       class="test-attempts">
+                <div th:each="pdf : ${pdfs}">
+                    <a class="test-attempts"
+                       th:href="'https://drive.google.com/file/d/' + ${pdf.resourcePath} + '/view'"
+                       target="_blank">
 
                         <div class="test-card">
                             <div class="test-card-icon">
                                 <div>
-                                    <i class="bi bi-file-earmark fs-2"></i>
-                                    <div class="fw-semibold">FILE</div>
+                                    <i class="bi bi-file-earmark-pdf fs-2"></i>
+                                    <div class="fw-semibold">PDF</div>
                                 </div>
+                                <i class="bi bi-list fs-3"></i>
                             </div>
 
                             <div class="test-card-content">
                                 <div class="test-meta">
-                                    <span th:text="${file.name}"></span>
+                                    <span th:text="${pdf.resourceName}">PDF Name</span>
                                 </div>
                             </div>
                         </div>
-
                     </a>
                 </div>
 
@@ -76,6 +130,6 @@
 </div>
 
 <script th:src="@{/js/script.js}"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

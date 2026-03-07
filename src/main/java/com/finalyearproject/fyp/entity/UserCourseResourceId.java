@@ -1,8 +1,10 @@
 package com.finalyearproject.fyp.entity;
 
+import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+@Embeddable
 public class UserCourseResourceId implements Serializable {
 
     private Long resourceId;
@@ -22,9 +24,9 @@ public class UserCourseResourceId implements Serializable {
         if (this == o) return true;
         if (!(o instanceof UserCourseResourceId)) return false;
         UserCourseResourceId that = (UserCourseResourceId) o;
-        return Objects.equals(resourceId, that.resourceId) &&
-                Objects.equals(courseId, that.courseId) &&
-                Objects.equals(userId, that.userId);
+        return Objects.equals(resourceId, that.resourceId)
+                && Objects.equals(courseId, that.courseId)
+                && Objects.equals(userId, that.userId);
     }
 
     @Override

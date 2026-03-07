@@ -6,31 +6,25 @@ import lombok.Setter;
 
 @Setter
 @Getter
-
 @Entity
 @Table(name = "user_course_resource")
-@IdClass(UserCourseResourceId.class)
 public class UserCourseResource {
 
-    @Id
-    private Long resourceId;
-
-    @Id
-    private Long courseId;
-
-    @Id
-    private Long userId;
+    @EmbeddedId
+    private UserCourseResourceId id;
 
     @ManyToOne
-    @JoinColumn(name = "resourceId", insertable = false, updatable = false)
+    @MapsId("resourceId")
+    @JoinColumn(name = "resource_id")
     private Resource resource;
 
     @ManyToOne
-    @JoinColumn(name = "courseId", insertable = false, updatable = false)
+    @MapsId("courseId")
+    @JoinColumn(name = "course_id")
     private Course course;
 
     @ManyToOne
-    @JoinColumn(name = "userId", insertable = false, updatable = false)
+    @MapsId("userId")
+    @JoinColumn(name = "user_id")
     private User user;
-
 }

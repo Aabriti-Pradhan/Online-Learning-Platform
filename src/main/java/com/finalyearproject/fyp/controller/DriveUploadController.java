@@ -28,6 +28,7 @@ public class DriveUploadController {
     @PostMapping("/upload-drive")
     @ResponseBody
     public String uploadFile(@RequestParam("file") MultipartFile file,
+                             @RequestParam("courseId") Long courseId,
                              @AuthenticationPrincipal OAuth2User principal) throws Exception {
 
         System.out.println("Received: " + file.getOriginalFilename());
@@ -41,7 +42,7 @@ public class DriveUploadController {
 
         resourceService.savePdf(
                 user.getUserId(),
-                1L,
+                courseId,
                 fileId,
                 file.getOriginalFilename()
         );
