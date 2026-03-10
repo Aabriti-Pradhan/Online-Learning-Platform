@@ -607,3 +607,45 @@ function createCourse() {
             location.reload();
         });
 }
+
+//save notes
+// document.addEventListener("DOMContentLoaded", () => {
+//
+//     const saveBtn = document.getElementById("save-btn");
+//
+//     console.log("save btn triggered")
+//     if (!saveBtn) return;
+//
+//     console.log("save btn is thre");
+//     saveBtn.addEventListener("click", async () => {
+//
+//         try {
+//
+//             const data = await window.editor.save();
+//             const title = document.getElementById("note-title").value;
+//
+//             const courseId = new URLSearchParams(window.location.search).get("courseId");
+//
+//             console.log("got the course id and triggering fetch");
+//
+//             const response = await fetch("/save-note", {
+//                 method: "POST",
+//                 headers: { "Content-Type": "application/json" },
+//                 body: JSON.stringify({
+//                     title: title,
+//                     content: data,
+//                     courseId: courseId
+//                 })
+//             });
+//
+//             const result = await response.text();
+//             console.log(result);
+//             alert("Note saved!");
+//
+//         } catch (err) {
+//             console.error("Saving failed:", err);
+//         }
+//
+//     });
+//
+// });

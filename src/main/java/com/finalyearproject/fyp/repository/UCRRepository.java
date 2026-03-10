@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-public interface UserCourseResourceRepository extends JpaRepository<UserCourseResource, UserCourseResourceId> {
+public interface UCRRepository extends JpaRepository<UserCourseResource, UserCourseResourceId> {
 
     // Use explicit JPQL for all queries — Spring Data cannot derive queries from
     // field names when the entity uses an @EmbeddedId composite key.

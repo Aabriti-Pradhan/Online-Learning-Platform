@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Course Resources</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
-
-    <link rel="icon" type="image/png" href="/images/logo.png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title th:text="${course.courseName} + ' — PrepHunt'">Course — PrepHunt</title>
+    <link rel="stylesheet"    th:href="@{/css/styles.css}">
+    <link rel="icon"          type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"     rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
     <style>
         body {
             background-color: #FFF9F9;
             font-family: 'Gabarito', sans-serif;
         }
     </style>
+
+
 </head>
 
 <body>
-
 <div class="container-fluid px-4 py-3">
 
     <div th:replace="navigation/index :: topbar"></div>
@@ -31,105 +31,313 @@
         </div>
 
         <!-- MAIN CONTENT -->
-        <div class="col ms-4">
+        <div class="col ms-3">
 
-            <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
-                <h2 th:text="${course.courseName}" class="fw-bold mb-4"></h2>
-                <div class="dropdown">
-                    <button class="btn p-0 border-0 bg-transparent"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                        <i class="bi bi-plus fs-1"></i>
+            <div class="course-breadcrumb mb-1">
+                <a th:href="@{/your-courses}">Your Courses</a>
+                <span class="mx-1">/</span>
+                <span th:text="${course.courseName}">Course Name</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-0" th:text="${course.courseName}">Course Name</h2>
+                    <p class="text-muted small mb-0" th:text="${course.courseDesc}">Description</p>
+                </div>
+
+                <div class="dropdown" sec:authorize="hasRole('TEACHER')">
+                    <button class="btn btn-upload px-4 py-2 dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus-lg me-1"></i> Add Resource
                     </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end shadow p-3" style="min-width:250px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm p-2" style="min-width:240px;">
                         <li>
-                            <a class="dropdown-item" href="/notes-editor">
-                                <i class="bi bi-pencil-square me-2"></i> Take Notes
+                            <label class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" style="cursor:pointer;">
+                                <i class="bi bi-file-earmark-pdf text-danger"></i> Upload PDF
+                                <input type="file" id="pdfFileInput" accept="application/pdf"
+                                       th:attr="data-course-id=${course.courseId}"
+                                       style="display:none;" onchange="uploadPDF(this)">
+                            </label>
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2"
+                               th:href="@{/notes-editor(courseId=${course.courseId})}">
+                                <i class="bi bi-pencil-square text-primary"></i> Take Notes
                             </a>
-                        </li>
-
-                        <li><hr class="dropdown-divider"></li>
-
-                        <li>
-                            <input type="file"
-                                   id="pdfFile"
-                                   accept="application/pdf"
-                                   class="form-control mb-2">
-                        </li>
-
-                        <li>
-                            <button class="btn btn-dark w-100"
-                                    th:attr="data-course-id=${course.courseId}"
-                                    onclick="uploadPDF(this)">
-                                <i class="bi bi-upload me-2"></i> Upload PDF
-                            </button>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Toast Message -->
-
-            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                <div id="uploadToast" class="toast align-items-center text-bg-dark border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body w-100">
-                            <div id="toastMessage">Uploading...</div>
-
-                            <div class="progress mt-2" style="height:5px;">
-                                <div id="uploadProgress"
-                                     class="progress-bar"
-                                     role="progressbar"
-                                     style="width: 0%;">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button"
-                                class="btn-close btn-close-white me-2 m-auto"
-                                data-bs-dismiss="toast">
-                        </button>
+            <!-- Stats row -->
+            <div class="d-flex flex-wrap gap-3 mb-4">
+                <div class="stat-card">
+                    <div class="stat-icon pdf"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <div>
+                        <div class="stat-value" th:text="${pdfCount}">0</div>
+                        <div class="stat-label">PDFs</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon note"><i class="bi bi-journal-text"></i></div>
+                    <div>
+                        <div class="stat-value" th:text="${noteCount}">0</div>
+                        <div class="stat-label">Notes</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon test"><i class="bi bi-patch-question"></i></div>
+                    <div>
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Tests</div>
                     </div>
                 </div>
             </div>
 
-            <!-- RESOURCE GRID -->
-            <div class="d-flex flex-wrap gap-4">
-
-                <!-- duplicate cards -->
-                <div th:each="pdf : ${pdfs}">
-                    <a class="test-attempts"
-                       th:href="'https://drive.google.com/file/d/' + ${pdf.resourcePath} + '/view'"
-                       target="_blank">
-
-                        <div class="test-card">
-                            <div class="test-card-icon">
-                                <div>
-                                    <i class="bi bi-file-earmark-pdf fs-2"></i>
-                                    <div class="fw-semibold">PDF</div>
-                                </div>
-                                <i class="bi bi-list fs-3"></i>
+            <!-- Resources table -->
+            <div class="resource-table-wrap" th:if="${resources != null and !#lists.isEmpty(resources)}">
+                <table class="table table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Uploaded</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="res : ${resources}">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                    <span class="resource-icon"
+                                          th:classappend="${res.resourceType == 'PDF'} ? ' pdf' : ' note'">
+                                        <i class="bi"
+                                           th:classappend="${res.resourceType == 'PDF'} ? ' bi-file-earmark-pdf' : ' bi-journal-text'"></i>
+                                    </span>
+                                <span class="fw-medium" th:text="${res.resourceName}">filename.pdf</span>
                             </div>
-
-                            <div class="test-card-content">
-                                <div class="test-meta">
-                                    <span th:text="${pdf.resourceName}">PDF Name</span>
-                                </div>
+                        </td>
+                        <td>
+                                <span class="badge-type"
+                                      th:classappend="${res.resourceType == 'PDF'} ? ' badge-pdf' : ' badge-note'"
+                                      th:text="${res.resourceType}">PDF</span>
+                        </td>
+                        <td class="text-muted"
+                            th:text="${#temporals.format(res.uploadedAt, 'dd MMM yyyy')}">01 Jan 2025</td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <!-- View PDF inline -->
+                                <button th:if="${res.resourceType == 'PDF'}"
+                                        class="btn btn-sm btn-outline-secondary rounded-2"
+                                        th:attr="onclick='openViewer(\'/files/' + ${res.resourcePath} + '\', \'' + ${res.resourceName} + '\')'">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <!-- Edit Note — opens notes editor with content loaded -->
+                                <a th:if="${res.resourceType == 'Note'}"
+                                   class="btn btn-sm btn-outline-primary rounded-2"
+                                   th:href="@{/notes-editor(resourceId=${res.resourceId}, courseId=${course.courseId})}">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a class="btn btn-sm btn-outline-secondary rounded-2"
+                                   th:href="@{'/files/' + ${res.resourcePath}}" download>
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button sec:authorize="hasRole('TEACHER')"
+                                        class="btn btn-sm btn-outline-danger rounded-2"
+                                        th:attr="data-resource-id=${res.resourceId}, data-resource-name=${res.resourceName}"
+                                        onclick="confirmDelete(this)">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
                             </div>
-                        </div>
-                    </a>
-                </div>
-
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
+
+            <!-- Empty state -->
+            <div class="empty-state resource-table-wrap"
+                 th:if="${resources == null or #lists.isEmpty(resources)}">
+                <i class="bi bi-folder2-open"></i>
+                <p class="fw-semibold mb-1">No resources yet</p>
+                <p class="small" sec:authorize="hasRole('TEACHER')">Upload a PDF or take notes to get started.</p>
+                <p class="small" sec:authorize="hasRole('STUDENT')">Your teacher hasn't added resources yet.</p>
+            </div>
+
         </div>
     </div>
 
     <div th:replace="footer/index :: footer"></div>
-
 </div>
 
-<script th:src="@{/js/script.js}"></script>
+<!-- ── PDF Viewer Panel ── -->
+<div id="viewer-panel">
+    <div id="viewer-header">
+        <span id="viewer-title">Document</span>
+        <button class="btn btn-sm btn-outline-secondary rounded-2" onclick="closeViewer()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <iframe id="viewer-iframe" src="about:blank"></iframe>
+</div>
+
+<!-- ── Toast ── -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    <div id="uploadToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body w-100">
+                <div id="toastMessage">Uploading...</div>
+                <div class="progress mt-2" style="height:4px;">
+                    <div id="uploadProgress" class="progress-bar" style="width:0%;"></div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Delete Confirmation Dialog ── -->
+<div class="dialog-backdrop" id="deleteDialog">
+    <div class="dialog-box">
+        <div class="dialog-icon danger"><i class="bi bi-trash3"></i></div>
+        <div class="dialog-title">Delete Resource</div>
+        <div class="dialog-message" id="deleteDialogMessage">Are you sure you want to delete this file?</div>
+        <div class="dialog-actions">
+            <button class="btn btn-light" onclick="closeDialog('deleteDialog')">Cancel</button>
+            <button class="btn btn-danger" id="deleteConfirmBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Error Dialog ── -->
+<div class="dialog-backdrop" id="errorDialog">
+    <div class="dialog-box">
+        <div class="dialog-icon error"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="dialog-title">Something went wrong</div>
+        <div class="dialog-message" id="errorDialogMessage">An error occurred.</div>
+        <div class="dialog-actions">
+            <button class="btn btn-dark" onclick="closeDialog('errorDialog')">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Success Dialog ── -->
+<div class="dialog-backdrop" id="successDialog">
+    <div class="dialog-box">
+        <div class="dialog-icon success"><i class="bi bi-check-lg"></i></div>
+        <div class="dialog-title" id="successDialogTitle">Success</div>
+        <div class="dialog-message" id="successDialogMessage"></div>
+        <div class="dialog-actions">
+            <button class="btn btn-dark" onclick="closeDialog('successDialog')">OK</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/script.js}"></script>
+<script>
+
+    // ── Dialog helpers ────────────────────────────────────────────────────────
+    function openDialog(id) {
+        const el = document.getElementById(id);
+        el.classList.add('show');
+    }
+    function closeDialog(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+    function showError(message) {
+        document.getElementById('errorDialogMessage').innerText = message;
+        openDialog('errorDialog');
+    }
+    function showSuccess(title, message) {
+        document.getElementById('successDialogTitle').innerText  = title;
+        document.getElementById('successDialogMessage').innerText = message;
+        openDialog('successDialog');
+    }
+
+    // Close dialogs when clicking the backdrop
+    document.querySelectorAll('.dialog-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', function(e) {
+            if (e.target === this) closeDialog(this.id);
+        });
+    });
+
+    // ── Upload PDF ────────────────────────────────────────────────────────────
+    function uploadPDF(input) {
+        const file     = input.files[0];
+        const courseId = input.dataset.courseId;
+        if (!file) return;
+
+        const toast    = new bootstrap.Toast(document.getElementById('uploadToast'));
+        const msg      = document.getElementById('toastMessage');
+        const progress = document.getElementById('uploadProgress');
+
+        msg.innerText        = 'Uploading ' + file.name + '…';
+        progress.style.width = '10%';
+        toast.show();
+
+        const form = new FormData();
+        form.append('file', file);
+
+        fetch('/upload-pdf/' + courseId, { method: 'POST', body: form })
+            .then(r => r.json())
+            .then(data => {
+                progress.style.width = '100%';
+                if (data.error) {
+                    msg.innerText = '✗ Upload failed';
+                    setTimeout(() => showError(data.error), 400);
+                } else {
+                    msg.innerText = '✓ ' + data.resourceName;
+                    setTimeout(() => location.reload(), 900);
+                }
+            })
+            .catch(() => {
+                progress.style.width = '100%';
+                msg.innerText = '✗ Upload failed';
+                setTimeout(() => showError('Could not connect to the server. Please try again.'), 400);
+            });
+    }
+
+    // ── Delete resource ───────────────────────────────────────────────────────
+    let pendingDeleteId = null;
+
+    function confirmDelete(btn) {
+        pendingDeleteId = btn.dataset.resourceId;
+        const name = btn.dataset.resourceName || 'this file';
+        document.getElementById('deleteDialogMessage').innerText =
+            'Are you sure you want to delete "' + name + '"? This cannot be undone.';
+        openDialog('deleteDialog');
+    }
+
+    document.getElementById('deleteConfirmBtn').addEventListener('click', function () {
+        if (!pendingDeleteId) return;
+        closeDialog('deleteDialog');
+
+        fetch('/delete-resource/' + pendingDeleteId, { method: 'DELETE' })
+            .then(r => {
+                if (r.ok) {
+                    location.reload();
+                } else {
+                    showError('Failed to delete the resource. Please try again.');
+                }
+            })
+            .catch(() => showError('Could not connect to the server. Please try again.'));
+
+        pendingDeleteId = null;
+    });
+
+    // ── PDF viewer slide-in ───────────────────────────────────────────────────
+    function openViewer(path, name) {
+        document.getElementById('viewer-iframe').src         = path;
+        document.getElementById('viewer-title').innerText    = name;
+        document.getElementById('viewer-panel').classList.add('open');
+    }
+    function closeViewer() {
+        document.getElementById('viewer-panel').classList.remove('open');
+        document.getElementById('viewer-iframe').src = 'about:blank';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
+
+</script>
 </body>
 </html>

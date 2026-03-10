@@ -2,12 +2,17 @@ package com.finalyearproject.fyp.controller;
 
 import com.finalyearproject.fyp.entity.Course;
 import com.finalyearproject.fyp.entity.Resource;
+import com.finalyearproject.fyp.entity.User;
+import com.finalyearproject.fyp.entity.UserCourse;
 import com.finalyearproject.fyp.repository.CourseRepository;
+import com.finalyearproject.fyp.repository.UserCourseRepository;
+import com.finalyearproject.fyp.repository.UserRepository;
 import com.finalyearproject.fyp.service.ResourceService;
-import com.finalyearproject.fyp.service.serviceImpl.CourseDriveService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,42 +24,65 @@ import java.util.List;
 @RequiredArgsConstructor
 public class YourCoursesController {
 
-    private final CourseRepository courseRepository;
-    private final CourseDriveService courseDriveService;
-    private final ResourceService resourceService;
+    private final CourseRepository     courseRepository;
+    private final UserRepository       userRepository;
+    private final UserCourseRepository userCourseRepository;
+    private final ResourceService      resourceService;
 
     @GetMapping("/your-courses")
-    public String coursesPage(Model model) {
-        List<Course> courses = courseRepository.findAll();
-        model.addAttribute("courses", courses);
+    public String coursesPage(Model model, Authentication authentication) {
+        User user = resolveUser(authentication);
+
+        List<Course> courses = userCourseRepository.findByUser(user)
+                .stream().map(UserCourse::getCourse).toList();
+
+        model.addAttribute("courses",     courses);
         model.addAttribute("currentPath", "/your-courses");
         return "yourCourses/index";
     }
 
     @GetMapping("/your-courses/{courseId}/resources")
-    public String courseResources(@PathVariable Long courseId,
+    public String courseDashboard(@PathVariable Long courseId,
                                   Model model,
-                                  OAuth2AuthenticationToken oauthToken,
-                                  HttpServletRequest request) throws Exception {
+                                  HttpServletRequest request) {
 
-        Course course = courseRepository.findById(courseId)
+        Course         course    = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
+        List<Resource> resources = resourceService.getCourseResources(courseId);
 
-        // Get files inside this Drive folder
-        List<com.google.api.services.drive.model.File> files =
-                courseDriveService.listFilesInsideFolder(
-                        course.getDriveFolderId(),
-                        oauthToken
-                );
+        long pdfCount  = resources.stream().filter(r -> "PDF" .equalsIgnoreCase(r.getResourceType())).count();
+        long noteCount = resources.stream().filter(r -> "Note".equalsIgnoreCase(r.getResourceType())).count();
 
-        List<Resource> pdfs = resourceService.getUserResources(oauthToken.getPrincipal().getAttribute("email"));
-
-        model.addAttribute("pdfs", pdfs);
+        model.addAttribute("course",      course);
+        model.addAttribute("resources",   resources);
+        model.addAttribute("pdfCount",    pdfCount);
+        model.addAttribute("noteCount",   noteCount);
         model.addAttribute("currentPath", request.getRequestURI());
-        model.addAttribute("course", course);
-        model.addAttribute("files", files);
-
         return "courseResources/index";
     }
 
+    // ── helper — works for both OAuth2 (Google) and form login ───────────────
+
+    private User resolveUser(Authentication authentication) {
+        String email = extractEmail(authentication);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found for email: " + email));
+    }
+
+    /**
+     * authentication.getName() returns the Google subject ID for OAuth2 users,
+     * NOT the email. We must pull the email from the OAuth2 attributes instead.
+     */
+    public static String extractEmail(Authentication authentication) {
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof OidcUser oidcUser) {
+            return oidcUser.getEmail();
+        }
+        if (principal instanceof OAuth2User oauth2User) {
+            return oauth2User.getAttribute("email");
+        }
+        // Form login — getName() is the email
+        return authentication.getName();
+    }
 }
