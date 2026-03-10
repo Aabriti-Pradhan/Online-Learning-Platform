@@ -126,12 +126,13 @@
                             th:text="${#temporals.format(res.uploadedAt, 'dd MMM yyyy')}">01 Jan 2025</td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
-                                <!-- View PDF inline -->
-                                <button th:if="${res.resourceType == 'PDF'}"
-                                        class="btn btn-sm btn-outline-secondary rounded-2"
-                                        th:attr="onclick='openViewer(\'/files/' + ${res.resourcePath} + '\', \'' + ${res.resourceName} + '\')'">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                                <!-- View PDF in split-screen -->
+                                <a th:if="${res.resourceType == 'PDF'}"
+                                   class="btn btn-sm btn-outline-secondary rounded-2"
+                                   th:href="@{'/split-view/' + ${res.resourceId} + '?courseId=' + ${course.courseId}}"
+                                   title="Open in split view with notes">
+                                    <i class="bi bi-layout-split"></i>
+                                </a>
                                 <!-- Edit Note — opens notes editor with content loaded -->
                                 <a th:if="${res.resourceType == 'Note'}"
                                    class="btn btn-sm btn-outline-primary rounded-2"
@@ -170,7 +171,7 @@
     <div th:replace="footer/index :: footer"></div>
 </div>
 
-<!-- ── PDF Viewer Panel ── -->
+<!-- PDF Viewer Panel -->
 <div id="viewer-panel">
     <div id="viewer-header">
         <span id="viewer-title">Document</span>
@@ -181,7 +182,7 @@
     <iframe id="viewer-iframe" src="about:blank"></iframe>
 </div>
 
-<!-- ── Toast ── -->
+<!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
     <div id="uploadToast" class="toast align-items-center text-bg-dark border-0" role="alert">
         <div class="d-flex">
@@ -196,7 +197,7 @@
     </div>
 </div>
 
-<!-- ── Delete Confirmation Dialog ── -->
+<!-- Delete Confirmation Dialog -->
 <div class="dialog-backdrop" id="deleteDialog">
     <div class="dialog-box">
         <div class="dialog-icon danger"><i class="bi bi-trash3"></i></div>
@@ -221,7 +222,7 @@
     </div>
 </div>
 
-<!-- ── Success Dialog ── -->
+<!-- Success Dialog -->
 <div class="dialog-backdrop" id="successDialog">
     <div class="dialog-box">
         <div class="dialog-icon success"><i class="bi bi-check-lg"></i></div>
@@ -237,7 +238,6 @@
 <script th:src="@{/js/script.js}"></script>
 <script>
 
-    // ── Dialog helpers ────────────────────────────────────────────────────────
     function openDialog(id) {
         const el = document.getElementById(id);
         el.classList.add('show');
@@ -262,7 +262,7 @@
         });
     });
 
-    // ── Upload PDF ────────────────────────────────────────────────────────────
+    // Upload PDF
     function uploadPDF(input) {
         const file     = input.files[0];
         const courseId = input.dataset.courseId;
@@ -298,7 +298,7 @@
             });
     }
 
-    // ── Delete resource ───────────────────────────────────────────────────────
+    // Delete resource
     let pendingDeleteId = null;
 
     function confirmDelete(btn) {
@@ -326,7 +326,7 @@
         pendingDeleteId = null;
     });
 
-    // ── PDF viewer slide-in ───────────────────────────────────────────────────
+    // PDF viewer slide-in
     function openViewer(path, name) {
         document.getElementById('viewer-iframe').src         = path;
         document.getElementById('viewer-title').innerText    = name;

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pdf.resourceName} + ' — PrepHunt'">Split View — PrepHunt</title>
+
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #FFF9F9; font-family: 'Gabarito', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- ── Top bar ── -->
+<div class="split-topbar">
+    <a th:href="@{'/your-courses/' + ${courseId} + '/resources'}" class="btn btn-sm btn-outline-secondary btn-back">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <span class="brand">PrepHunt</span>
+    <span class="pdf-name" th:text="${pdf.resourceName}">document.pdf</span>
+    <button class="btn btn-sm btn-dark" id="save-note-btn">
+        <i class="bi bi-floppy me-1"></i> Save Note
+    </button>
+</div>
+
+<!-- ── Split layout ── -->
+<div class="split-layout" id="splitLayout">
+
+    <!-- ══ PDF Panel ══ -->
+    <div class="pdf-panel" id="pdfPanel">
+        <div class="pdf-toolbar">
+            <button class="btn btn-sm btn-outline-secondary" id="prev-page"><i class="bi bi-chevron-left"></i></button>
+            <span class="page-info">Page <span id="page-num">1</span> / <span id="page-count">?</span></span>
+            <button class="btn btn-sm btn-outline-secondary" id="next-page"><i class="bi bi-chevron-right"></i></button>
+            <div class="ms-2 d-flex align-items-center gap-1">
+                <button class="btn btn-sm btn-outline-secondary" id="zoom-out"><i class="bi bi-zoom-out"></i></button>
+                <span class="page-info" id="zoom-level">100%</span>
+                <button class="btn btn-sm btn-outline-secondary" id="zoom-in"><i class="bi bi-zoom-in"></i></button>
+            </div>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <span class="page-info text-warning"><i class="bi bi-pin-angle-fill me-1"></i>Click page to tag</span>
+            </div>
+        </div>
+        <div class="pdf-canvas-wrap" id="pdfCanvasWrap">
+            <!-- Pages rendered here by PDF.js -->
+        </div>
+    </div>
+
+    <!-- ── Resize handle ── -->
+    <div class="resize-handle" id="resizeHandle"></div>
+
+    <!-- ══ Notes Panel ══ -->
+    <div class="notes-panel" id="notesPanel">
+        <div class="notes-toolbar">
+            <select class="note-select" id="noteSelect" onchange="loadSelectedNote()">
+                <option value="">— Select a note —</option>
+                <option th:each="note : ${courseNotes}"
+                        th:value="${note.resourceId}"
+                        th:text="${note.resourceName != null ? #strings.replace(note.resourceName, '.json', '') : 'Untitled'}">
+                </option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" onclick="newNoteInSplit()">
+                <i class="bi bi-plus"></i> New
+            </button>
+        </div>
+        <div class="notes-editor-wrap">
+            <input type="text" id="note-title" placeholder="Note title..."
+                   style="border:none; border-bottom: 1px solid #eee; width:100%; padding: 8px 0; font-size: 1.1rem; font-weight: 600; outline: none; margin-bottom: 8px; background: transparent;">
+            <div id="editorjs"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Text selection tag button (floats near selection) ── -->
+<button id="text-tag-btn">
+    <i class="bi bi-pin-angle"></i> Tag Selection
+</button>
+
+<!-- ── Tag creation dialog ── -->
+<div class="dialog-backdrop" id="tagDialog">
+    <div class="dialog-box" style="max-width:480px;">
+        <h6 class="fw-bold mb-1">Create Tag</h6>
+        <p class="text-muted small mb-3" id="tagDialogSubtitle">Link this location to a note block</p>
+
+        <label class="form-label small fw-semibold">Tag Label</label>
+        <input type="text" id="tagLabelInput" class="form-control form-control-sm mb-3"
+               placeholder="e.g. Important definition, See my notes...">
+
+        <label class="form-label small fw-semibold">Link to note block
+            <span class="fw-normal text-muted">(optional)</span>
+        </label>
+
+        <!-- No note loaded state -->
+        <div id="noNoteWarning" class="text-muted small p-2 bg-light rounded mb-2" style="display:none;">
+            <i class="bi bi-info-circle me-1"></i> Select a note in the editor panel first to link a block.
+        </div>
+
+        <!-- Block picker list -->
+        <div id="blockPickerList"
+             style="max-height:180px; overflow-y:auto; border:1px solid #e5e7eb;
+                    border-radius:8px; display:none;">
+            <!-- populated dynamically -->
+        </div>
+        <input type="hidden" id="tagNoteBlockId">
+
+        <div class="d-flex gap-2 justify-content-end mt-3">
+            <button class="btn btn-sm btn-light" onclick="closeTagDialog()">Cancel</button>
+            <button class="btn btn-sm btn-warning fw-bold" onclick="confirmSaveTag()">
+                <i class="bi bi-pin-angle-fill me-1"></i> Save Tag
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Tag click dialog (view/delete) ── -->
+<div class="dialog-backdrop" id="tagViewDialog">
+    <div class="dialog-box">
+        <h6 class="fw-bold mb-1" id="tagViewLabel">Tag</h6>
+        <p class="text-muted small mb-1" id="tagViewType"></p>
+        <p class="text-muted small mb-3" id="tagViewText"></p>
+        <div class="d-flex gap-2 justify-content-end">
+            <button class="btn btn-sm btn-light" onclick="document.getElementById('tagViewDialog').classList.remove('show')">Close</button>
+            <button class="btn btn-sm btn-outline-primary" id="tagViewJumpBtn">
+                <i class="bi bi-arrow-right-circle me-1"></i> Go to note block
+            </button>
+            <button class="btn btn-sm btn-outline-danger" id="tagViewDeleteBtn">
+                <i class="bi bi-trash3"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- EditorJS -->
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/embed@latest"></script>
+<!-- PDF.js -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+
+<script th:inline="javascript">
+    const PDF_RESOURCE_ID = /*[[${pdf.resourceId}]]*/ null;
+    const PDF_PATH        = /*[[${pdf.resourcePath}]]*/ '';
+    const COURSE_ID       = /*[[${courseId}]]*/ null;
+    const INITIAL_TAGS    = /*[[${tags}]]*/ [];
+
+    // ════════════════════════════════════════════════════════════════
+    //  PDF.js setup
+    // ════════════════════════════════════════════════════════════════
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+
+    let pdfDoc    = null;
+    let scale     = 1.4;
+    let allTags   = [...INITIAL_TAGS];   // live tag list
+    let pendingTag = null;               // tag being created
+
+    const canvasWrap = document.getElementById('pdfCanvasWrap');
+
+    async function renderAllPages() {
+        canvasWrap.innerHTML = '';
+        const count = pdfDoc.numPages;
+        document.getElementById('page-count').innerText = count;
+
+        for (let i = 1; i <= count; i++) {
+            const page      = await pdfDoc.getPage(i);
+            const viewport  = page.getViewport({ scale });
+
+            const wrap      = document.createElement('div');
+            wrap.className  = 'pdf-page-wrap';
+            wrap.dataset.page = i;
+            wrap.style.width  = viewport.width  + 'px';
+            wrap.style.height = viewport.height + 'px';
+
+            const canvas        = document.createElement('canvas');
+            canvas.width        = viewport.width;
+            canvas.height       = viewport.height;
+            const ctx           = canvas.getContext('2d');
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            wrap.appendChild(canvas);
+            canvasWrap.appendChild(wrap);
+
+            // ── Click on page to create page tag ──
+            wrap.addEventListener('click', (e) => {
+                if (e.target.closest('.tag-pin')) return; // ignore pin clicks
+                const rect = wrap.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / wrap.offsetWidth * 100).toFixed(1);
+                const y = ((e.clientY - rect.top)  / wrap.offsetHeight * 100).toFixed(1);
+                openTagDialog('PAGE', { page: i, x: parseFloat(x), y: parseFloat(y) });
+            });
+        }
+
+        renderTagPins();
+    }
+
+    // ── Render all tag pins onto their pages ──────────────────────────────────
+    function renderTagPins() {
+        // Remove old pins
+        document.querySelectorAll('.tag-pin').forEach(p => p.remove());
+
+        allTags.forEach(tag => {
+            let val;
+            try { val = JSON.parse(tag.tagValue); } catch { return; }
+
+            const wrap = canvasWrap.querySelector(`.pdf-page-wrap[data-page="${val.page}"]`);
+            if (!wrap) return;
+
+            const pin         = document.createElement('div');
+            pin.className     = 'tag-pin';
+            pin.style.left    = val.x + '%';
+            pin.style.top     = val.y + '%';
+            pin.innerHTML     = `<span class="pin-icon"><i class="bi bi-pin-fill" style="font-size:9px;"></i></span>
+                                 <div class="tag-pin-tooltip">${escHtml(tag.label)}</div>`;
+
+            pin.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openTagViewDialog(tag);
+            });
+
+            wrap.appendChild(pin);
+        });
+    }
+
+    // Load PDF
+    pdfjsLib.getDocument('/files/' + PDF_PATH).promise.then(doc => {
+        pdfDoc = doc;
+        document.getElementById('page-count').innerText = doc.numPages;
+        renderAllPages();
+    });
+
+    // Zoom
+    document.getElementById('zoom-in').addEventListener('click', () => {
+        scale = Math.min(scale + 0.2, 3.0);
+        document.getElementById('zoom-level').innerText = Math.round(scale * 100) + '%';
+        renderAllPages();
+    });
+    document.getElementById('zoom-out').addEventListener('click', () => {
+        scale = Math.max(scale - 0.2, 0.6);
+        document.getElementById('zoom-level').innerText = Math.round(scale * 100) + '%';
+        renderAllPages();
+    });
+
+    // ── Text selection → float button ────────────────────────────────────────
+    let selectedTextInfo = null;
+
+    document.getElementById('pdfCanvasWrap').addEventListener('mouseup', () => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) {
+            hideTextTagBtn();
+            return;
+        }
+        const text = sel.toString().trim();
+        if (!text) { hideTextTagBtn(); return; }
+
+        // Figure out which page was selected
+        const range    = sel.getRangeAt(0);
+        const rect     = range.getBoundingClientRect();
+        const pageWrap = range.startContainer.parentElement?.closest('.pdf-page-wrap');
+        const pageNum  = pageWrap ? parseInt(pageWrap.dataset.page) : 1;
+        const pRect    = pageWrap ? pageWrap.getBoundingClientRect() : rect;
+        const x = ((rect.left + rect.width / 2 - pRect.left) / pRect.width * 100).toFixed(1);
+        const y = ((rect.top               - pRect.top)  / pRect.height * 100).toFixed(1);
+
+        selectedTextInfo = { page: pageNum, x: parseFloat(x), y: parseFloat(y), selectedText: text };
+
+        const btn = document.getElementById('text-tag-btn');
+        btn.style.top  = (rect.top  + window.scrollY - 40) + 'px';
+        btn.style.left = (rect.left + rect.width / 2 - 60) + 'px';
+        btn.classList.add('visible');
+    });
+
+    document.getElementById('text-tag-btn').addEventListener('click', () => {
+        hideTextTagBtn();
+        openTagDialog('TEXT', selectedTextInfo);
+    });
+
+    function hideTextTagBtn() {
+        document.getElementById('text-tag-btn').classList.remove('visible');
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  Tag dialog — with block picker
+    // ════════════════════════════════════════════════════════════════
+    function openTagDialog(type, locationData) {
+        pendingTag = { type, locationData };
+
+        const sub = type === 'PAGE'
+            ? `Page ${locationData.page}`
+            : `"${locationData.selectedText?.substring(0, 60)}${locationData.selectedText?.length > 60 ? '…' : ''}"`;
+        document.getElementById('tagDialogSubtitle').innerText = sub;
+        document.getElementById('tagLabelInput').value = '';
+        document.getElementById('tagNoteBlockId').value = '';
+
+        // Populate block picker from current EditorJS content
+        populateBlockPicker();
+
+        document.getElementById('tagDialog').classList.add('show');
+        setTimeout(() => document.getElementById('tagLabelInput').focus(), 200);
+    }
+
+    async function populateBlockPicker() {
+        const list       = document.getElementById('blockPickerList');
+        const noNoteWarn = document.getElementById('noNoteWarning');
+
+        if (!currentNoteResourceId) {
+            list.style.display    = 'none';
+            noNoteWarn.style.display = '';
+            return;
+        }
+
+        noNoteWarn.style.display = 'none';
+        list.style.display = '';
+        list.innerHTML = '<div class="block-picker-empty">Loading blocks…</div>';
+
+        try {
+            const data = await window.editor.save();
+            const blocks = data.blocks || [];
+
+            if (blocks.length === 0) {
+                list.innerHTML = '<div class="block-picker-empty">No blocks in this note yet.</div>';
+                return;
+            }
+
+            list.innerHTML = '';
+
+            // "No link" option
+            const noneItem = document.createElement('div');
+            noneItem.className = 'block-picker-item selected';
+            noneItem.dataset.blockId = '';
+            noneItem.innerHTML = `<span class="block-type-badge">none</span>
+                                  <span class="block-preview text-muted">— No link —</span>`;
+            noneItem.addEventListener('click', () => selectBlock(noneItem, ''));
+            list.appendChild(noneItem);
+
+            blocks.forEach(block => {
+                const preview = extractBlockPreview(block);
+                const item    = document.createElement('div');
+                item.className     = 'block-picker-item';
+                item.dataset.blockId = block.id;
+                item.innerHTML = `<span class="block-type-badge">${escHtml(block.type)}</span>
+                                  <span class="block-preview">${escHtml(preview)}</span>`;
+                item.addEventListener('click', () => selectBlock(item, block.id));
+                list.appendChild(item);
+            });
+
+        } catch (e) {
+            list.innerHTML = '<div class="block-picker-empty">Could not load note blocks.</div>';
+        }
+    }
+
+    function selectBlock(clickedItem, blockId) {
+        document.querySelectorAll('.block-picker-item').forEach(i => i.classList.remove('selected'));
+        clickedItem.classList.add('selected');
+        document.getElementById('tagNoteBlockId').value = blockId;
+    }
+
+    /** Extract readable preview text from any EditorJS block type */
+    function extractBlockPreview(block) {
+        const d = block.data || {};
+        if (d.text)    return d.text.replace(/<[^>]+>/g, '').substring(0, 80);
+        if (d.content) return d.content.replace(/<[^>]+>/g, '').substring(0, 80);
+        if (d.items && d.items.length) {
+            const first = d.items[0];
+            const text  = typeof first === 'string' ? first : (first.content || first.text || '');
+            return text.replace(/<[^>]+>/g, '').substring(0, 80);
+        }
+        if (d.caption) return d.caption.substring(0, 80);
+        return `[${block.type}]`;
+    }
+
+    function closeTagDialog() {
+        document.getElementById('tagDialog').classList.remove('show');
+        pendingTag = null;
+    }
+
+    async function confirmSaveTag() {
+        const label       = document.getElementById('tagLabelInput').value.trim() || 'Tag';
+        const noteBlockId = document.getElementById('tagNoteBlockId').value || null;
+
+        const tagValue = JSON.stringify({
+            ...pendingTag.locationData,
+            noteBlockId,
+            noteResourceId: noteBlockId ? currentNoteResourceId : null
+        });
+
+        try {
+            const res = await fetch('/save-tag', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pdfResourceId: PDF_RESOURCE_ID,
+                    courseId:      COURSE_ID,
+                    tagType:       pendingTag.type,
+                    tagValue,
+                    label
+                })
+            });
+            const saved = await res.json();
+            allTags.push(saved);
+            closeTagDialog();
+            renderTagPins();
+        } catch (e) {
+            alert('Failed to save tag.');
+        }
+    }
+
+    // ── Tag view dialog ───────────────────────────────────────────────────────
+    function openTagViewDialog(tag) {
+        let val = {};
+        try { val = JSON.parse(tag.tagValue); } catch {}
+
+        document.getElementById('tagViewLabel').innerText = tag.label;
+        document.getElementById('tagViewType').innerText  = tag.tagType === 'TEXT'
+            ? `Text selection` : `Page ${val.page}`;
+        document.getElementById('tagViewText').innerText  = val.selectedText
+            ? `"${val.selectedText}"` : '';
+
+        // Jump to note block
+        const jumpBtn = document.getElementById('tagViewJumpBtn');
+        if (val.noteBlockId) {
+            jumpBtn.style.display = '';
+            jumpBtn.onclick = async () => {
+                document.getElementById('tagViewDialog').classList.remove('show');
+
+                const targetNoteId = val.noteResourceId ? parseInt(val.noteResourceId) : null;
+
+                // Load the note if a noteResourceId is stored and it's not already open
+                if (targetNoteId && currentNoteResourceId !== targetNoteId) {
+                    await loadNoteById(targetNoteId);
+                }
+
+                // Retry scrolling until the block appears in the DOM (EditorJS renders async)
+                scrollToBlockWhenReady(val.noteBlockId);
+            };
+        } else {
+            jumpBtn.style.display = 'none';
+        }
+
+        // Delete tag
+        document.getElementById('tagViewDeleteBtn').onclick = () => {
+            fetch('/delete-tag/' + tag.tagId, { method: 'DELETE' })
+                .then(() => {
+                    allTags = allTags.filter(t => t.tagId !== tag.tagId);
+                    renderTagPins();
+                    document.getElementById('tagViewDialog').classList.remove('show');
+                });
+        };
+
+        document.getElementById('tagViewDialog').classList.add('show');
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  EditorJS setup
+    // ════════════════════════════════════════════════════════════════
+    let currentNoteResourceId = null;
+
+    window.editor = new EditorJS({
+        holder: 'editorjs',
+        placeholder: 'Select a note above, or create a new one...',
+        tools: {
+            header: { class: Header, inlineToolbar: true },
+            list:   { class: EditorjsList, inlineToolbar: true },
+            embed:  { class: Embed, config: { services: { youtube: true } } }
+        },
+        onChange: () => {}
+    });
+
+    // Load note when dropdown changes
+    async function loadSelectedNote() {
+        const id = document.getElementById('noteSelect').value;
+        if (!id) return;
+        await loadNoteById(parseInt(id));
+    }
+
+    // Core note loader — used by dropdown AND tag jump
+    async function loadNoteById(id) {
+        currentNoteResourceId = id;
+        try {
+            const res  = await fetch('/load-note/' + id);
+            const data = await res.json();
+            await window.editor.isReady;
+            await window.editor.render(data);
+
+            // Sync title input and dropdown selection
+            const opt = document.querySelector(`#noteSelect option[value="${id}"]`);
+            document.getElementById('note-title').value = opt ? opt.innerText : '';
+            document.getElementById('noteSelect').value = id;
+        } catch (e) {
+            console.error('Failed to load note:', e);
+        }
+    }
+
+    // New note in split view
+    async function newNoteInSplit() {
+        currentNoteResourceId = null;
+        await window.editor.isReady;
+        window.editor.clear();
+        document.getElementById('note-title').value = '';
+        document.getElementById('noteSelect').value = '';
+    }
+
+    // Scroll to a block — retries every 100ms for up to 3 seconds while EditorJS renders
+    function scrollToBlockWhenReady(blockId, attempts) {
+        attempts = attempts || 0;
+        if (attempts > 30) return;
+
+        const block     = document.querySelector(`.ce-block[data-id="${blockId}"]`);
+        const container = document.querySelector('.notes-editor-wrap');
+
+        if (block && container) {
+            // Scroll the notes-editor-wrap container, not the whole page
+            const containerTop = container.getBoundingClientRect().top;
+            const blockTop     = block.getBoundingClientRect().top;
+            const offset       = blockTop - containerTop + container.scrollTop - 60; // 60px padding
+            container.scrollTo({ top: offset, behavior: 'smooth' });
+
+            block.classList.add('tag-highlight');
+            setTimeout(() => block.classList.remove('tag-highlight'), 1600);
+        } else {
+            setTimeout(() => scrollToBlockWhenReady(blockId, attempts + 1), 100);
+        }
+    }
+
+    // Instant scroll (used when note is already loaded)
+    function scrollEditorToBlock(blockId) {
+        scrollToBlockWhenReady(blockId, 0);
+    }
+
+    // ── Save note ─────────────────────────────────────────────────────────────
+    document.getElementById('save-note-btn').addEventListener('click', async () => {
+        const title  = document.getElementById('note-title').value || 'Untitled Note';
+        const data   = await window.editor.save();
+        const btn    = document.getElementById('save-note-btn');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass me-1"></i> Saving...';
+
+        try {
+            if (currentNoteResourceId) {
+                // Update existing
+                await fetch('/update-note/' + currentNoteResourceId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content: data })
+                });
+            } else {
+                // Create new note linked to this course
+                const res    = await fetch('/save-note', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content: data, courseId: COURSE_ID })
+                });
+                const saved  = await res.json();
+                currentNoteResourceId = saved.resourceId;
+
+                // Add to dropdown
+                const opt = document.createElement('option');
+                opt.value     = saved.resourceId;
+                opt.innerText = title;
+                opt.selected  = true;
+                document.getElementById('noteSelect').appendChild(opt);
+            }
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Saved!';
+            setTimeout(() => { btn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save Note'; btn.disabled = false; }, 1500);
+        } catch (e) {
+            btn.innerHTML = '<i class="bi bi-x-lg me-1"></i> Failed';
+            setTimeout(() => { btn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save Note'; btn.disabled = false; }, 1500);
+        }
+    });
+
+    // ── Resize handle drag ────────────────────────────────────────────────────
+    const handle     = document.getElementById('resizeHandle');
+    const pdfPanel   = document.getElementById('pdfPanel');
+    const notesPanel = document.getElementById('notesPanel');
+    let   dragging   = false;
+
+    handle.addEventListener('mousedown', () => { dragging = true; document.body.style.cursor = 'col-resize'; });
+    document.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const layout  = document.getElementById('splitLayout');
+        const rect    = layout.getBoundingClientRect();
+        const pdfPct  = Math.min(Math.max((e.clientX - rect.left) / rect.width * 100, 25), 75);
+        pdfPanel.style.flex   = 'none';
+        pdfPanel.style.width  = pdfPct + '%';
+        notesPanel.style.flex = 'none';
+        notesPanel.style.width = (100 - pdfPct - 0.5) + '%';
+    });
+    document.addEventListener('mouseup', () => { dragging = false; document.body.style.cursor = ''; });
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function escHtml(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+</script>
+</body>
+</html>

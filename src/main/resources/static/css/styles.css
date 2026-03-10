@@ -1318,3 +1318,190 @@ body {
 .badge-type { font-size: 0.72rem; font-weight: 600; padding: 0.3em 0.7em; border-radius: 999px; }
 .badge-pdf  { background: #fee2e2; color: #dc2626; }
 .badge-note { background: #dbeafe; color: #2563eb; }
+
+/* ── Top bar ── */
+.split-topbar {
+    height: 56px;
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+    display: flex; align-items: center;
+    padding: 0 1.25rem; gap: 1rem;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+}
+.split-topbar .brand { font-weight: 700; font-size: 1rem; color: var(--color-primary); text-decoration: none; }
+.split-topbar .pdf-name { font-size: 0.85rem; color: var(--color-text-secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.split-topbar .btn-back { font-size: 0.82rem; }
+
+/* ── Split layout ── */
+.split-layout {
+    display: flex;
+    height: calc(100vh - 56px);
+    margin-top: 56px;
+}
+
+/* ── PDF panel ── */
+.pdf-panel {
+    flex: 1;
+    min-width: 0;
+    border-right: 2px solid var(--color-border);
+    display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+}
+.pdf-toolbar {
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    flex-shrink: 0;
+}
+.pdf-toolbar .page-info { font-size: 0.82rem; color: var(--color-text-secondary); }
+.pdf-canvas-wrap {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    background: #555;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1rem 0;
+    position: relative;
+}
+/* Each page wrapper — tag pins are absolutely positioned inside */
+.pdf-page-wrap {
+    position: relative;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.pdf-page-wrap canvas { display: block; }
+
+/* Tag pin on PDF */
+.tag-pin {
+    position: absolute;
+    width: 26px; height: 26px;
+    background: #f59e0b;
+    border: 2px solid white;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg) translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.15s, background 0.15s;
+}
+.tag-pin:hover { background: #d97706; transform: rotate(-45deg) translate(-50%, -50%) scale(1.2); }
+.tag-pin .pin-icon {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(45deg);
+    font-size: 11px; color: white;
+}
+.tag-pin-tooltip {
+    position: absolute;
+    background: #1a1f2e;
+    color: white;
+    font-size: 0.72rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 20;
+}
+.tag-pin:hover .tag-pin-tooltip { opacity: 1; }
+
+/* Text-selection tag button */
+#text-tag-btn {
+    position: fixed;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.78rem; font-weight: 600;
+    cursor: pointer;
+    z-index: 300;
+    display: none;
+    gap: 4px; align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+#text-tag-btn.visible { display: flex; }
+
+/* ── Notes panel ── */
+.notes-panel {
+    width: 42%;
+    min-width: 320px;
+    display: flex; flex-direction: column;
+    background: white; overflow: hidden;
+}
+.notes-toolbar {
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+    padding: 0.5rem 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    flex-shrink: 0;
+}
+.note-select {
+    flex: 1; border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.85rem; font-family: inherit;
+    outline: none;
+}
+.note-select:focus { border-color: var(--color-primary); }
+.notes-editor-wrap {
+    flex: 1; overflow-y: auto;
+    padding: 0.5rem 1rem;
+}
+#editorjs { min-height: 300px; }
+.ce-block { width: 100% !important; max-width: 100% !important; }
+.ce-block__content { width: 100% !important; max-width: 100% !important; }
+
+/* Note block highlight when jumped to from tag */
+.ce-block.tag-highlight { animation: highlightPulse 1.5s ease; }
+@keyframes highlightPulse {
+    0%   { background: rgba(245, 158, 11, 0.3); border-radius: 6px; }
+    100% { background: transparent; }
+}
+
+/* ── Resize handle ── */
+.resize-handle {
+    width: 6px; cursor: col-resize;
+    background: var(--color-border);
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+.resize-handle:hover { background: var(--color-primary); }
+
+/* ── Tag modal ── */
+.dialog-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+.dialog-backdrop.show { opacity: 1; pointer-events: all; }
+.dialog-box { background: white; border-radius: 1rem; padding: 1.75rem; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.2s; }
+.dialog-backdrop.show .dialog-box { transform: scale(1); }
+
+/* Block picker inside tag dialog */
+.block-picker-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.1s;
+}
+.block-picker-item:last-child { border-bottom: none; }
+.block-picker-item:hover { background: #fefce8; }
+.block-picker-item.selected { background: #fef3c7; font-weight: 600; }
+.block-picker-item .block-type-badge {
+    font-size: 0.68rem; background: #f3f4f6; color: #6b7280;
+    padding: 1px 6px; border-radius: 99px; flex-shrink: 0;
+}
+.block-picker-item .block-preview {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+}
+.block-picker-empty {
+    padding: 12px; text-align: center;
+    font-size: 0.82rem; color: #9ca3af;
+}
+
+/* Scrollbar for block picker */
+#blockPickerList::-webkit-scrollbar { width: 4px; }
+#blockPickerList::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+.pdf-canvas-wrap::-webkit-scrollbar-track { background: #444; }
+.pdf-canvas-wrap::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
