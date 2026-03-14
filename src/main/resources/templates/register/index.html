@@ -74,17 +74,17 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="role" class="form-label">Select Role</label>
-                        <select class="form-select bg-transparent border-0 border-bottom rounded-0" id="role" name="role" required>
-                            <option value="" disabled selected>Choose role</option>
-                            <option value="STUDENT" th:selected="${registerDTO.role=='STUDENT'}">Student</option>
-                            <option value="TEACHER" th:selected="${registerDTO.role=='TEACHER'}">Teacher</option>
-                        </select>
-                        <div th:if="${#fields.hasErrors('role')}" class="text-danger small">
-                            <span th:errors="*{role}"></span>
-                        </div>
-                    </div>
+<!--                    <div class="mb-3">-->
+<!--                        <label for="role" class="form-label">Select Role</label>-->
+<!--                        <select class="form-select bg-transparent border-0 border-bottom rounded-0" id="role" name="role" required>-->
+<!--                            <option value="" disabled selected>Choose role</option>-->
+<!--                            <option value="STUDENT" th:selected="${registerDTO.role=='STUDENT'}">Student</option>-->
+<!--                            <option value="TEACHER" th:selected="${registerDTO.role=='TEACHER'}">Teacher</option>-->
+<!--                        </select>-->
+<!--                        <div th:if="${#fields.hasErrors('role')}" class="text-danger small">-->
+<!--                            <span th:errors="*{role}"></span>-->
+<!--                        </div>-->
+<!--                    </div>-->
 
                     <button type="submit" class="btn btn-dark w-50">
                         Register

@@ -1,16 +1,14 @@
 package com.finalyearproject.fyp.config;
 
-import com.finalyearproject.fyp.entity.Course;
-import com.finalyearproject.fyp.entity.User;
-import com.finalyearproject.fyp.entity.UserCourse;
-import com.finalyearproject.fyp.repository.UserCourseRepository;
-import com.finalyearproject.fyp.repository.UserRepository;
+import com.finalyearproject.fyp.controller.YourCoursesController;
+import com.finalyearproject.fyp.entity.*;
+import com.finalyearproject.fyp.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.ui.Model;
 
 import java.util.List;
 
@@ -18,29 +16,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GlobalController {
 
-    private final UserRepository userRepository;
-    private final UserCourseRepository userCourseRepository;
+    private final UserRepository               userRepository;
+    private final UserCourseRepository         userCourseRepository;
+    private final UserCourseEnrollmentRepository enrollmentRepository;
 
     @ModelAttribute
-    public void addUserCourses(Model model, Authentication authentication) {
+    public void addGlobalAttributes(Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) return;
 
-        if (authentication != null && authentication.getPrincipal() instanceof OAuth2User oauthUser) {
+        String email = YourCoursesController.extractEmail(authentication);
+        if (email == null) return;
 
-            String email = oauthUser.getAttribute("email");
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) return;
 
-            User user = userRepository.findByEmail(email).orElse(null);
+        model.addAttribute("loggedInUser", user);
 
-            if (user != null) {
+        boolean isStudent = authentication.getAuthorities()
+                .contains(new SimpleGrantedAuthority("ROLE_STUDENT"));
 
-                List<UserCourse> userCourses =
-                        userCourseRepository.findByUser(user);
-
-                List<Course> courses = userCourses.stream()
-                        .map(UserCourse::getCourse)
-                        .toList();
-
-                model.addAttribute("userCourses", courses);
-            }
+        if (isStudent) {
+            // Students see their ENROLLED courses in sidebar
+            List<Course> enrolledCourses = enrollmentRepository.findByUser(user)
+                    .stream()
+                    .map(uce -> uce.getCourse())
+                    .toList();
+            model.addAttribute("userCourses", enrolledCourses);
+        } else {
+            // Teachers see their CREATED courses in sidebar
+            List<Course> createdCourses = userCourseRepository.findByUser(user)
+                    .stream()
+                    .map(UserCourse::getCourse)
+                    .toList();
+            model.addAttribute("userCourses", createdCourses);
         }
     }
 }

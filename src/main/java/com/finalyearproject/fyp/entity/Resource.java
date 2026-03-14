@@ -23,6 +23,9 @@ public class Resource {
     private LocalDateTime uploadedAt;
     private String resourceName;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isPrivate = false;
+
     @OneToMany(mappedBy = "resource")
     private List<UserCourseResource> userCourseResources;
 

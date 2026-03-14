@@ -5,6 +5,7 @@ import com.finalyearproject.fyp.repository.UserRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,27 +29,39 @@ public class RoleSelectionController {
 
     @PostMapping("/select-role")
     public String selectRole(@RequestParam String role,
-                             Authentication authentication) {
+                             Authentication authentication,
+                             HttpSession session) {
 
-        OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
-        assert oauthUser != null;
-        String email = oauthUser.getAttribute("email");
-        String name = oauthUser.getAttribute("name");
-
-        User user = new User();
-        user.setEmail(email);
-        user.setUsername(name);
-        user.setRole(role);
-
-        userRepository.save(user);
-
-        System.out.println("user saved !!");
-
-        if(Objects.equals(role, "TEACHER")){
-            return "yourCourses/index";
+        // ── Manual registration (not yet logged in) ───────────────────────────
+        // Just store role in session and redirect to registration form
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            session.setAttribute("selectedRole", role);
+            return "redirect:/register";
         }
-        else {
-            return "yourResources/index";
+
+        // ── OAuth2 login (new Google user selecting role) ─────────────────────
+        String email = null;
+        String name  = null;
+
+        if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
+            email = oidcUser.getEmail();
+            name  = oidcUser.getFullName();
+        } else if (authentication.getPrincipal() instanceof OAuth2User oauthUser) {
+            email = oauthUser.getAttribute("email");
+            name  = oauthUser.getAttribute("name");
         }
+
+        if (email != null) {
+            User user = new User();
+            user.setEmail(email);
+            user.setUsername(name);
+            user.setRole(role);
+            userRepository.save(user);
+        }
+
+        return Objects.equals(role, "TEACHER")
+                ? "redirect:/your-courses"
+                : "redirect:/your-courses";
     }
 }
