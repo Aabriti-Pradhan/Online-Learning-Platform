@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head><meta charset="UTF-8"></head>
+<body>
+
+<!-- ── Teacher: Create Test button ── -->
+<div th:fragment="createButton(courseId)" sec:authorize="hasRole('TEACHER')">
+    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/create'}"
+       class="btn btn-dark rounded-3">
+        <i class="bi bi-plus-lg me-1"></i> Create Test
+    </a>
+</div>
+
+<!-- ── Teacher: Edit / Results / Delete — testId passed as parameter ── -->
+<div th:fragment="teacherActions(courseId, testId)" sec:authorize="hasRole('TEACHER')" class="d-flex gap-2">
+    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/edit'}"
+       class="btn btn-sm btn-outline-secondary rounded-2">
+        <i class="bi bi-pencil me-1"></i> Edit
+    </a>
+    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/results'}"
+       class="btn btn-sm btn-outline-secondary rounded-2">
+        <i class="bi bi-bar-chart me-1"></i> Results
+    </a>
+    <button class="btn btn-sm btn-outline-danger rounded-2"
+            th:attr="onclick='deleteTest(' + ${testId} + ')'">
+        <i class="bi bi-trash3"></i>
+    </button>
+</div>
+
+<!-- ── Student: Take Test button — testId passed as parameter ── -->
+<div th:fragment="studentActions(courseId, testId)" sec:authorize="hasRole('STUDENT')">
+    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/take'}"
+       class="btn btn-sm btn-dark rounded-2">
+        <i class="bi bi-play-fill me-1"></i> Take Test
+    </a>
+</div>
+
+<!-- ── Teacher: empty state message ── -->
+<p th:fragment="emptyTeacher" sec:authorize="hasRole('TEACHER')" class="small">
+    Click "Create Test" to add your first test.
+</p>
+
+<!-- ── Student: empty state message ── -->
+<p th:fragment="emptyStudent" sec:authorize="hasRole('STUDENT')" class="small">
+    Your teacher hasn't created any tests yet.
+</p>
+
+</body>
+</html>

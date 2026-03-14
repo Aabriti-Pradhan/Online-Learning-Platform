@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Test — PrepHunt</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
+        .create-wrap { max-width: 780px; }
+
+        /* Test header card */
+        .test-header-card {
+            background: white; border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg); padding: 1.5rem;
+            box-shadow: var(--shadow-sm); margin-bottom: 1.25rem;
+        }
+        .test-title-input {
+            font-size: 1.4rem; font-weight: 700; border: none; outline: none;
+            width: 100%; background: transparent; font-family: inherit;
+            color: var(--color-text-primary);
+        }
+        .test-title-input::placeholder { color: #9ca3af; }
+
+        /* Type selector */
+        .type-selector { display: flex; gap: 0.75rem; margin-top: 1rem; }
+        .type-btn {
+            flex: 1; padding: 0.65rem; border-radius: var(--radius-md);
+            border: 2px solid var(--color-border); background: white;
+            font-family: inherit; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s; color: var(--color-text-secondary);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .type-btn.selected.quiz { border-color: #6c47ff; background: #f5f3ff; color: #6c47ff; }
+        .type-btn.selected.exam { border-color: #d97706; background: #fffbeb; color: #d97706; }
+        .type-btn:not(.selected):hover { border-color: #9ca3af; }
+
+        /* Timer input (only for exam) */
+        #timerWrap { display: none; margin-top: 0.75rem; }
+
+        /* Question card */
+        .question-card {
+            background: white; border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg); padding: 1.5rem;
+            box-shadow: var(--shadow-sm); margin-bottom: 1rem;
+            position: relative;
+        }
+        .q-number {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 0.6rem;
+        }
+        .q-text-input {
+            width: 100%; border: none; border-bottom: 2px solid var(--color-border);
+            outline: none; font-size: 0.97rem; font-family: inherit;
+            padding: 0.35rem 0; margin-bottom: 1.1rem; background: transparent;
+            color: var(--color-text-primary);
+        }
+        .q-text-input:focus { border-bottom-color: var(--color-primary); }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .option-row {
+            display: flex; align-items: center; gap: 0.5rem;
+            border: 1.5px solid var(--color-border); border-radius: var(--radius-md);
+            padding: 0.5rem 0.75rem; cursor: pointer; transition: all 0.15s;
+        }
+        .option-row:hover { border-color: #9ca3af; }
+        .option-row.correct { border-color: #059669; background: #f0fdf4; }
+        .option-letter {
+            width: 26px; height: 26px; border-radius: 50%; background: #f3f4f6;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: #6b7280; flex-shrink: 0;
+        }
+        .option-row.correct .option-letter { background: #059669; color: white; }
+        .option-input {
+            flex: 1; border: none; outline: none; font-size: 0.88rem;
+            font-family: inherit; background: transparent;
+        }
+        .correct-radio { display: none; }
+
+        .q-delete { position: absolute; top: 1rem; right: 1rem; }
+
+        /* Add question button */
+        .add-q-btn {
+            width: 100%; padding: 0.9rem; border: 2px dashed var(--color-border);
+            border-radius: var(--radius-lg); background: white;
+            font-family: inherit; font-size: 0.9rem; font-weight: 600;
+            color: var(--color-text-secondary); cursor: pointer;
+            transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .add-q-btn:hover { border-color: var(--color-primary); color: var(--color-primary); background: #f5f3ff; }
+
+        /* Sticky footer */
+        .save-bar {
+            position: sticky; bottom: 0; background: white;
+            border-top: 1px solid var(--color-border);
+            padding: 1rem 0; margin-top: 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .q-counter { font-size: 0.85rem; color: var(--color-text-secondary); }
+    </style>
+</head>
+<body>
+<div class="container-fluid px-4 py-3">
+    <div th:replace="navigation/index :: topbar"></div>
+    <div class="row align-items-stretch">
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+        <div class="col ms-4">
+
+            <div class="d-flex align-items-center mb-4 page-header gap-3">
+                <div>
+                    <h2 class="fw-bold mb-0">Create Test</h2>
+                    <p class="text-muted small mb-0" th:text="${course.courseName}"></p>
+                </div>
+                <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests'}"
+                   class="btn btn-sm btn-outline-secondary rounded-2">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+            </div>
+
+            <div class="create-wrap">
+
+                <!-- Test header card -->
+                <div class="test-header-card">
+                    <input type="text" id="testTitle" class="test-title-input" placeholder="Test title...">
+
+                    <div class="type-selector">
+                        <button class="type-btn quiz selected" onclick="selectType('QUIZ', this)">
+                            <i class="bi bi-patch-question"></i> Quiz
+                        </button>
+                        <button class="type-btn exam" onclick="selectType('PRACTICE_EXAM', this)">
+                            <i class="bi bi-stopwatch"></i> Practice Exam
+                        </button>
+                    </div>
+
+                    <div id="timerWrap">
+                        <label class="form-label small fw-semibold mt-2">Timer (minutes)</label>
+                        <input type="number" id="timerMinutes" class="form-control form-control-sm"
+                               style="max-width:120px;" value="30" min="1" max="180">
+                    </div>
+                </div>
+
+                <!-- Questions container -->
+                <div id="questionsContainer"></div>
+
+                <!-- Add question -->
+                <button class="add-q-btn mb-3" onclick="addQuestion()">
+                    <i class="bi bi-plus-circle"></i> Add Question
+                </button>
+
+                <!-- Save bar -->
+                <div class="save-bar">
+                    <span class="q-counter" id="qCounter">0 questions</span>
+                    <div class="d-flex gap-2">
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests'}"
+                           class="btn btn-outline-secondary rounded-3">Discard</a>
+                        <button class="btn btn-dark rounded-3" onclick="saveTest()">
+                            <i class="bi bi-floppy me-1"></i> Save Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+<script th:inline="javascript">
+    const COURSE_ID  = /*[[${course.courseId}]]*/ null;
+    let   selectedType = 'QUIZ';
+    let   qCount       = 0;
+
+    function selectType(type, btn) {
+        selectedType = type;
+        document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('timerWrap').style.display = type === 'PRACTICE_EXAM' ? '' : 'none';
+    }
+
+    function addQuestion() {
+        qCount++;
+        updateCounter();
+        const idx = qCount;
+        const div = document.createElement('div');
+        div.className   = 'question-card';
+        div.id          = 'q-' + idx;
+        div.dataset.idx = idx;
+        div.innerHTML = `
+            <div class="q-number">Question ${idx}</div>
+            <input class="q-text-input" placeholder="Type your question here..." id="qtext-${idx}">
+            <div class="options-grid">
+                ${['A','B','C','D'].map(l => `
+                <div class="option-row" id="opt-${idx}-${l}" onclick="selectCorrect(${idx},'${l}')">
+                    <div class="option-letter">${l}</div>
+                    <input class="option-input" placeholder="Option ${l}" id="opt${l}-${idx}"
+                           onclick="event.stopPropagation()">
+                    <input type="radio" class="correct-radio" name="correct-${idx}" value="${l}" id="radio-${idx}-${l}">
+                </div>`).join('')}
+            </div>
+            <button class="btn btn-sm btn-outline-danger q-delete rounded-2"
+                    onclick="removeQuestion(${idx})">
+                <i class="bi bi-trash3"></i>
+            </button>
+        `;
+        document.getElementById('questionsContainer').appendChild(div);
+        div.querySelector('.q-text-input').focus();
+    }
+
+    function selectCorrect(idx, letter) {
+        ['A','B','C','D'].forEach(l => {
+            document.getElementById(`opt-${idx}-${l}`).classList.toggle('correct', l === letter);
+        });
+        document.getElementById(`radio-${idx}-${letter}`).checked = true;
+    }
+
+    function removeQuestion(idx) {
+        document.getElementById('q-' + idx).remove();
+        qCount--;
+        updateCounter();
+        // Re-number
+        document.querySelectorAll('.question-card').forEach((card, i) => {
+            card.querySelector('.q-number').innerText = 'Question ' + (i + 1);
+        });
+    }
+
+    function updateCounter() {
+        const n = document.querySelectorAll('.question-card').length;
+        document.getElementById('qCounter').innerText = n + ' question' + (n !== 1 ? 's' : '');
+    }
+
+    async function saveTest() {
+        const title = document.getElementById('testTitle').value.trim();
+        if (!title) { alert('Please enter a test title.'); return; }
+
+        const cards = document.querySelectorAll('.question-card');
+        if (cards.length === 0) { alert('Please add at least one question.'); return; }
+
+        const questions = [];
+        let valid = true;
+        cards.forEach((card, i) => {
+            const idx    = card.dataset.idx;
+            const qtext  = document.getElementById('qtext-' + idx)?.value.trim();
+            const optA   = document.getElementById('optA-' + idx)?.value.trim();
+            const optB   = document.getElementById('optB-' + idx)?.value.trim();
+            const optC   = document.getElementById('optC-' + idx)?.value.trim();
+            const optD   = document.getElementById('optD-' + idx)?.value.trim();
+            const radios = card.querySelectorAll('.correct-radio');
+            let   correct = '';
+            radios.forEach(r => { if (r.checked) correct = r.value; });
+
+            if (!qtext || !optA || !optB || !optC || !optD) {
+                alert(`Question ${i+1}: please fill in all options.`); valid = false; return;
+            }
+            if (!correct) {
+                alert(`Question ${i+1}: please select the correct answer.`); valid = false; return;
+            }
+            questions.push({ questionText: qtext, optionA: optA, optionB: optB,
+                optionC: optC, optionD: optD, correctAns: correct });
+        });
+
+        if (!valid) return;
+
+        const timer = selectedType === 'PRACTICE_EXAM'
+            ? parseInt(document.getElementById('timerMinutes').value) : null;
+
+        const res = await fetch(`/your-courses/${COURSE_ID}/tests/create`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testTitle: title, testType: selectedType,
+                timerMinutes: timer, questions })
+        });
+
+        if (res.ok) {
+            window.location.href = `/your-courses/${COURSE_ID}/tests`;
+        } else {
+            alert('Failed to save test. Please try again.');
+        }
+    }
+
+    // Add first question on load
+    addQuestion();
+</script>
+</body>
+</html>
