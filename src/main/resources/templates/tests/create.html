@@ -178,7 +178,7 @@
         selectedType = type;
         document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
-        document.getElementById('timerWrap').style.display = type === 'PRACTICE_EXAM' ? '' : 'none';
+        document.getElementById('timerWrap').style.display = type === 'PRACTICE_EXAM' ? 'block' : 'none';
     }
 
     function addQuestion() {

@@ -35,12 +35,9 @@
         .test-icon.quiz { background: #ede9fe; color: #6c47ff; }
         .test-icon.exam { background: #fef3c7; color: #d97706; }
 
-        .test-info {
-            flex: 1;
-            min-width: 0;           /* prevents text overflow breaking layout */
-        }
+        .test-info { flex: 1; min-width: 0; }
         .test-title { font-weight: 700; font-size: 0.97rem; color: var(--color-text-primary); margin-bottom: 3px; }
-        .test-meta  { font-size: 0.78rem; color: var(--color-text-secondary); }
+        .test-meta  { font-size: 0.78rem; color: var(--color-text-secondary); margin-top: 10px; }
 
         .badge-type {
             font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
@@ -53,7 +50,7 @@
             display: flex;
             gap: 0.5rem;
             align-items: center;
-            flex-shrink: 0;         /* never shrink — always visible */
+            flex-shrink: 0;
             position: relative;
             z-index: 2;
         }
@@ -109,21 +106,21 @@
             </div>
 
             <!-- Test list -->
-            <div class="d-flex flex-column gap-3" th:if="${!testSummaries.isEmpty()}">
+            <div class="d-flex flex-row flex-wrap gap-3" th:if="${!testSummaries.isEmpty()}">
                 <div class="test-card" th:each="t : ${testSummaries}">
 
-                    <!-- Icon -->
                     <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
                         <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
                     </div>
 
-                    <!-- Info -->
                     <div class="test-info">
                         <div class="test-title" th:text="${t.testTitle}">Test Title</div>
                         <div class="test-meta">
                             <span class="badge-type me-2"
                                   th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
                                   th:text="${t.testType}">QUIZ</span>
+                        </div>
+                        <div class="test-meta">
                             <span th:text="${t.questionCount} + ' questions'"></span>
                             <span class="mx-1">·</span>
                             <span th:text="${t.attemptCount} + ' attempts'"></span>
@@ -140,8 +137,10 @@
                            class="btn btn-sm btn-outline-secondary rounded-2">
                             <i class="bi bi-bar-chart me-1"></i> Results
                         </a>
+                        <!-- Changed: no longer calls deleteTest() with confirm() -->
                         <button class="btn btn-sm btn-outline-danger rounded-2"
-                                th:attr="onclick='deleteTest(' + ${t.testId} + ')'">
+                                th:attr="data-test-id=${t.testId}"
+                                onclick="openDeleteModal(this)">
                             <i class="bi bi-trash3"></i>
                         </button>
                     </div>
@@ -169,15 +168,80 @@
     </div>
 </div>
 
+<!-- ── Delete Confirmation Modal ── -->
+<div class="modal fade" id="deleteTestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Delete Test</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete this test?</p>
+                <small class="text-danger">This will also delete all student attempts. This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button id="confirmDeleteTestBtn" class="btn btn-dark">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="deleteToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body w-100">
+                <div id="deleteToastMessage">Deleting...</div>
+                <div class="progress mt-2" style="height:5px;">
+                    <div id="deleteProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/js/script.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     const COURSE_ID = /*[[${course.courseId}]]*/ null;
-    async function deleteTest(testId) {
-        if (!confirm('Delete this test and all its attempts?')) return;
-        const res = await fetch(`/your-courses/${COURSE_ID}/tests/${testId}`, { method: 'DELETE' });
-        if (res.ok) location.reload();
-        else alert('Failed to delete test.');
+
+    let selectedTestId = null;
+    const deleteModal  = new bootstrap.Modal(document.getElementById('deleteTestModal'));
+    const toastEl      = document.getElementById('deleteToast');
+    const toast        = new bootstrap.Toast(toastEl);
+    const toastMsg     = document.getElementById('deleteToastMessage');
+    const progressBar  = document.getElementById('deleteProgress');
+
+    function openDeleteModal(btn) {
+        selectedTestId = btn.getAttribute('data-test-id');
+        deleteModal.show();
     }
+
+    document.getElementById('confirmDeleteTestBtn').addEventListener('click', () => {
+        deleteModal.hide();
+
+        toastMsg.innerText = "Deleting test...";
+        progressBar.style.width = "30%";
+        toast.show();
+
+        fetch(`/your-courses/${COURSE_ID}/tests/${selectedTestId}`, { method: 'DELETE' })
+            .then(res => {
+                progressBar.style.width = "70%";
+                if (res.ok) {
+                    setTimeout(() => {
+                        progressBar.style.width = "100%";
+                        toastMsg.innerText = "Test deleted successfully!";
+                        setTimeout(() => location.reload(), 800);
+                    }, 500);
+                } else {
+                    toastMsg.innerText = "Failed to delete test.";
+                    progressBar.style.width = "100%";
+                }
+            });
+    });
 </script>
 </body>
 </html>
