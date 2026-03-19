@@ -20,24 +20,27 @@ public class ResourceServiceImpl implements ResourceService {
     private final UserCourseResourceRepository ucrRepository;
     private final UserRepository               userRepository;
     private final CourseRepository             courseRepository;
+    private final ChapterRepository            chapterRepository;
     private final LocalFileStorageService      storageService;
 
     @Override
     @Transactional
-    public Resource savePdf(Long userId, Long courseId, MultipartFile file) throws Exception {
-        User   user   = getUser(userId);
-        Course course = getCourse(courseId);
-        String path   = storageService.store(file, user.getUsername(), course.getCourseName());
-        return saveResourceRecord(user, course, file.getOriginalFilename(), "PDF", path);
+    public Resource savePdf(Long userId, Long courseId, Long chapterId, MultipartFile file) throws Exception {
+        User    user    = getUser(userId);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
+        String  path    = storageService.store(file, user.getUsername(), course.getCourseName());
+        return saveResourceRecord(user, course, chapter, file.getOriginalFilename(), "PDF", path);
     }
 
     @Override
     @Transactional
-    public Resource saveNote(Long userId, Long courseId, MultipartFile file) throws Exception {
-        User   user   = getUser(userId);
-        Course course = getCourse(courseId);
-        String path   = storageService.store(file, user.getUsername(), course.getCourseName());
-        return saveResourceRecord(user, course, file.getOriginalFilename(), "Note", path);
+    public Resource saveNote(Long userId, Long courseId, Long chapterId, MultipartFile file) throws Exception {
+        User    user    = getUser(userId);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
+        String  path    = storageService.store(file, user.getUsername(), course.getCourseName());
+        return saveResourceRecord(user, course, chapter, file.getOriginalFilename(), "Note", path);
     }
 
     @Override
@@ -56,6 +59,29 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public List<Resource> getChapterResources(Long chapterId) {
+        Chapter chapter = getChapter(chapterId);
+        return ucrRepository.findByChapter(chapter)
+                .stream().map(UserCourseResource::getResource).toList();
+    }
+
+    @Override
+    public List<Resource> getChapterResourcesExcludingUser(Long chapterId, Long userId) {
+        Chapter chapter = getChapter(chapterId);
+        User    user    = getUser(userId);
+        return ucrRepository.findByChapterExcludingUser(chapter, user)
+                .stream().map(UserCourseResource::getResource).toList();
+    }
+
+    @Override
+    public List<Resource> getChapterResourcesByUser(Long chapterId, Long userId) {
+        Chapter chapter = getChapter(chapterId);
+        User    user    = getUser(userId);
+        return ucrRepository.findByChapterAndUser(chapter, user)
+                .stream().map(UserCourseResource::getResource).toList();
+    }
+
+    @Override
     @Transactional
     public void deleteResource(Long resourceId) throws Exception {
         Resource resource = resourceRepository.findById(resourceId)
@@ -67,7 +93,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
-    private Resource saveResourceRecord(User user, Course course,
+    private Resource saveResourceRecord(User user, Course course, Chapter chapter,
                                         String originalName, String type,
                                         String relativePath) {
         Resource resource = new Resource();
@@ -82,6 +108,7 @@ public class ResourceServiceImpl implements ResourceService {
         ucr.setResource(resource);
         ucr.setUser(user);
         ucr.setCourse(course);
+        ucr.setChapter(chapter);
         ucrRepository.save(ucr);
 
         return resource;
@@ -95,5 +122,17 @@ public class ResourceServiceImpl implements ResourceService {
     private Course getCourse(Long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found: " + courseId));
+    }
+
+    private Chapter getChapter(Long chapterId) {
+        return chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new RuntimeException("Chapter not found: " + chapterId));
+    }
+
+    @Override
+    public List<Resource> getChapterTeacherResources(Long chapterId) {
+        Chapter chapter = getChapter(chapterId);
+        return ucrRepository.findTeacherResourcesByChapter(chapter)
+                .stream().map(UserCourseResource::getResource).toList();
     }
 }

@@ -15,4 +15,7 @@ public interface UserCourseTestRepository extends JpaRepository<UserCourseTest, 
 
     @Query("SELECT uct FROM UserCourseTest uct WHERE uct.course = :course AND uct.user = :user")
     List<UserCourseTest> findByCourseAndUser(@Param("course") Course course, @Param("user") User user);
+
+    @Query("SELECT uct FROM UserCourseTest uct WHERE uct.chapter = :chapter")
+    List<UserCourseTest> findByChapter(@Param("chapter") Chapter chapter);
 }

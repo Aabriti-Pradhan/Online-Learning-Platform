@@ -7,6 +7,7 @@ import com.finalyearproject.fyp.repository.ResourceRepository;
 import com.finalyearproject.fyp.repository.UserRepository;
 import com.finalyearproject.fyp.service.LocalFileStorageService;
 import com.finalyearproject.fyp.service.ResourceService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,30 +32,40 @@ public class NotesEditorController {
 
     /**
      * GET /notes-editor
-     * - No params         → new blank note
-     * - ?courseId=X       → new note for that course
-     * - ?resourceId=X     → open existing note for editing
+     * - ?courseId=X&chapterId=Y   → new note for that chapter
+     * - ?resourceId=X             → open existing note for editing
      */
     @GetMapping("/notes-editor")
     public String openNotesEditor(@RequestParam(required = false) Long courseId,
+                                  @RequestParam(required = false) Long chapterId,
                                   @RequestParam(required = false) Long resourceId,
-                                  Model model) {
+                                  Model model,
+                                  HttpServletRequest request,
+                                  Authentication authentication) {
 
         model.addAttribute("courseId",    courseId);
+        model.addAttribute("chapterId",   chapterId);
         model.addAttribute("resourceId",  resourceId);
+        model.addAttribute("currentPath", request.getRequestURI());
 
-        // Pre-fill title if editing an existing note
+        boolean readOnly = false;
+
         if (resourceId != null) {
             resourceRepository.findById(resourceId).ifPresent(r -> {
-                // Strip the .json extension for display
                 String name = r.getResourceName();
                 if (name != null && name.endsWith(".json")) {
                     name = name.substring(0, name.length() - 5);
                 }
                 model.addAttribute("noteTitle", name);
             });
+
+            // If the logged-in user is a student, mark as read-only
+            boolean isStudent = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"));
+            if (isStudent) readOnly = true;
         }
 
+        model.addAttribute("readOnly", readOnly);
         return "notesEditor/index";
     }
 
@@ -65,9 +76,10 @@ public class NotesEditorController {
     public ResponseEntity<?> saveNote(@RequestBody Map<String, Object> payload,
                                       Authentication authentication) throws Exception {
 
-        String title    = (String) payload.get("title");
-        Object content  = payload.get("content");
-        Long   courseId = Long.valueOf(payload.get("courseId").toString());
+        String title     = (String) payload.get("title");
+        Object content   = payload.get("content");
+        Long   courseId  = Long.valueOf(payload.get("courseId").toString());
+        Long   chapterId = Long.valueOf(payload.get("chapterId").toString());
 
         String json     = new ObjectMapper().writeValueAsString(content);
         String filename = (title != null && !title.isBlank() ? title : "Untitled_Note") + ".json";
@@ -75,7 +87,7 @@ public class NotesEditorController {
 
         User user = resolveUser(authentication);
         ByteArrayMultipartFile file = new ByteArrayMultipartFile(filename, bytes);
-        Resource saved = resourceService.saveNote(user.getUserId(), courseId, file);
+        Resource saved = resourceService.saveNote(user.getUserId(), courseId, chapterId, file);
 
         return ResponseEntity.ok(Map.of(
                 "resourceId",   saved.getResourceId(),
@@ -84,7 +96,7 @@ public class NotesEditorController {
         ));
     }
 
-    // ── Update existing note (overwrite file on disk) ─────────────────────────
+    // ── Update existing note ──────────────────────────────────────────────────
 
     @PutMapping("/update-note/{resourceId}")
     @ResponseBody
@@ -100,11 +112,9 @@ public class NotesEditorController {
         String json  = new ObjectMapper().writeValueAsString(content);
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
 
-        // Overwrite the existing file on disk
         Path filePath = Paths.get("uploads").resolve(resource.getResourcePath()).normalize();
         Files.write(filePath, bytes);
 
-        // Update resource name if title changed
         String newName = (title != null && !title.isBlank() ? title : "Untitled_Note") + ".json";
         resource.setResourceName(newName);
         resourceRepository.save(resource);
@@ -123,7 +133,6 @@ public class NotesEditorController {
         org.springframework.core.io.Resource file = storageService.load(resource.getResourcePath());
         String json = new String(file.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-        // Return parsed JSON so EditorJS can render it directly
         Object parsed = new ObjectMapper().readValue(json, Object.class);
         return ResponseEntity.ok(parsed);
     }

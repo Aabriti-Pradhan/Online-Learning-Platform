@@ -149,6 +149,7 @@
 <script th:src="@{/js/script.js}"></script>
 <script th:inline="javascript">
     const COURSE_ID     = /*[[${course.courseId}]]*/ null;
+    const CHAPTER_ID    = /*[[${chapter.chapterId}]]*/ null;
     const TEST_ID       = /*[[${test.testId}]]*/ null;
     const TOTAL         = /*[[${questions.size()}]]*/ 0;
     const TIMER_MINUTES = /*[[${timerMinutes}]]*/ null;
@@ -194,13 +195,13 @@
         Object.entries(answers).forEach(([k, v]) => payload[k] = v);
 
         try {
-            const res = await fetch(`/your-courses/${COURSE_ID}/tests/${TEST_ID}/submit`, {
+            const res = await fetch(`/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests/${TEST_ID}/submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            window.location.href = `/your-courses/${COURSE_ID}/tests/${TEST_ID}/result/${data.attemptId}`;
+            window.location.href = `/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests/${TEST_ID}/result/${data.attemptId}`;
         } catch (e) {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Submit Test';

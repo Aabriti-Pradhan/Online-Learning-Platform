@@ -14,6 +14,10 @@ public class UserCourseResource {
     private UserCourseResourceId id;
 
     @ManyToOne
+    @JoinColumn(name = "chapter_id")
+    private Chapter chapter;
+
+    @ManyToOne
     @MapsId("resourceId")
     @JoinColumn(name = "resource_id")
     private Resource resource;

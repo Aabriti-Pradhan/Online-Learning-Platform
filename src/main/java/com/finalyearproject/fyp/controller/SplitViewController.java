@@ -16,51 +16,54 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SplitViewController {
 
-    private final ResourceRepository             resourceRepository;
-    private final UserRepository                 userRepository;
-    private final CourseRepository               courseRepository;
-    private final UserCourseResourceRepository   ucrRepository;
-    private final TagRepository                  tagRepository;
+    private final ResourceRepository              resourceRepository;
+    private final UserRepository                  userRepository;
+    private final CourseRepository                courseRepository;
+    private final ChapterRepository               chapterRepository;
+    private final UserCourseResourceRepository    ucrRepository;
+    private final TagRepository                   tagRepository;
     private final UserCourseResourceTagRepository ucrtRepository;
-
 
     @GetMapping("/split-view/{pdfResourceId}")
     public String splitView(@PathVariable Long pdfResourceId,
                             @RequestParam Long courseId,
+                            @RequestParam Long chapterId,
                             Model model,
                             Authentication authentication) {
 
         Resource pdf = resourceRepository.findById(pdfResourceId)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
 
-        // All notes in this course the user can pick from
-        Course course = courseRepository.findById(courseId)
+        Course  course  = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new RuntimeException("Chapter not found"));
 
-        List<Resource> courseNotes = ucrRepository.findByCourse(course)
+        // All notes in this chapter the user can pick from
+        List<Resource> courseNotes = ucrRepository.findByChapter(chapter)
                 .stream()
                 .map(UserCourseResource::getResource)
                 .filter(r -> "Note".equalsIgnoreCase(r.getResourceType()))
                 .toList();
 
-        // Existing tags for this PDF
         List<Map<String, Object>> tags = ucrtRepository.findByResource(pdf)
                 .stream()
                 .map(ucrt -> {
                     Tag t = ucrt.getTag();
                     return Map.<String, Object>of(
                             "tagId",    t.getTagId(),
-                            "tagType",  t.getTagType(),   // "PAGE" or "TEXT"
-                            "tagValue", t.getTagValue(),  // JSON: {page, x, y, selectedText, noteBlockId}
+                            "tagType",  t.getTagType(),
+                            "tagValue", t.getTagValue(),
                             "label",    t.getLabel()
                     );
                 })
                 .toList();
 
-        model.addAttribute("pdf",        pdf);
-        model.addAttribute("courseId",   courseId);
+        model.addAttribute("pdf",         pdf);
+        model.addAttribute("courseId",    courseId);
+        model.addAttribute("chapterId",   chapterId);
         model.addAttribute("courseNotes", courseNotes);
-        model.addAttribute("tags",       tags);
+        model.addAttribute("tags",        tags);
 
         return "splitView/index";
     }
@@ -72,8 +75,8 @@ public class SplitViewController {
 
         Long   pdfResourceId = Long.valueOf(payload.get("pdfResourceId").toString());
         Long   courseId      = Long.valueOf(payload.get("courseId").toString());
-        String tagType       = (String) payload.get("tagType");   // "PAGE" or "TEXT"
-        String tagValue      = (String) payload.get("tagValue");  // JSON string
+        String tagType       = (String) payload.get("tagType");
+        String tagValue      = (String) payload.get("tagValue");
         String label         = (String) payload.get("label");
 
         String email = YourCoursesController.extractEmail(authentication);
@@ -86,14 +89,12 @@ public class SplitViewController {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        // Save Tag
         Tag tag = new Tag();
         tag.setTagType(tagType);
         tag.setTagValue(tagValue);
         tag.setLabel(label);
         tagRepository.save(tag);
 
-        // Save join row
         UserCourseResourceTag ucrt = new UserCourseResourceTag();
         ucrt.setTagId(tag.getTagId());
         ucrt.setResourceId(resource.getResourceId());
@@ -116,7 +117,6 @@ public class SplitViewController {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Tag not found: " + tagId));
 
-        // Delete all join rows referencing this tag first (FK constraint)
         List<UserCourseResourceTag> joinRows = ucrtRepository.findByTagId(tagId);
         ucrtRepository.deleteAll(joinRows);
 

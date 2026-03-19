@@ -1,5 +1,6 @@
 package com.finalyearproject.fyp.repository;
 
+import com.finalyearproject.fyp.entity.Chapter;
 import com.finalyearproject.fyp.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -27,8 +28,20 @@ public interface UserCourseResourceRepository extends JpaRepository<UserCourseRe
     @Query("DELETE FROM UserCourseResource ucr WHERE ucr.resource = :resource")
     void deleteByResource(@Param("resource") Resource resource);
 
+    @Query("SELECT ucr FROM UserCourseResource ucr WHERE ucr.chapter = :chapter")
+    List<UserCourseResource> findByChapter(@Param("chapter") Chapter chapter);
+
+    @Query("SELECT ucr FROM UserCourseResource ucr WHERE ucr.chapter = :chapter AND ucr.user = :user")
+    List<UserCourseResource> findByChapterAndUser(@Param("chapter") Chapter chapter, @Param("user") User user);
+
+    @Query("SELECT ucr FROM UserCourseResource ucr WHERE ucr.chapter = :chapter AND ucr.user != :user")
+    List<UserCourseResource> findByChapterExcludingUser(@Param("chapter") Chapter chapter, @Param("user") User user);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM UserCourseResource ucr WHERE ucr.course = :course")
     void deleteByCourse(@Param("course") Course course);
+
+    @Query("SELECT ucr FROM UserCourseResource ucr WHERE ucr.chapter = :chapter AND ucr.user.role = 'TEACHER'")
+    List<UserCourseResource> findTeacherResourcesByChapter(@Param("chapter") Chapter chapter);
 }

@@ -74,9 +74,14 @@
                 <input type="text" id="note-title" class="editor-title"
                        placeholder="Untitled Note"
                        th:value="${noteTitle}">
-                <button id="save-btn" onclick="saveNote()">
-                    <i class="bi bi-floppy me-1"></i> Save
-                </button>
+                <div th:if="${!readOnly}">
+                    <button id="save-btn" onclick="saveNote()">
+                        <i class="bi bi-floppy me-1"></i> Save
+                    </button>
+                </div>
+                <div th:if="${readOnly}" class="alert alert-info py-2 px-3" style="font-size:0.85rem;">
+                    <i class="bi bi-eye me-1"></i> You are viewing this note in read-only mode.
+                </div>
             </div>
 
             <div class="editor-container">
@@ -123,6 +128,7 @@
     // Passed from controller — null if creating new, set if editing existing
     const resourceId = /*[[${resourceId}]]*/ null;
     const courseId   = /*[[${courseId}]]*/ null;
+    const chapterId  = /*[[${chapterId}]]*/ null;
 
     let activeDialog = null;
 
@@ -146,7 +152,8 @@
     // ── Init EditorJS ─────────────────────────────────────────────────────────
     window.editor = new EditorJS({
         holder: 'editorjs',
-        autofocus: !resourceId,   // only autofocus on new notes
+        autofocus: !resourceId,
+        readOnly: false,
         placeholder: 'Start writing your notes...',
         tools: {
             header: { class: Header, inlineToolbar: ['bold', 'italic', 'link'] },
@@ -199,13 +206,13 @@
                 const response = await fetch('/save-note', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: title, content: data, courseId: courseId })
+                    body: JSON.stringify({ title: title, content: data, courseId: courseId, chapterId: chapterId })
                 });
                 if (!response.ok) throw new Error(await response.text());
                 const result = await response.json();
 
                 // Redirect to edit mode so subsequent saves go to update
-                window.history.replaceState({}, '', '/notes-editor?resourceId=' + result.resourceId + '&courseId=' + courseId);
+                window.history.replaceState({}, '', '/notes-editor?resourceId=' + result.resourceId + '&courseId=' + courseId + '&chapterId=' + chapterId);
                 showSuccess('Note saved successfully.');
             }
 

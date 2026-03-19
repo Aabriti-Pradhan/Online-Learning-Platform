@@ -3,10 +3,8 @@ package com.finalyearproject.fyp.controller;
 import com.finalyearproject.fyp.entity.Course;
 import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.entity.UserCourse;
-import com.finalyearproject.fyp.repository.CourseRepository;
-import com.finalyearproject.fyp.repository.UserCourseRepository;
-import com.finalyearproject.fyp.repository.UserCourseResourceRepository;
-import com.finalyearproject.fyp.repository.UserRepository;
+import com.finalyearproject.fyp.entity.UserCourseEnrollment;
+import com.finalyearproject.fyp.repository.*;
 import com.finalyearproject.fyp.controller.YourCoursesController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +31,7 @@ public class CourseCreationController {
     private final UserRepository                userRepository;
     private final UserCourseRepository          userCourseRepository;
     private final UserCourseResourceRepository  ucrRepository;
+    private final UserCourseEnrollmentRepository userCourseEnrollmentRepository;
 
     // ── Create course ─────────────────────────────────────────────────────────
 
@@ -64,6 +63,23 @@ public class CourseCreationController {
                 "courseId",   course.getCourseId(),
                 "courseName", courseName
         );
+    }
+
+    // ── Update course name/description ───────────────────────────────────────
+
+    @PutMapping("/update-course/{courseId}")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<?> updateCourse(@PathVariable Long courseId,
+                                          @RequestBody Map<String, String> payload) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        if (payload.containsKey("courseName")) course.setCourseName(payload.get("courseName"));
+        if (payload.containsKey("courseDesc"))  course.setCourseDesc(payload.get("courseDesc"));
+        courseRepository.save(course);
+
+        return ResponseEntity.ok(Map.of("message", "Updated"));
     }
 
     // ── Delete course ─────────────────────────────────────────────────────────
@@ -98,11 +114,19 @@ public class CourseCreationController {
 
         String email = YourCoursesController.extractEmail(authentication);
         userRepository.findByEmail(email).ifPresent(user -> {
-            List<Course> courses = userCourseRepository.findByUser(user)
-                    .stream()
-                    .map(UserCourse::getCourse)
-                    .toList();
-            model.addAttribute("userCourses", courses);
+            List<Course> owned = userCourseRepository.findByUser(user)
+                    .stream().map(UserCourse::getCourse).toList();
+
+            List<Course> enrolled = userCourseEnrollmentRepository.findByUser(user)
+                    .stream().map(UserCourseEnrollment::getCourse).toList();
+
+            List<Course> all = new java.util.ArrayList<>(owned);
+            enrolled.forEach(c -> {
+                if (all.stream().noneMatch(o -> o.getCourseId().equals(c.getCourseId())))
+                    all.add(c);
+            });
+
+            model.addAttribute("userCourses", all);
             model.addAttribute("loggedInUser", user);
         });
     }

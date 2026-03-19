@@ -6,7 +6,7 @@
 
 <!-- ── Teacher: Create Test button ── -->
 <div th:fragment="createButton(courseId)" sec:authorize="hasRole('TEACHER')">
-    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/create'}"
+    <a th:href="@{'/your-courses/' + ${courseId} + '/chapters/' + ${chapterId} + '/tests/create'}"
        class="btn btn-dark rounded-3">
         <i class="bi bi-plus-lg me-1"></i> Create Test
     </a>
@@ -14,11 +14,11 @@
 
 <!-- ── Teacher: Edit / Results / Delete — testId passed as parameter ── -->
 <div th:fragment="teacherActions(courseId, testId)" sec:authorize="hasRole('TEACHER')" class="d-flex gap-2">
-    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/edit'}"
+    <a th:href="@{'/your-courses/' + ${courseId} + '/chapters/' + ${chapterId} + '/tests/' + ${testId} + '/edit'}"
        class="btn btn-sm btn-outline-secondary rounded-2">
         <i class="bi bi-pencil me-1"></i> Edit
     </a>
-    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/results'}"
+    <a th:href="@{'/your-courses/' + ${courseId} + '/chapters/' + ${chapterId} + '/tests/' + ${testId} + '/results'}"
        class="btn btn-sm btn-outline-secondary rounded-2">
         <i class="bi bi-bar-chart me-1"></i> Results
     </a>
@@ -30,7 +30,7 @@
 
 <!-- ── Student: Take Test button — testId passed as parameter ── -->
 <div th:fragment="studentActions(courseId, testId)" sec:authorize="hasRole('STUDENT')">
-    <a th:href="@{'/your-courses/' + ${courseId} + '/tests/' + ${testId} + '/take'}"
+    <a th:href="@{'/your-courses/' + ${courseId} + '/chapters/' + ${chapterId} + '/tests/' + ${testId} + '/take'}"
        class="btn btn-sm btn-dark rounded-2">
         <i class="bi bi-play-fill me-1"></i> Take Test
     </a>

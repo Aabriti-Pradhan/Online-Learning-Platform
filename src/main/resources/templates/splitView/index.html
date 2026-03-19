@@ -24,7 +24,7 @@
 
 <!-- ── Top bar ── -->
 <div class="split-topbar">
-    <a th:href="@{'/your-courses/' + ${courseId} + '/resources'}" class="btn btn-sm btn-outline-secondary btn-back">
+    <a th:href="@{'/your-courses/' + ${courseId} + '/chapters/' + ${chapterId} + '/resources'}" class="btn btn-sm btn-outline-secondary btn-back">
         <i class="bi bi-arrow-left me-1"></i> Back
     </a>
     <span class="brand">PrepHunt</span>
@@ -153,6 +153,7 @@
     const PDF_RESOURCE_ID = /*[[${pdf.resourceId}]]*/ null;
     const PDF_PATH        = /*[[${pdf.resourcePath}]]*/ '';
     const COURSE_ID       = /*[[${courseId}]]*/ null;
+    const CHAPTER_ID      = /*[[${chapterId}]]*/ null;
     const INITIAL_TAGS    = /*[[${tags}]]*/ [];
 
     // ════════════════════════════════════════════════════════════════
@@ -560,7 +561,7 @@
                 const res    = await fetch('/save-note', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, content: data, courseId: COURSE_ID })
+                    body: JSON.stringify({ title, content: data, courseId: COURSE_ID, chapterId: CHAPTER_ID })
                 });
                 const saved  = await res.json();
                 currentNoteResourceId = saved.resourceId;

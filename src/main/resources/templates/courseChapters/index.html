@@ -3,7 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Your Courses</title>
+    <title th:text="${course.courseName} + ' — Chapters'">Chapters</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,45 +15,42 @@
             font-family: 'Gabarito', sans-serif;
         }
 
-        /* ── Course Card ─────────────────────────────────── */
-        .course-card-wrapper {
+        /* ── Chapter Card ─────────────────────────────────── */
+        .chapter-card-wrapper {
             cursor: pointer;
             width: 220px;
-            display: flex;
-            flex-direction: column;
         }
 
-        .course-card {
+        .chapter-card {
             background: white;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
-            overflow: visible;
+            overflow: hidden;
             box-shadow: var(--shadow-sm);
             transition: box-shadow 0.2s, transform 0.15s;
             position: relative;
-            height: 100%;
         }
 
-        .course-card:hover {
+        .chapter-card:hover {
             box-shadow: 0 8px 24px rgba(0,0,0,0.09);
             transform: translateY(-2px);
         }
 
-        .course-card-stripe {
+        /* Teal-green top stripe — distinct from courses (purple) */
+        .chapter-card-stripe {
             height: 6px;
-            background: linear-gradient(90deg, #6c47ff, #a78bfa);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            background: linear-gradient(90deg, #0d9488, #34d399);
         }
 
         /* Three-dot menu */
-        .course-card-menu {
+        .chapter-card-menu {
             position: absolute;
             top: 14px;
             right: 12px;
-            z-index: 1000;
+            z-index: 10;
         }
 
-        .course-card-menu .dropdown-btn {
+        .chapter-card-menu .dropdown-btn {
             width: 28px;
             height: 28px;
             border-radius: 6px;
@@ -64,12 +61,12 @@
             transition: background 0.15s, color 0.15s;
         }
 
-        .course-card-menu .dropdown-btn:hover {
+        .chapter-card-menu .dropdown-btn:hover {
             background: #f3f4f6;
             color: #374151;
         }
 
-        .course-card-menu .dropdown-content {
+        .chapter-card-menu .dropdown-content {
             display: none;
             position: absolute;
             right: 0;
@@ -79,13 +76,15 @@
             border-radius: var(--radius-md);
             box-shadow: 0 4px 16px rgba(0,0,0,0.10);
             min-width: 120px;
-            z-index: 1000;
+            z-index: 20;
             overflow: hidden;
         }
 
-        .course-card-menu .dropdown-content.open { display: block; }
+        .chapter-card-menu .dropdown-content.open {
+            display: block;
+        }
 
-        .course-card-menu .dropdown-item-action {
+        .chapter-card-menu .dropdown-item-action {
             display: block;
             width: 100%;
             padding: 9px 14px;
@@ -97,30 +96,39 @@
             transition: background 0.12s;
         }
 
-        .course-card-menu .edit-course-btn   { color: #374151; }
-        .course-card-menu .edit-course-btn:hover   { background: #f9fafb; }
-        .course-card-menu .delete-course-btn { color: #374151; }
-        .course-card-menu .delete-course-btn:hover { background: #f9fafb; }
+        .chapter-card-menu .edit-chapter-btn {
+            color: #374151;
+        }
+        .chapter-card-menu .edit-chapter-btn:hover {
+            background: #f9fafb;
+        }
+
+        .chapter-card-menu .delete-chapter-btn {
+            color: #ef4444;
+        }
+        .chapter-card-menu .delete-chapter-btn:hover {
+            background: #fef2f2;
+        }
 
         /* Card body */
-        .course-card-body {
+        .chapter-card-body {
             padding: 1.1rem 1.2rem 1.2rem;
         }
 
-        .course-card-icon-wrap {
+        .chapter-card-icon-wrap {
             width: 44px;
             height: 44px;
             border-radius: var(--radius-md);
-            background: #ede9fe;
+            background: #ccfbf1;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6c47ff;
+            color: #0d9488;
             font-size: 1.3rem;
             margin-bottom: 0.85rem;
         }
 
-        .course-card-label {
+        .chapter-card-order {
             font-size: 0.62rem;
             font-weight: 700;
             letter-spacing: 0.08em;
@@ -129,7 +137,7 @@
             margin-bottom: 4px;
         }
 
-        .course-card-name {
+        .chapter-card-name {
             font-weight: 700;
             font-size: 0.92rem;
             color: var(--color-text-primary);
@@ -140,16 +148,17 @@
             overflow: hidden;
         }
 
-        .course-card-desc {
+        .chapter-card-desc {
             font-size: 0.76rem;
             color: var(--color-text-secondary);
             margin-top: 4px;
-            white-space: nowrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        .course-card-footer {
+        .chapter-card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -157,12 +166,12 @@
             border-top: 1px solid #f3f4f6;
         }
 
-        .course-card-footer-label {
+        .chapter-card-footer-label {
             font-size: 0.72rem;
             color: #9ca3af;
         }
 
-        .course-card-arrow {
+        .chapter-card-arrow {
             width: 26px;
             height: 26px;
             border-radius: 50%;
@@ -170,16 +179,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #6c47ff;
+            color: #0d9488;
             font-size: 0.8rem;
             transition: background 0.15s;
         }
 
-        .course-card:hover .course-card-arrow { background: #ede9fe; }
+        .chapter-card:hover .chapter-card-arrow {
+            background: #ccfbf1;
+        }
     </style>
 </head>
 
 <body>
+
 <div class="container-fluid px-4 py-3">
 
     <div th:replace="navigation/index :: topbar"></div>
@@ -194,82 +206,93 @@
         <!-- MAIN CONTENT -->
         <div class="col ms-4">
 
+            <!-- Breadcrumb -->
+            <div class="course-breadcrumb mb-1">
+                <a th:href="@{/your-courses}">Your Courses</a>
+                <span class="mx-1">/</span>
+                <span th:text="${course.courseName}">Course Name</span>
+            </div>
+
+            <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
-                <h2 class="fw-bold">Your Courses</h2>
+                <div>
+                    <h2 class="fw-bold mb-0" th:text="${course.courseName}">Course Name</h2>
+                    <p class="text-muted small mb-0" th:text="${course.courseDesc}">Description</p>
+                </div>
                 <div sec:authorize="hasRole('TEACHER')">
                     <button class="btn p-0 border-0 bg-transparent"
                             data-bs-toggle="modal"
-                            data-bs-target="#createCourseModal">
+                            data-bs-target="#createChapterModal">
                         <i class="bi bi-plus fs-1"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- ── Create Course Modal ── -->
-            <div class="modal fade" id="createCourseModal" tabindex="-1">
+            <!-- Create Chapter Modal -->
+            <div class="modal fade" id="createChapterModal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content rounded-4">
                         <div class="modal-header">
-                            <h5 class="modal-title fw-bold">Create Course</h5>
+                            <h5 class="modal-title fw-bold">Create Chapter</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <input type="text" id="courseNameInput" class="form-control"
-                                       placeholder="Enter Course Name">
+                                <input type="text" id="chapterTitleInput" class="form-control"
+                                       placeholder="Chapter Title (e.g. Chapter 1: Introduction)">
                             </div>
                             <div>
-                                <textarea id="courseDescInput" class="form-control" rows="3"
-                                          placeholder="Enter Course Description"></textarea>
+                                <textarea id="chapterDescInput" class="form-control" rows="2"
+                                          placeholder="Brief description (optional)"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-dark w-100" onclick="createCourse()">Create</button>
+                            <button class="btn btn-dark w-100" onclick="createChapter()">Create</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── Edit Course Modal ── -->
-            <div class="modal fade" id="editCourseModal" tabindex="-1">
+            <!-- Edit Chapter Modal -->
+            <div class="modal fade" id="editChapterModal" tabindex="-1">
                 <div class="modal-dialog">
                     <div class="modal-content rounded-4">
                         <div class="modal-header">
-                            <h5 class="modal-title fw-bold">Edit Course</h5>
+                            <h5 class="modal-title fw-bold">Edit Chapter</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <input type="text" id="editCourseNameInput" class="form-control"
-                                       placeholder="Course Name">
+                                <input type="text" id="editChapterTitleInput" class="form-control"
+                                       placeholder="Chapter Title">
                             </div>
                             <div>
-                                <textarea id="editCourseDescInput" class="form-control" rows="3"
-                                          placeholder="Course Description"></textarea>
+                                <textarea id="editChapterDescInput" class="form-control" rows="2"
+                                          placeholder="Brief description (optional)"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-dark w-100" onclick="saveCourseEdit()">Save</button>
+                            <button class="btn btn-dark w-100" onclick="saveChapterEdit()">Save</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ── Delete Confirmation Modal ── -->
-            <div class="modal fade" id="deleteCourseModal" tabindex="-1">
+            <!-- Delete Chapter Modal -->
+            <div class="modal fade" id="deleteChapterModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content rounded-4">
                         <div class="modal-header border-0">
-                            <h5 class="modal-title fw-bold">Delete Course</h5>
+                            <h5 class="modal-title fw-bold">Delete Chapter</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <p class="mb-0">Are you sure you want to delete this course?</p>
-                            <small class="text-danger">All chapters, resources and tests inside it will also be deleted. This cannot be undone.</small>
+                            <p class="mb-0">Are you sure you want to delete this chapter?</p>
+                            <small class="text-danger">All resources and tests inside it will also be deleted. This cannot be undone.</small>
                         </div>
                         <div class="modal-footer border-0">
                             <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button id="confirmDeleteBtn" class="btn btn-dark">Delete</button>
+                            <button id="confirmDeleteChapterBtn" class="btn btn-dark">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -277,12 +300,12 @@
 
             <!-- Toast -->
             <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                <div id="uploadToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+                <div id="chapterToast" class="toast align-items-center text-bg-dark border-0" role="alert">
                     <div class="d-flex">
                         <div class="toast-body w-100">
-                            <div id="toastMessage">Working...</div>
+                            <div id="chapterToastMessage">Working...</div>
                             <div class="progress mt-2" style="height:5px;">
-                                <div id="uploadProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                <div id="chapterProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
                             </div>
                         </div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -290,86 +313,85 @@
                 </div>
             </div>
 
-            <!-- COURSE GRID -->
-            <div class="d-flex flex-wrap gap-4" style="align-items: stretch;">
-                <div th:each="course : ${courses}">
+            <!-- CHAPTER GRID -->
+            <div class="d-flex flex-wrap gap-4">
 
-                    <div class="course-card-wrapper"
-                         th:data-url="@{'/your-courses/' + ${course.courseId} + '/chapters'}">
-                        <div class="course-card">
+                <div th:each="ch : ${chapters}">
+                    <div class="chapter-card-wrapper"
+                         th:data-url="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${ch.chapterId} + '/resources'}">
+                        <div class="chapter-card">
 
-                            <div class="course-card-stripe"></div>
+                            <!-- Teal top stripe -->
+                            <div class="chapter-card-stripe"></div>
 
-                            <!-- Three-dot menu -->
-                            <div class="course-card-menu menu">
+                            <!-- Three-dot menu (teacher only) -->
+                            <div class="chapter-card-menu menu" sec:authorize="hasRole('TEACHER')">
                                 <button class="dropdown-btn btn p-0 border-0 bg-transparent">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <div class="dropdown-content">
-                                    <button class="dropdown-item-action edit-course-btn"
-                                            sec:authorize="hasRole('TEACHER')"
-                                            th:data-course-id="${course.courseId}"
-                                            th:data-course-name="${course.courseName}"
-                                            th:data-course-desc="${course.courseDesc}">
+                                    <button class="dropdown-item-action edit-chapter-btn"
+                                            th:data-chapter-id="${ch.chapterId}"
+                                            th:data-chapter-title="${ch.chapterTitle}"
+                                            th:data-chapter-desc="${ch.chapterDesc}">
                                         <i class="bi bi-pencil me-1"></i> Edit
                                     </button>
-                                    <button class="dropdown-item-action delete-course-btn"
-                                            sec:authorize="hasRole('TEACHER')"
-                                            th:data-course-id="${course.courseId}">
+                                    <button class="dropdown-item-action delete-chapter-btn"
+                                            th:data-chapter-id="${ch.chapterId}">
                                         <i class="bi bi-trash3 me-1"></i> Delete
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Body -->
-                            <div class="course-card-body">
-                                <div class="course-card-icon-wrap">
-                                    <i class="bi bi-journal-bookmark-fill"></i>
+                            <div class="chapter-card-body">
+                                <div class="chapter-card-icon-wrap">
+                                    <i class="bi bi-collection-fill"></i>
                                 </div>
-                                <div class="course-card-label">Course</div>
-                                <div class="course-card-name" th:text="${course.courseName}">Course Name</div>
-                                <div class="course-card-desc"
-                                     th:text="${course.courseDesc != null and !course.courseDesc.isEmpty()} ? ${course.courseDesc} : 'No description'">
-                                    Description
-                                </div>
+                                <div class="chapter-card-order" th:text="'Chapter ' + ${ch.chapterOrder}">Chapter 1</div>
+                                <div class="chapter-card-name" th:text="${ch.chapterTitle}">Chapter Title</div>
+                                <div class="chapter-card-desc" th:text="${ch.chapterDesc}" th:if="${ch.chapterDesc != null and !ch.chapterDesc.isEmpty()}">Description</div>
                             </div>
 
                             <!-- Footer -->
-                            <div class="course-card-footer">
-                                <span class="course-card-footer-label">View chapters</span>
-                                <div class="course-card-arrow">
+                            <div class="chapter-card-footer">
+                                <span class="chapter-card-footer-label">Open chapter</span>
+                                <div class="chapter-card-arrow">
                                     <i class="bi bi-arrow-right"></i>
                                 </div>
                             </div>
 
                         </div>
                     </div>
-
                 </div>
+
             </div>
 
             <!-- Empty state -->
-            <div th:if="${courses == null or #lists.isEmpty(courses)}"
+            <div th:if="${chapters == null or #lists.isEmpty(chapters)}"
                  class="text-center py-5 text-muted">
-                <i class="bi bi-journal-bookmark" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
-                <p class="fw-semibold mb-1">No courses yet</p>
-                <p class="small" sec:authorize="hasRole('TEACHER')">Click <strong>+</strong> to create your first course.</p>
-                <p class="small" sec:authorize="hasRole('STUDENT')">You haven't enrolled in any courses yet.</p>
+                <i class="bi bi-collection" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
+                <p class="fw-semibold mb-1">No chapters yet</p>
+                <p class="small" sec:authorize="hasRole('TEACHER')">Click <strong>+</strong> to create the first chapter.</p>
+                <p class="small" sec:authorize="hasRole('STUDENT')">Your teacher hasn't added any chapters yet.</p>
             </div>
 
         </div>
     </div>
 
     <div th:replace="footer/index :: footer"></div>
+
 </div>
 
 <script th:src="@{/js/script.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
+    const COURSE_ID = /*[[${course.courseId}]]*/ null;
+
     // ── Card click → navigate (ignore menu clicks) ────────────────────────────
-    document.querySelectorAll('.course-card-wrapper').forEach(wrapper => {
+    document.querySelectorAll('.chapter-card-wrapper').forEach(wrapper => {
         wrapper.addEventListener('click', function (e) {
-            if (e.target.closest('.dropdown-btn') || e.target.closest('.dropdown-content')) return;
+            if (e.target.closest('.menu')) return;
             window.location.href = this.getAttribute('data-url');
         });
     });
@@ -378,127 +400,116 @@
     document.querySelectorAll('.dropdown-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
-
             const menu = this.nextElementSibling;
-
-            document.querySelectorAll('.dropdown-content').forEach(m => {
+            document.querySelectorAll('.dropdown-content.open').forEach(m => {
                 if (m !== menu) m.classList.remove('open');
             });
-
             menu.classList.toggle('open');
         });
     });
 
     document.addEventListener('click', function (e) {
-        if (e.target.closest('.dropdown-btn') || e.target.closest('.dropdown-content')) return;
+        if (e.target.closest('.menu')) return;
         document.querySelectorAll('.dropdown-content.open').forEach(m => m.classList.remove('open'));
     });
 
     // ── Toast helpers ─────────────────────────────────────────────────────────
-    const toastEl  = document.getElementById('uploadToast');
-    const toast    = new bootstrap.Toast(toastEl);
-    const toastMsg = document.getElementById('toastMessage');
-    const progress = document.getElementById('uploadProgress');
+    const toastEl   = document.getElementById('chapterToast');
+    const toast     = new bootstrap.Toast(toastEl);
+    const toastMsg  = document.getElementById('chapterToastMessage');
+    const progress  = document.getElementById('chapterProgress');
 
     function showToast(msg, pct) {
-        toastMsg.innerText   = msg;
-        progress.style.width = pct + '%';
+        toastMsg.innerText    = msg;
+        progress.style.width  = pct + '%';
         toast.show();
     }
 
-    // ── Create Course ─────────────────────────────────────────────────────────
-    const createModal = new bootstrap.Modal(document.getElementById('createCourseModal'));
+    // ── Create Chapter ────────────────────────────────────────────────────────
+    const createModal = new bootstrap.Modal(document.getElementById('createChapterModal'));
 
-    function createCourse() {
-        const name = document.getElementById('courseNameInput').value.trim();
-        const desc = document.getElementById('courseDescInput').value.trim();
-        if (!name) { alert('Please enter a course name.'); return; }
+    function createChapter() {
+        const title = document.getElementById('chapterTitleInput').value.trim();
+        const desc  = document.getElementById('chapterDescInput').value.trim();
+        if (!title) { alert('Please enter a chapter title.'); return; }
 
         createModal.hide();
-        showToast('Creating course...', 30);
+        showToast('Creating chapter...', 30);
 
-        fetch('/create-course', {
+        fetch(`/your-courses/${COURSE_ID}/chapters`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({ courseName: name, courseDesc: desc })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chapterTitle: title, chapterDesc: desc })
         })
             .then(r => r.json())
             .then(() => {
                 progress.style.width = '100%';
-                toastMsg.innerText   = 'Course created!';
+                toastMsg.innerText   = 'Chapter created!';
                 setTimeout(() => location.reload(), 700);
             })
             .catch(() => {
-                toastMsg.innerText = 'Failed to create course.';
+                toastMsg.innerText  = 'Failed to create chapter.';
                 progress.style.width = '100%';
             });
     }
 
-    // ── Edit Course ───────────────────────────────────────────────────────────
-    let editCourseId = null;
-    const editModal  = new bootstrap.Modal(document.getElementById('editCourseModal'));
+    // ── Edit Chapter ──────────────────────────────────────────────────────────
+    let editChapterId = null;
+    const editModal   = new bootstrap.Modal(document.getElementById('editChapterModal'));
 
-    document.querySelectorAll('.edit-course-btn').forEach(btn => {
+    document.querySelectorAll('.edit-chapter-btn').forEach(btn => {
         btn.addEventListener('click', e => {
             e.stopPropagation();
-            editCourseId = btn.getAttribute('data-course-id');
-            document.getElementById('editCourseNameInput').value = btn.getAttribute('data-course-name') || '';
-            document.getElementById('editCourseDescInput').value = btn.getAttribute('data-course-desc') || '';
+            editChapterId = btn.getAttribute('data-chapter-id');
+            document.getElementById('editChapterTitleInput').value = btn.getAttribute('data-chapter-title') || '';
+            document.getElementById('editChapterDescInput').value  = btn.getAttribute('data-chapter-desc')  || '';
             document.querySelectorAll('.dropdown-content.open').forEach(m => m.classList.remove('open'));
             editModal.show();
         });
     });
 
-    function saveCourseEdit() {
-        const name = document.getElementById('editCourseNameInput').value.trim();
-        const desc = document.getElementById('editCourseDescInput').value.trim();
-        if (!name) { alert('Course name cannot be empty.'); return; }
+    function saveChapterEdit() {
+        const title = document.getElementById('editChapterTitleInput').value.trim();
+        const desc  = document.getElementById('editChapterDescInput').value.trim();
+        if (!title) { alert('Title cannot be empty.'); return; }
 
         editModal.hide();
         showToast('Saving changes...', 30);
 
-        fetch(`/update-course/${editCourseId}`, {
+        fetch(`/your-courses/${COURSE_ID}/chapters/${editChapterId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ courseName: name, courseDesc: desc })
+            body: JSON.stringify({ chapterTitle: title, chapterDesc: desc })
         })
             .then(r => {
                 progress.style.width = '100%';
-                toastMsg.innerText   = r.ok ? 'Course updated!' : 'Update failed.';
+                toastMsg.innerText   = r.ok ? 'Chapter updated!' : 'Update failed.';
                 setTimeout(() => location.reload(), 700);
             });
     }
 
-    // ── Delete Course ─────────────────────────────────────────────────────────
-    let selectedCourseId = null;
-    const deleteModal    = new bootstrap.Modal(document.getElementById('deleteCourseModal'));
+    // ── Delete Chapter ────────────────────────────────────────────────────────
+    let deleteChapterId = null;
+    const deleteModal   = new bootstrap.Modal(document.getElementById('deleteChapterModal'));
 
-    document.querySelectorAll('.delete-course-btn').forEach(btn => {
+    document.querySelectorAll('.delete-chapter-btn').forEach(btn => {
         btn.addEventListener('click', e => {
             e.stopPropagation();
-            selectedCourseId = btn.getAttribute('data-course-id');
+            deleteChapterId = btn.getAttribute('data-chapter-id');
             document.querySelectorAll('.dropdown-content.open').forEach(m => m.classList.remove('open'));
             deleteModal.show();
         });
     });
 
-    document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+    document.getElementById('confirmDeleteChapterBtn').addEventListener('click', () => {
         deleteModal.hide();
-        showToast('Deleting course...', 30);
+        showToast('Deleting chapter...', 30);
 
-        fetch(`/delete-course/${selectedCourseId}`, { method: 'DELETE' })
-            .then(res => {
-                progress.style.width = '70%';
-                if (res.ok) {
-                    setTimeout(() => {
-                        progress.style.width = '100%';
-                        toastMsg.innerText = 'Course deleted!';
-                        setTimeout(() => location.reload(), 800);
-                    }, 500);
-                } else {
-                    toastMsg.innerText = 'Failed to delete course.';
-                    progress.style.width = '100%';
-                }
+        fetch(`/your-courses/${COURSE_ID}/chapters/${deleteChapterId}`, { method: 'DELETE' })
+            .then(r => {
+                progress.style.width = '100%';
+                toastMsg.innerText   = r.ok ? 'Chapter deleted!' : 'Delete failed.';
+                setTimeout(() => location.reload(), 700);
             });
     });
 </script>

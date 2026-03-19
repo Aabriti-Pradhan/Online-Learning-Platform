@@ -79,13 +79,13 @@
                     <div>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-1">
-                                <li class="breadcrumb-item"><a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/take'}">Tests</a></li>
+                                <li class="breadcrumb-item"><a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests'}">Tests</a></li>
                                 <li class="breadcrumb-item active">Result</li>
                             </ol>
                         </nav>
                         <h2 class="fw-bold mb-0" th:text="${test.testTitle}">Test Title</h2>
                     </div>
-                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${test.testId} + '/take'}"
+                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${test.testId} + '/take'}"
                        class="btn btn-dark rounded-3">
                         <i class="bi bi-arrow-repeat me-1"></i> Retake
                     </a>

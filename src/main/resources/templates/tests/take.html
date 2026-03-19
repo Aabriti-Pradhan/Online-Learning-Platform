@@ -52,7 +52,9 @@
                 <div>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-1">
-                            <li class="breadcrumb-item"><a th:href="@{/your-courses}" th:text="${course.courseName}">Course</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/your-courses}">Courses</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}" th:text="${course.courseName}">Course</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/resources'}" th:text="${chapter.chapterTitle}">Chapter</a></li>
                             <li class="breadcrumb-item active">Tests</li>
                         </ol>
                     </nav>
@@ -87,12 +89,12 @@
                             <span class="past-attempt" th:each="a : ${t.pastAttempts}">
                                 <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
                                 <span th:text="${a.score} + '/' + ${a.total}"></span>
-                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}"
+                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}"
                                    style="color:#6c47ff;text-decoration:none;font-weight:700;">view</a>
                             </span>
                         </div>
 
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${t.testId} + '/take'}"
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
                            class="btn btn-dark rounded-3 mt-auto">
                             <i class="bi bi-play-fill me-1"></i>
                             <span th:text="${t.pastAttempts.isEmpty()} ? 'Start' : 'Retake'">Start</span>

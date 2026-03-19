@@ -39,20 +39,13 @@
         .test-title { font-weight: 700; font-size: 0.97rem; color: var(--color-text-primary); margin-bottom: 3px; }
         .test-meta  { font-size: 0.78rem; color: var(--color-text-secondary); margin-top: 10px; }
 
-        .badge-type {
-            font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
-            border-radius: 99px; text-transform: uppercase;
-        }
+        .badge-type { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; text-transform: uppercase; }
         .badge-quiz { background: #ede9fe; color: #6c47ff; }
         .badge-exam { background: #fef3c7; color: #d97706; }
 
         .test-actions {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            flex-shrink: 0;
-            position: relative;
-            z-index: 2;
+            display: flex; gap: 0.5rem; align-items: center;
+            flex-shrink: 0; position: relative; z-index: 2;
         }
 
         .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
@@ -75,17 +68,21 @@
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a th:href="@{/your-courses}">Courses</a></li>
                             <li class="breadcrumb-item">
-                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/resources'}"
+                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                    th:text="${course.courseName}">Course</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/resources'}"
+                                   th:text="${chapter.chapterTitle}">Chapter</a>
                             </li>
                             <li class="breadcrumb-item active">Tests</li>
                         </ol>
                     </nav>
                     <h2 class="fw-bold mb-0">Tests</h2>
-                    <p class="text-muted small mb-0" th:text="${course.courseName}"></p>
+                    <p class="text-muted small mb-0" th:text="${chapter.chapterTitle}"></p>
                 </div>
                 <div th:if="${isTeacher}">
-                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/create'}"
+                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/create'}"
                        class="btn btn-dark rounded-3">
                         <i class="bi bi-plus-lg me-1"></i> Create Test
                     </a>
@@ -129,15 +126,14 @@
 
                     <!-- Teacher actions -->
                     <div th:if="${isTeacher}" class="test-actions">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${t.testId} + '/edit'}"
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/edit'}"
                            class="btn btn-sm btn-outline-secondary rounded-2">
                             <i class="bi bi-pencil me-1"></i> Edit
                         </a>
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${t.testId} + '/results'}"
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/results'}"
                            class="btn btn-sm btn-outline-secondary rounded-2">
                             <i class="bi bi-bar-chart me-1"></i> Results
                         </a>
-                        <!-- Changed: no longer calls deleteTest() with confirm() -->
                         <button class="btn btn-sm btn-outline-danger rounded-2"
                                 th:attr="data-test-id=${t.testId}"
                                 onclick="openDeleteModal(this)">
@@ -147,7 +143,7 @@
 
                     <!-- Student actions -->
                     <div th:unless="${isTeacher}" class="test-actions">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${t.testId} + '/take'}"
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
                            class="btn btn-sm btn-dark rounded-2">
                             <i class="bi bi-play-fill me-1"></i> Take Test
                         </a>
@@ -168,7 +164,7 @@
     </div>
 </div>
 
-<!-- ── Delete Confirmation Modal ── -->
+<!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteTestModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4">
@@ -188,14 +184,14 @@
     </div>
 </div>
 
-<!-- ── Toast ── -->
+<!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
     <div id="deleteToast" class="toast align-items-center text-bg-dark border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body w-100">
                 <div id="deleteToastMessage">Deleting...</div>
                 <div class="progress mt-2" style="height:5px;">
-                    <div id="deleteProgress" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                    <div id="deleteProgress" class="progress-bar" role="progressbar" style="width: 0%"></div>
                 </div>
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -206,7 +202,8 @@
 <script th:src="@{/js/script.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    const COURSE_ID = /*[[${course.courseId}]]*/ null;
+    const COURSE_ID  = /*[[${course.courseId}]]*/ null;
+    const CHAPTER_ID = /*[[${chapter.chapterId}]]*/ null;
 
     let selectedTestId = null;
     const deleteModal  = new bootstrap.Modal(document.getElementById('deleteTestModal'));
@@ -222,12 +219,11 @@
 
     document.getElementById('confirmDeleteTestBtn').addEventListener('click', () => {
         deleteModal.hide();
-
         toastMsg.innerText = "Deleting test...";
         progressBar.style.width = "30%";
         toast.show();
 
-        fetch(`/your-courses/${COURSE_ID}/tests/${selectedTestId}`, { method: 'DELETE' })
+        fetch(`/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests/${selectedTestId}`, { method: 'DELETE' })
             .then(res => {
                 progressBar.style.width = "70%";
                 if (res.ok) {

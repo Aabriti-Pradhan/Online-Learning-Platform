@@ -22,6 +22,10 @@ public class UserCourseTest {
     private Long userId;
 
     @ManyToOne
+    @JoinColumn(name = "chapter_id")
+    private Chapter chapter;
+
+    @ManyToOne
     @JoinColumn(name = "testId", insertable = false, updatable = false)
     private Test test;
 

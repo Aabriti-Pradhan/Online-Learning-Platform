@@ -2,6 +2,7 @@ package com.finalyearproject.fyp.controller;
 
 import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class TestController {
 
     private final CourseRepository                        courseRepository;
+    private final ChapterRepository                       chapterRepository;
     private final UserRepository                          userRepository;
     private final TestRepository                          testRepository;
     private final QuestionRepository                      questionRepository;
@@ -29,10 +31,16 @@ public class TestController {
 
     // ── Teacher/Student: test dashboard ──────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests")
-    public String testsDashboard(@PathVariable Long courseId, Model model, Authentication auth) {
-        Course course = getCourse(courseId);
-        model.addAttribute("course", course);
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests")
+    public String testsDashboard(@PathVariable Long courseId,
+                                 @PathVariable Long chapterId,
+                                 Model model, Authentication auth,
+                                 HttpServletRequest  request) {
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
+        model.addAttribute("course",   course);
+        model.addAttribute("chapter",  chapter);
+        model.addAttribute("currentPath", request.getRequestURI());
 
         boolean isStudent = auth.getAuthorities()
                 .stream().anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"));
@@ -42,9 +50,8 @@ public class TestController {
         model.addAttribute("isTeacher", isTeacher);
 
         if (isStudent) {
-            // Students: show available tests with their past attempts
             User user = resolveUser(auth);
-            List<Map<String, Object>> testData = uctRepository.findByCourse(course).stream().map(uct -> {
+            List<Map<String, Object>> testData = uctRepository.findByChapter(chapter).stream().map(uct -> {
                 Test t      = uct.getTest();
                 long qCount = uctqRepository.findByTest(t).size();
 
@@ -72,8 +79,7 @@ public class TestController {
             return "tests/take";
         }
 
-        // Teachers: show all tests with stats
-        List<Map<String, Object>> summaries = uctRepository.findByCourse(course).stream().map(uct -> {
+        List<Map<String, Object>> summaries = uctRepository.findByChapter(chapter).stream().map(uct -> {
             Test t      = uct.getTest();
             long qCount = uctqRepository.findByTest(t).size();
             long aCount = uctqaRepository.findByTest(t).stream()
@@ -95,25 +101,30 @@ public class TestController {
 
     // ── Teacher: create test page ─────────────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests/create")
-    public String createTestPage(@PathVariable Long courseId, Model model) {
-        model.addAttribute("course", getCourse(courseId));
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/create")
+    public String createTestPage(@PathVariable Long courseId,
+                                 @PathVariable Long chapterId,
+                                 Model model) {
+        model.addAttribute("course",  getCourse(courseId));
+        model.addAttribute("chapter", getChapter(chapterId));
         return "tests/create";
     }
 
     // ── Teacher: save test + questions ────────────────────────────────────────
 
-    @PostMapping("/your-courses/{courseId}/tests/create")
+    @PostMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/create")
     @ResponseBody
     public ResponseEntity<?> saveTest(@PathVariable Long courseId,
+                                      @PathVariable Long chapterId,
                                       @RequestBody Map<String, Object> payload,
                                       Authentication auth) {
-        Course course = getCourse(courseId);
-        User   user   = resolveUser(auth);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
+        User    user    = resolveUser(auth);
 
-        String  title     = (String) payload.get("testTitle");
-        String  testType  = (String) payload.get("testType");
-        Integer timer     = payload.get("timerMinutes") != null
+        String  title    = (String) payload.get("testTitle");
+        String  testType = (String) payload.get("testType");
+        Integer timer    = payload.get("timerMinutes") != null
                 ? Integer.valueOf(payload.get("timerMinutes").toString()) : null;
 
         Test test = new Test();
@@ -125,6 +136,7 @@ public class TestController {
 
         UserCourseTest uct = new UserCourseTest();
         uct.setTestId(test.getTestId()); uct.setCourseId(course.getCourseId()); uct.setUserId(user.getUserId());
+        uct.setChapter(chapter);
         uctRepository.save(uct);
 
         List<Map<String, String>> qs = (List<Map<String, String>>) payload.get("questions");
@@ -147,10 +159,12 @@ public class TestController {
 
     // ── Teacher: delete test ──────────────────────────────────────────────────
 
-    @DeleteMapping("/your-courses/{courseId}/tests/{testId}")
+    @DeleteMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}")
     @ResponseBody
     @org.springframework.transaction.annotation.Transactional
-    public ResponseEntity<?> deleteTest(@PathVariable Long courseId, @PathVariable Long testId) {
+    public ResponseEntity<?> deleteTest(@PathVariable Long courseId,
+                                        @PathVariable Long chapterId,
+                                        @PathVariable Long testId) {
         Test test = getTest(testId);
         uctqaRepository.deleteAll(uctqaRepository.findByTest(test));
         uctqRepository.deleteAll(uctqRepository.findByTest(test));
@@ -162,11 +176,16 @@ public class TestController {
 
     // ── Teacher: per-student results ──────────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests/{testId}/results")
-    public String testResults(@PathVariable Long courseId, @PathVariable Long testId, Model model) {
-        Test   test   = getTest(testId);
-        Course course = getCourse(courseId);
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/results")
+    public String testResults(@PathVariable Long courseId,
+                              @PathVariable Long chapterId,
+                              @PathVariable Long testId,
+                              Model model) {
+        Test    test    = getTest(testId);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
         model.addAttribute("test", test); model.addAttribute("course", course);
+        model.addAttribute("chapter", chapter);
 
         List<UserCourseTestQuestionAttempt> all = uctqaRepository.findByTest(test);
         Map<Long, Map<String, Object>> byAttempt = new LinkedHashMap<>();
@@ -188,12 +207,14 @@ public class TestController {
 
     // ── Teacher: edit test page ───────────────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests/{testId}/edit")
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/edit")
     public String editTestPage(@PathVariable Long courseId,
+                               @PathVariable Long chapterId,
                                @PathVariable Long testId,
                                Model model) {
-        Test   test   = getTest(testId);
-        Course course = getCourse(courseId);
+        Test    test    = getTest(testId);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
 
         String rawType = test.getTestType();
         String type    = rawType != null && rawType.contains(":") ? rawType.split(":")[0] : rawType;
@@ -205,26 +226,28 @@ public class TestController {
         List<Question> questions = uctqRepository.findByTest(test)
                 .stream().map(UserCourseTestQuestion::getQuestion).toList();
 
-        model.addAttribute("course",        course);
-        model.addAttribute("test",          test);
-        model.addAttribute("testType",      type);
-        model.addAttribute("timerMinutes",  timer);
-        model.addAttribute("questions",     questions);
+        model.addAttribute("course",       course);
+        model.addAttribute("chapter",      chapter);
+        model.addAttribute("test",         test);
+        model.addAttribute("testType",     type);
+        model.addAttribute("timerMinutes", timer);
+        model.addAttribute("questions",    questions);
         return "tests/edit";
     }
 
     // ── Teacher: save edits to existing test ─────────────────────────────────
 
-    @PutMapping("/your-courses/{courseId}/tests/{testId}/edit")
+    @PutMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/edit")
     @ResponseBody
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> updateTest(@PathVariable Long courseId,
+                                        @PathVariable Long chapterId,
                                         @PathVariable Long testId,
                                         @RequestBody Map<String, Object> payload,
                                         Authentication auth) {
-        Test   test   = getTest(testId);
-        Course course = getCourse(courseId);
-        User   user   = resolveUser(auth);
+        Test    test    = getTest(testId);
+        Course  course  = getCourse(courseId);
+        User    user    = resolveUser(auth);
 
         String  title    = (String) payload.get("testTitle");
         String  testType = (String) payload.get("testType");
@@ -236,7 +259,6 @@ public class TestController {
                 ? "PRACTICE_EXAM:" + timer : testType);
         testRepository.save(test);
 
-        // Delete old questions and re-save new ones
         List<UserCourseTestQuestion> oldUctqs = uctqRepository.findByTest(test);
         uctqRepository.deleteAll(oldUctqs);
 
@@ -268,20 +290,16 @@ public class TestController {
         return ResponseEntity.ok(Map.of("testId", test.getTestId(), "testTitle", test.getTestTitle()));
     }
 
-    // ── Student: available tests list (kept for direct URL access) ────────────
-
-    @GetMapping("/your-courses/{courseId}/tests/take")
-    public String takeTestList(@PathVariable Long courseId, Model model, Authentication auth) {
-        // Delegate to the main tests endpoint which handles role-based routing
-        return testsDashboard(courseId, model, auth);
-    }
-
     // ── Student: exam page ────────────────────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests/{testId}/take")
-    public String examPage(@PathVariable Long courseId, @PathVariable Long testId, Model model) {
-        Test   test   = getTest(testId);
-        Course course = getCourse(courseId);
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/take")
+    public String examPage(@PathVariable Long courseId,
+                           @PathVariable Long chapterId,
+                           @PathVariable Long testId,
+                           Model model) {
+        Test    test    = getTest(testId);
+        Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
 
         String rawType = test.getTestType();
         String type    = rawType != null && rawType.contains(":") ? rawType.split(":")[0] : rawType;
@@ -294,6 +312,7 @@ public class TestController {
                 .stream().map(UserCourseTestQuestion::getQuestion).toList();
 
         model.addAttribute("test", test); model.addAttribute("course", course);
+        model.addAttribute("chapter", chapter);
         model.addAttribute("questions", questions);
         model.addAttribute("testType", type); model.addAttribute("timerMinutes", timer);
         return "tests/exam";
@@ -301,9 +320,10 @@ public class TestController {
 
     // ── Student: submit answers ───────────────────────────────────────────────
 
-    @PostMapping("/your-courses/{courseId}/tests/{testId}/submit")
+    @PostMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/submit")
     @ResponseBody
     public ResponseEntity<?> submitTest(@PathVariable Long courseId,
+                                        @PathVariable Long chapterId,
                                         @PathVariable Long testId,
                                         @RequestBody Map<String, String> answers,
                                         Authentication auth) {
@@ -348,11 +368,15 @@ public class TestController {
 
     // ── Student: result page ──────────────────────────────────────────────────
 
-    @GetMapping("/your-courses/{courseId}/tests/{testId}/result/{attemptId}")
-    public String resultPage(@PathVariable Long courseId, @PathVariable Long testId,
-                             @PathVariable Long attemptId, Model model) {
+    @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/tests/{testId}/result/{attemptId}")
+    public String resultPage(@PathVariable Long courseId,
+                             @PathVariable Long chapterId,
+                             @PathVariable Long testId,
+                             @PathVariable Long attemptId,
+                             Model model) {
         Test    test    = getTest(testId);
         Course  course  = getCourse(courseId);
+        Chapter chapter = getChapter(chapterId);
         Attempt attempt = attemptRepository.findById(attemptId)
                 .orElseThrow(() -> new RuntimeException("Attempt not found"));
 
@@ -372,6 +396,7 @@ public class TestController {
         int total = uctqs.size();
         int score = attempt.getScore();
         model.addAttribute("test", test); model.addAttribute("course", course);
+        model.addAttribute("chapter", chapter);
         model.addAttribute("attempt", attempt); model.addAttribute("results", results);
         model.addAttribute("total", total); model.addAttribute("score", score);
         model.addAttribute("pct", total > 0 ? score * 100 / total : 0);
@@ -382,6 +407,9 @@ public class TestController {
 
     private Course getCourse(Long id) {
         return courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+    }
+    private Chapter getChapter(Long id) {
+        return chapterRepository.findById(id).orElseThrow(() -> new RuntimeException("Chapter not found"));
     }
     private Test getTest(Long id) {
         return testRepository.findById(id).orElseThrow(() -> new RuntimeException("Test not found"));

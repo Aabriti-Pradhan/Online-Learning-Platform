@@ -32,7 +32,7 @@
                     <h2 class="fw-bold mb-0" th:text="${test.testTitle} + ' — Results'">Results</h2>
                     <p class="text-muted small mb-0" th:text="${course.courseName}"></p>
                 </div>
-                <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests'}"
+                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests'}"
                    class="btn btn-sm btn-outline-secondary rounded-2">
                     <i class="bi bi-arrow-left"></i>
                 </a>
@@ -89,7 +89,7 @@
                             </div>
                         </td>
                         <td class="text-end">
-                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests/' + ${test.testId} + '/result/' + ${r.attemptId}}"
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${test.testId} + '/result/' + ${r.attemptId}}"
                                class="btn btn-sm btn-outline-secondary rounded-2">
                                 <i class="bi bi-eye me-1"></i> View
                             </a>

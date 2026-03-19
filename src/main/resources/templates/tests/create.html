@@ -114,9 +114,9 @@
             <div class="d-flex align-items-center mb-4 page-header gap-3">
                 <div>
                     <h2 class="fw-bold mb-0">Create Test</h2>
-                    <p class="text-muted small mb-0" th:text="${course.courseName}"></p>
+                    <p class="text-muted small mb-0"><span th:text="${course.courseName}"></span> <span class="text-muted">/</span> <span th:text="${chapter.chapterTitle}"></span></p>
                 </div>
-                <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests'}"
+                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests'}"
                    class="btn btn-sm btn-outline-secondary rounded-2">
                     <i class="bi bi-arrow-left"></i>
                 </a>
@@ -156,7 +156,7 @@
                 <div class="save-bar">
                     <span class="q-counter" id="qCounter">0 questions</span>
                     <div class="d-flex gap-2">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/tests'}"
+                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests'}"
                            class="btn btn-outline-secondary rounded-3">Discard</a>
                         <button class="btn btn-dark rounded-3" onclick="saveTest()">
                             <i class="bi bi-floppy me-1"></i> Save Test
@@ -171,6 +171,7 @@
 <script th:src="@{/js/script.js}"></script>
 <script th:inline="javascript">
     const COURSE_ID  = /*[[${course.courseId}]]*/ null;
+    const CHAPTER_ID = /*[[${chapter.chapterId}]]*/ null;
     let   selectedType = 'QUIZ';
     let   qCount       = 0;
 
@@ -267,7 +268,7 @@
         const timer = selectedType === 'PRACTICE_EXAM'
             ? parseInt(document.getElementById('timerMinutes').value) : null;
 
-        const res = await fetch(`/your-courses/${COURSE_ID}/tests/create`, {
+        const res = await fetch(`/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ testTitle: title, testType: selectedType,
@@ -275,7 +276,7 @@
         });
 
         if (res.ok) {
-            window.location.href = `/your-courses/${COURSE_ID}/tests`;
+            window.location.href = `/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests`;
         } else {
             alert('Failed to save test. Please try again.');
         }

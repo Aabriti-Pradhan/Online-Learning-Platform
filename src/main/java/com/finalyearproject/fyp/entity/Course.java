@@ -22,6 +22,10 @@ public class Course {
     private LocalDateTime createdAt;
     private String driveFolderId;
 
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("chapterOrder ASC")
+    private List<Chapter> chapters;
+
     @OneToMany(mappedBy = "course")
     private List<UserCourse> userCourses;
 

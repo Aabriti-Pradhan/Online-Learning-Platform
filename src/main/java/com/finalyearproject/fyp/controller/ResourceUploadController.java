@@ -4,7 +4,6 @@ import com.finalyearproject.fyp.entity.Resource;
 import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.repository.UserRepository;
 import com.finalyearproject.fyp.service.ResourceService;
-import com.finalyearproject.fyp.controller.YourCoursesController;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
-/**
- * Phase 1 — Replaces DriveUploadController.
- * All uploads go to local disk via LocalFileStorageService.
- */
 @Controller
 @RequiredArgsConstructor
 public class ResourceUploadController {
@@ -27,18 +22,19 @@ public class ResourceUploadController {
     private final ResourceService resourceService;
     private final UserRepository  userRepository;
 
-    /** Upload a PDF into a course. Called from the course resources page. */
-    @PostMapping("/upload-pdf/{courseId}")
+    /** Upload a PDF into a chapter of a course. */
+    @PostMapping("/your-courses/{courseId}/chapters/{chapterId}/upload-pdf")
     @ResponseBody
     @Transactional
     public ResponseEntity<?> uploadPdf(
             @PathVariable Long courseId,
+            @PathVariable Long chapterId,
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
 
         try {
             User user = resolveUser(authentication);
-            Resource saved = resourceService.savePdf(user.getUserId(), courseId, file);
+            Resource saved = resourceService.savePdf(user.getUserId(), courseId, chapterId, file);
 
             return ResponseEntity.ok(Map.of(
                     "resourceId",   saved.getResourceId(),
