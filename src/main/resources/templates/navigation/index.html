@@ -1,5 +1,104 @@
 <nav th:fragment="topbar" id="topbar">
 
+    <style>
+        /* Bell icon & dropdown */
+        .notif-wrap {
+            position: relative;
+        }
+        .notif-bell {
+            background: none; border: none; cursor: pointer;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem; color: var(--color-text-secondary);
+            transition: background 0.15s, color 0.15s;
+            position: relative;
+        }
+        .notif-bell:hover { background: var(--color-bg); color: var(--color-primary); }
+        .notif-badge {
+            position: absolute; top: 4px; right: 4px;
+            background: #ef4444; color: white;
+            font-size: 0.6rem; font-weight: 700;
+            border-radius: 99px; padding: 1px 5px;
+            min-width: 16px; text-align: center;
+            display: none;
+        }
+        .notif-badge.visible { display: block; }
+
+        /* Dropdown */
+        .notif-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0;
+            width: 340px; background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 9999; display: none;
+            overflow: hidden;
+        }
+        .notif-dropdown.open { display: block; }
+
+        .notif-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.85rem 1rem 0.6rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .notif-header-title { font-weight: 700; font-size: 0.9rem; color: var(--color-text-primary); }
+        .notif-mark-all {
+            font-size: 0.76rem; color: var(--color-accent); cursor: pointer;
+            background: none; border: none; font-family: inherit; font-weight: 600;
+        }
+        .notif-mark-all:hover { text-decoration: underline; }
+
+        .notif-list { max-height: 360px; overflow-y: auto; }
+
+        .notif-item {
+            display: flex; gap: 0.75rem; padding: 0.85rem 1rem;
+            border-bottom: 1px solid #f3f4f6; cursor: pointer;
+            transition: background 0.12s;
+        }
+        .notif-item:hover { background: #f9fafb; }
+        .notif-item.unread { background: #f0fdf4; }
+        .notif-item.unread:hover { background: #dcfce7; }
+
+        .notif-icon {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; flex-shrink: 0;
+        }
+        .notif-icon.ENROLLMENT      { background: #ede9fe; color: #6c47ff; }
+        .notif-icon.NEW_CHAPTER     { background: #ccfbf1; color: #0d9488; }
+        .notif-icon.NEW_RESOURCE    { background: #fef3c7; color: #d97706; }
+        .notif-icon.NEW_TEST        { background: #dbeafe; color: #2563eb; }
+        .notif-icon.FRIEND_REQUEST  { background: #ffe4e6; color: #e11d48; }
+        .notif-icon.FRIEND_ACCEPTED { background: #dcfce7; color: #16a34a; }
+        .notif-icon.TEST_SUBMITTED  { background: #f3f4f6; color: #374151; }
+
+        .notif-content { flex: 1; min-width: 0; }
+        .notif-title   { font-size: 0.82rem; font-weight: 700; color: var(--color-text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .notif-msg     { font-size: 0.76rem; color: var(--color-text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .notif-time    { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+
+        .notif-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--color-accent); flex-shrink: 0;
+            align-self: center; display: none;
+        }
+        .notif-item.unread .notif-dot { display: block; }
+
+        .notif-empty {
+            text-align: center; padding: 2rem 1rem;
+            font-size: 0.85rem; color: #9ca3af;
+        }
+
+        .notif-footer {
+            text-align: center; padding: 0.6rem;
+            border-top: 1px solid var(--color-border);
+            font-size: 0.78rem; color: var(--color-accent);
+            font-weight: 600; cursor: pointer;
+        }
+    </style>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <a class="navbar-brand fw-bold fs-3" th:href="@{/}">
@@ -12,32 +111,145 @@
             <span id="dateTime"></span>
         </div>
 
-        <div class="btn btn-dark px-4 py-2 rounded-3">
-            <a onclick="window.location.href='http://localhost:8081/logout'">Logout</a>
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Bell icon -->
+            <div class="notif-wrap" id="notifWrap">
+                <button class="notif-bell" id="notifBell" onclick="toggleNotifDropdown()">
+                    <i class="bi bi-bell"></i>
+                    <span class="notif-badge" id="notifBadge"></span>
+                </button>
+
+                <!-- Dropdown -->
+                <div class="notif-dropdown" id="notifDropdown">
+                    <div class="notif-header">
+                        <span class="notif-header-title">Notifications</span>
+                        <button class="notif-mark-all" onclick="markAllRead()">Mark all as read</button>
+                    </div>
+                    <div class="notif-list" id="notifList">
+                        <div class="notif-empty">No notifications yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn btn-dark px-4 py-2 rounded-3">
+                <a onclick="window.location.href='http://localhost:8081/logout'">Logout</a>
+            </div>
         </div>
     </div>
 
     <script>
+        // Date/time
         function updateDateTime() {
             const now = new Date();
-
-            const options = {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            };
-
-            const date = now.toLocaleDateString('en-GB', options);
+            const date = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
             const time = now.toLocaleTimeString('en-GB');
-
             document.getElementById('dateTime').textContent = `${date} | ${time}`;
         }
-
-        // Run once immediately
         updateDateTime();
-
-        // Update every second
         setInterval(updateDateTime, 1000);
+
+        // Notification icons by type
+        const TYPE_ICONS = {
+            ENROLLMENT:      'bi-person-plus',
+            NEW_CHAPTER:     'bi-collection',
+            NEW_RESOURCE:    'bi-file-earmark-pdf',
+            NEW_TEST:        'bi-patch-question',
+            FRIEND_REQUEST:  'bi-person-heart',
+            FRIEND_ACCEPTED: 'bi-people',
+            TEST_SUBMITTED:  'bi-check-circle'
+        };
+
+        // Relative time
+        function relativeTime(isoString) {
+            const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
+            if (diff < 60)   return 'Just now';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
+        }
+
+        // Render notifications
+        function renderNotifications(notifications) {
+            const list = document.getElementById('notifList');
+            if (!notifications || notifications.length === 0) {
+                list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+                return;
+            }
+            list.innerHTML = notifications.map(n => `
+                <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                     onclick="handleNotifClick(${n.notificationId}, '${n.type}', ${n.referenceId})">
+                    <div class="notif-icon ${n.type}">
+                        <i class="bi ${TYPE_ICONS[n.type] || 'bi-bell'}"></i>
+                    </div>
+                    <div class="notif-content">
+                        <div class="notif-title">${n.title}</div>
+                        <div class="notif-msg">${n.message}</div>
+                        <div class="notif-time">${relativeTime(n.createdAt)}</div>
+                    </div>
+                    <div class="notif-dot"></div>
+                </div>
+            `).join('');
+        }
+
+        // Poll for notifications
+        function pollNotifications() {
+            fetch('/notifications/summary')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (!data) return;
+                    const badge = document.getElementById('notifBadge');
+                    if (data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                        badge.classList.add('visible');
+                    } else {
+                        badge.classList.remove('visible');
+                    }
+                    renderNotifications(data.notifications);
+                })
+                .catch(() => {}); // silently fail if not logged in
+        }
+
+        pollNotifications();
+        setInterval(pollNotifications, 30000);
+
+        // Toggle dropdown
+        function toggleNotifDropdown() {
+            document.getElementById('notifDropdown').classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('notifWrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('notifDropdown').classList.remove('open');
+            }
+        });
+
+        // Handle click on a notification
+        function handleNotifClick(notifId, type, referenceId) {
+            // Mark as read
+            fetch(`/notifications/${notifId}/read`, { method: 'POST' })
+                .then(() => pollNotifications());
+
+            // Navigate based on type
+            // referenceId meanings:
+            // ENROLLMENT, NEW_CHAPTER, NEW_RESOURCE, NEW_TEST → courseId or chapterId
+            // FRIEND_REQUEST, FRIEND_ACCEPTED                 → userId
+            // TEST_SUBMITTED                                  → testId
+            if (type === 'FRIEND_REQUEST' || type === 'FRIEND_ACCEPTED') {
+                window.location.href = '/friends';
+            } else if (referenceId) {
+                window.location.href = '/your-courses';
+            }
+
+            document.getElementById('notifDropdown').classList.remove('open');
+        }
+
+        // Mark all as read
+        function markAllRead() {
+            fetch('/notifications/read-all', { method: 'POST' })
+                .then(() => pollNotifications());
+        }
     </script>
 </nav>

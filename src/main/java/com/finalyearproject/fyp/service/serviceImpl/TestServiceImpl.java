@@ -4,6 +4,8 @@ import com.finalyearproject.fyp.dto.*;
 import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.*;
 import com.finalyearproject.fyp.service.TestService;
+import com.finalyearproject.fyp.service.NotificationService;
+import com.finalyearproject.fyp.repository.UserCourseEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ public class TestServiceImpl implements TestService {
     private final UserCourseTestRepository                uctRepository;
     private final UserCourseTestQuestionRepository        uctqRepository;
     private final UserCourseTestQuestionAttemptRepository uctqaRepository;
+    private final UserCourseEnrollmentRepository           enrollmentRepository;
+    private final NotificationService                       notificationService;
 
     @Override
     public List<TestSummaryDTO> getTestsForTeacher(Long chapterId) {
@@ -83,6 +87,17 @@ public class TestServiceImpl implements TestService {
         uctRepository.save(uct);
 
         saveQuestions(req.questions(), test, course, user);
+
+        // Notify all enrolled students
+        java.util.List<Long> studentIds = enrollmentRepository.findByCourse(course)
+                .stream().map(uce -> uce.getUser().getUserId()).toList();
+        notificationService.sendToUsers(
+                studentIds,
+                "New Test Available",
+                "A new test \"" + test.getTestTitle() + "\" was added in " + course.getCourseName(),
+                "NEW_TEST",
+                chapter.getChapterId()
+        );
 
         return new TestSummaryDTO(test.getTestId(), test.getTestTitle(),
                 req.testType(), test.getCreatedAt(), req.questions().size(), 0);
@@ -168,6 +183,19 @@ public class TestServiceImpl implements TestService {
             uctqaRepository.save(ucta);
         }
 
+        // Notify teacher
+        java.util.List<Long> teacherIds = uctRepository.findByCourse(course).stream()
+                .filter(u -> u.getTestId().equals(testId))
+                .map(u -> u.getUser().getUserId())
+                .collect(java.util.stream.Collectors.toList());
+        notificationService.sendToUsers(
+                teacherIds,
+                "Test Submitted",
+                user.getUsername() + " completed \"" + test.getTestTitle() + "\" — Score: " + correct + "/" + uctqs.size(),
+                "TEST_SUBMITTED",
+                test.getTestId()
+        );
+
         return new TestResultDTO(attempt.getAttemptId(), correct, uctqs.size());
     }
 
@@ -215,7 +243,7 @@ public class TestServiceImpl implements TestService {
         return new ArrayList<>(byAttempt.values());
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // helpers
 
     private void saveQuestions(List<QuestionDTO> dtos, Test test, Course course, User user) {
         if (dtos == null) return;

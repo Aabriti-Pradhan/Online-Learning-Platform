@@ -4,6 +4,7 @@ import com.finalyearproject.fyp.dto.EnrollmentDTO;
 import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.*;
 import com.finalyearproject.fyp.service.EnrollmentService;
+import com.finalyearproject.fyp.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,8 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final UserRepository                 userRepository;
     private final EnrollmentRepository           enrollmentRepository;
     private final UserCourseEnrollmentRepository uceRepository;
+    private final UserCourseRepository           userCourseRepository;
+    private final NotificationService            notificationService;
 
     @Override
     @Transactional
@@ -43,6 +46,17 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         uce.setUserId(user.getUserId());
         uceRepository.save(uce);
 
+        // Notify the course teacher(s)
+        List<Long> teacherIds = userCourseRepository.findByCourse(course)
+                .stream().map(uc -> uc.getUser().getUserId()).toList();
+        notificationService.sendToUsers(
+                teacherIds,
+                "New Enrollment",
+                user.getUsername() + " enrolled in " + course.getCourseName(),
+                "ENROLLMENT",
+                courseId
+        );
+
         return new EnrollmentDTO("Enrolled successfully", courseId, course.getCourseName());
     }
 
@@ -51,7 +65,6 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     public void unenroll(String userEmail, Long courseId) {
         User   user   = getUser(userEmail);
         Course course = getCourse(courseId);
-
         uceRepository.findByUserAndCourse(user, course).ifPresent(uce -> {
             enrollmentRepository.deleteById(uce.getEnrollmentId());
             uceRepository.delete(uce);
@@ -72,13 +85,6 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         return courseRepository.findAll();
     }
 
-    private User getUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
-    }
-
-    private Course getCourse(Long id) {
-        return courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found: " + id));
-    }
+    private User   getUser(String email) { return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found: " + email)); }
+    private Course getCourse(Long id)    { return courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found: " + id)); }
 }

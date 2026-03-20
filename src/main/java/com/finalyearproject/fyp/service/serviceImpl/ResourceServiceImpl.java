@@ -4,6 +4,8 @@ import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.*;
 import com.finalyearproject.fyp.service.LocalFileStorageService;
 import com.finalyearproject.fyp.service.ResourceService;
+import com.finalyearproject.fyp.service.NotificationService;
+import com.finalyearproject.fyp.repository.UserCourseEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +19,9 @@ import java.util.List;
 public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceRepository           resourceRepository;
-    private final UserCourseResourceRepository ucrRepository;
+    private final UserCourseResourceRepository  ucrRepository;
+    private final UserCourseEnrollmentRepository enrollmentRepository;
+    private final NotificationService             notificationService;
     private final UserRepository               userRepository;
     private final CourseRepository             courseRepository;
     private final ChapterRepository            chapterRepository;
@@ -26,11 +30,27 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional
     public Resource savePdf(Long userId, Long courseId, Long chapterId, MultipartFile file) throws Exception {
-        User    user    = getUser(userId);
-        Course  course  = getCourse(courseId);
-        Chapter chapter = getChapter(chapterId);
-        String  path    = storageService.store(file, user.getUsername(), course.getCourseName());
-        return saveResourceRecord(user, course, chapter, file.getOriginalFilename(), "PDF", path);
+        User     user     = getUser(userId);
+        Course   course   = getCourse(courseId);
+        Chapter  chapter  = getChapter(chapterId);
+        String   path     = storageService.store(file, user.getUsername(), course.getCourseName());
+        Resource resource = saveResourceRecord(user, course, chapter, file.getOriginalFilename(), "PDF", path);
+
+        // Notify enrolled students that a new PDF was uploaded
+        List<Long> studentIds = enrollmentRepository.findByCourse(course)
+                .stream().map(uce -> uce.getUser().getUserId())
+                .filter(id -> !id.equals(userId)) // don't notify the uploader
+                .toList();
+        if (!studentIds.isEmpty()) {
+            notificationService.sendToUsers(
+                    studentIds,
+                    "New Resource Added",
+                    "A new PDF \"" + resource.getResourceName() + "\" was added in " + course.getCourseName(),
+                    "NEW_RESOURCE",
+                    chapterId
+            );
+        }
+        return resource;
     }
 
     @Override
@@ -91,7 +111,7 @@ public class ResourceServiceImpl implements ResourceService {
         resourceRepository.delete(resource);
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // helpers
 
     private Resource saveResourceRecord(User user, Course course, Chapter chapter,
                                         String originalName, String type,

@@ -6,6 +6,7 @@ import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.repository.FriendshipRepository;
 import com.finalyearproject.fyp.repository.UserRepository;
 import com.finalyearproject.fyp.service.FriendshipService;
+import com.finalyearproject.fyp.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,9 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository       userRepository;
+    private final NotificationService  notificationService;
 
-    // ── Friends page data ─────────────────────────────────────────────────────
+    // Friends page data
 
     @Override
     public FriendsPageDTO getFriendsPageData(String email) {
@@ -67,7 +69,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         return new FriendsPageDTO(friends, incoming, pendingOutgoing, friendIds, allUsers);
     }
 
-    // ── Send request ──────────────────────────────────────────────────────────
+    // Send request
 
     @Override
     @Transactional
@@ -85,9 +87,18 @@ public class FriendshipServiceImpl implements FriendshipService {
         f.setStatus("PENDING");
         f.setCreatedAt(LocalDateTime.now());
         friendshipRepository.save(f);
+
+        // Notify addressee
+        notificationService.sendToUser(
+                target.getUserId(),
+                "New Friend Request",
+                me.getUsername() + " sent you a friend request.",
+                "FRIEND_REQUEST",
+                me.getUserId()
+        );
     }
 
-    // ── Accept request ────────────────────────────────────────────────────────
+    // Accept request
 
     @Override
     @Transactional
@@ -102,9 +113,18 @@ public class FriendshipServiceImpl implements FriendshipService {
         f.setStatus("ACCEPTED");
         f.setUpdatedAt(LocalDateTime.now());
         friendshipRepository.save(f);
+
+        // Notify the original requester
+        notificationService.sendToUser(
+                f.getRequester().getUserId(),
+                "Friend Request Accepted",
+                me.getUsername() + " accepted your friend request.",
+                "FRIEND_ACCEPTED",
+                me.getUserId()
+        );
     }
 
-    // ── Decline request ───────────────────────────────────────────────────────
+    // Decline request
 
     @Override
     @Transactional
@@ -119,7 +139,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         friendshipRepository.delete(f);
     }
 
-    // ── Remove friend ─────────────────────────────────────────────────────────
+    // Remove friend
 
     @Override
     @Transactional
@@ -137,7 +157,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         friendshipRepository.delete(f);
     }
 
-    // ── Cancel outgoing request ───────────────────────────────────────────────
+    // Cancel outgoing request
 
     @Override
     @Transactional
@@ -148,7 +168,7 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .ifPresent(friendshipRepository::delete);
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // Private helpers
 
     private User getByEmail(String email) {
         return userRepository.findByEmail(email)

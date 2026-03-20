@@ -6,27 +6,30 @@ import com.finalyearproject.fyp.entity.Chapter;
 import com.finalyearproject.fyp.entity.Course;
 import com.finalyearproject.fyp.repository.ChapterRepository;
 import com.finalyearproject.fyp.repository.CourseRepository;
+import com.finalyearproject.fyp.repository.UserCourseEnrollmentRepository;
 import com.finalyearproject.fyp.service.ChapterService;
+import com.finalyearproject.fyp.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ChapterServiceImpl implements ChapterService {
 
-    private final ChapterRepository chapterRepository;
-    private final CourseRepository  courseRepository;
+    private final ChapterRepository              chapterRepository;
+    private final CourseRepository               courseRepository;
+    private final UserCourseEnrollmentRepository enrollmentRepository;
+    private final NotificationService            notificationService;
 
     @Override
     @Transactional
     public ChapterDTO createChapter(Long courseId, CreateChapterRequest request) {
-        Course course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found: " + courseId));
-
-        int order = chapterRepository.countByCourse(course) + 1;
+        Course course = getCourse(courseId);
+        int    order  = chapterRepository.countByCourse(course) + 1;
 
         Chapter chapter = new Chapter();
         chapter.setCourse(course);
@@ -35,6 +38,17 @@ public class ChapterServiceImpl implements ChapterService {
         chapter.setChapterOrder(order);
         chapter.setCreatedAt(LocalDateTime.now());
         chapterRepository.save(chapter);
+
+        // Notify all enrolled students
+        List<Long> studentIds = enrollmentRepository.findByCourse(course)
+                .stream().map(uce -> uce.getUser().getUserId()).toList();
+        notificationService.sendToUsers(
+                studentIds,
+                "New Chapter Added",
+                "A new chapter \"" + chapter.getChapterTitle() + "\" was added to " + course.getCourseName(),
+                "NEW_CHAPTER",
+                courseId
+        );
 
         return toDTO(chapter);
     }
@@ -55,12 +69,7 @@ public class ChapterServiceImpl implements ChapterService {
         chapterRepository.delete(getChapter(chapterId));
     }
 
-    private Chapter getChapter(Long id) {
-        return chapterRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Chapter not found: " + id));
-    }
-
-    private ChapterDTO toDTO(Chapter c) {
-        return new ChapterDTO(c.getChapterId(), c.getChapterTitle(), c.getChapterDesc(), c.getChapterOrder());
-    }
+    private Course  getCourse(Long id)  { return courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found: " + id)); }
+    private Chapter getChapter(Long id) { return chapterRepository.findById(id).orElseThrow(() -> new RuntimeException("Chapter not found: " + id)); }
+    private ChapterDTO toDTO(Chapter c) { return new ChapterDTO(c.getChapterId(), c.getChapterTitle(), c.getChapterDesc(), c.getChapterOrder()); }
 }
