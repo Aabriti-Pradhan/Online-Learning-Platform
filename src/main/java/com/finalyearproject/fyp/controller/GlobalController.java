@@ -1,8 +1,8 @@
-package com.finalyearproject.fyp.config;
+package com.finalyearproject.fyp.controller;
 
-import com.finalyearproject.fyp.controller.YourCoursesController;
-import com.finalyearproject.fyp.entity.*;
-import com.finalyearproject.fyp.repository.*;
+import com.finalyearproject.fyp.entity.Course;
+import com.finalyearproject.fyp.service.CourseService;
+import com.finalyearproject.fyp.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -16,9 +16,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GlobalController {
 
-    private final UserRepository               userRepository;
-    private final UserCourseRepository         userCourseRepository;
-    private final UserCourseEnrollmentRepository enrollmentRepository;
+    private final CourseService courseService;
+    private final UserService   userService;
 
     @ModelAttribute
     public void addGlobalAttributes(Model model, Authentication authentication) {
@@ -27,28 +26,11 @@ public class GlobalController {
         String email = YourCoursesController.extractEmail(authentication);
         if (email == null) return;
 
-        User user = userRepository.findByEmail(email).orElse(null);
-        if (user == null) return;
+        // loggedInUser
+        model.addAttribute("loggedInUser", userService.findByEmail(email));
 
-        model.addAttribute("loggedInUser", user);
-
-        boolean isStudent = authentication.getAuthorities()
-                .contains(new SimpleGrantedAuthority("ROLE_STUDENT"));
-
-        if (isStudent) {
-            // Students see their ENROLLED courses in sidebar
-            List<Course> enrolledCourses = enrollmentRepository.findByUser(user)
-                    .stream()
-                    .map(uce -> uce.getCourse())
-                    .toList();
-            model.addAttribute("userCourses", enrolledCourses);
-        } else {
-            // Teachers see their CREATED courses in sidebar
-            List<Course> createdCourses = userCourseRepository.findByUser(user)
-                    .stream()
-                    .map(UserCourse::getCourse)
-                    .toList();
-            model.addAttribute("userCourses", createdCourses);
-        }
+        // userCourses for sidebar
+        List<Course> courses = courseService.getCoursesForUser(email);
+        model.addAttribute("userCourses", courses);
     }
 }

@@ -50,7 +50,7 @@
 
             <div class="d-flex justify-content-between align-items-center mb-4 page-header">
                 <div>
-                    <nav aria-label="breadcrumb">
+                    <nav aria-label="breadcrumb" class="course-breadcrumb mb-1">
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a th:href="@{/your-courses}">Courses</a></li>
                             <li class="breadcrumb-item"><a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}" th:text="${course.courseName}">Course</a></li>

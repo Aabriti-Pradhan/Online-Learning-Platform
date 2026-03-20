@@ -56,6 +56,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User registerOAuthUser(String email, String name, String role) {
+        User existing = userDao.findByEmail(email);
+        if (existing != null) return existing;
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(name);
+        user.setRole(role);
+        return userDao.save(user);
+    }
+
+    @Override
     public boolean checkPassword(String rawPassword, String hashedPassword) {
         return BCrypt.checkpw(rawPassword, hashedPassword);
     }

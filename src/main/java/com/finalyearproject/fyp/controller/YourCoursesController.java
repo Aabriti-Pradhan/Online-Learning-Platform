@@ -1,8 +1,12 @@
 package com.finalyearproject.fyp.controller;
 
-import com.finalyearproject.fyp.entity.*;
-import com.finalyearproject.fyp.repository.*;
-import com.finalyearproject.fyp.service.ResourceService;
+import com.finalyearproject.fyp.dto.ChapterResourcesDTO;
+import com.finalyearproject.fyp.entity.Chapter;
+import com.finalyearproject.fyp.entity.Course;
+import com.finalyearproject.fyp.repository.ChapterRepository;
+import com.finalyearproject.fyp.repository.CourseRepository;
+import com.finalyearproject.fyp.service.ChapterViewService;
+import com.finalyearproject.fyp.service.CourseService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -19,113 +23,63 @@ import java.util.List;
 @RequiredArgsConstructor
 public class YourCoursesController {
 
-    private final CourseRepository     courseRepository;
-    private final UserRepository       userRepository;
-    private final UserCourseRepository userCourseRepository;
-    private final ResourceService      resourceService;
-    private final ChapterRepository    chapterRepository;
-    private final UserCourseEnrollmentRepository userCourseEnrollmentRepository;
+    private final CourseService      courseService;
+    private final ChapterViewService chapterViewService;
+    private final CourseRepository   courseRepository;
+    private final ChapterRepository  chapterRepository;
 
     @GetMapping("/your-courses")
     public String coursesPage(Model model, Authentication authentication) {
-        User user = resolveUser(authentication);
-
-        // Courses the user owns (teachers)
-        List<Course> owned = userCourseRepository.findByUser(user)
-                .stream().map(UserCourse::getCourse).toList();
-
-        List<Course> enrolled = userCourseEnrollmentRepository.findByUser(user)
-                .stream().map(UserCourseEnrollment::getCourse).toList();
-
-        // Merge both, no duplicates
-        List<Course> all = new java.util.ArrayList<>(owned);
-        enrolled.forEach(c -> {
-            if (all.stream().noneMatch(o -> o.getCourseId().equals(c.getCourseId())))
-                all.add(c);
-        });
-
-        model.addAttribute("courses",     all);
+        String       email   = extractEmail(authentication);
+        List<Course> courses = courseService.getCoursesForUser(email);
+        model.addAttribute("courses",     courses);
         model.addAttribute("currentPath", "/your-courses");
         return "yourCourses/index";
     }
 
-    /** Chapter list for a course — the new landing page when a course card is clicked */
     @GetMapping("/your-courses/{courseId}/chapters")
     public String chaptersPage(@PathVariable Long courseId,
                                Model model,
                                HttpServletRequest request) {
-        Course course = getCourse(courseId);
-        List<Chapter> chapters = chapterRepository.findByCourseOrderByChapterOrderAsc(course);
-
+        Course         course   = getCourse(courseId);
+        List<Chapter>  chapters = chapterViewService.getChaptersForCourse(courseId);
         model.addAttribute("course",      course);
         model.addAttribute("chapters",    chapters);
         model.addAttribute("currentPath", request.getRequestURI());
         return "courseChapters/index";
     }
 
-    /** Resources page, now scoped to a chapter */
     @GetMapping("/your-courses/{courseId}/chapters/{chapterId}/resources")
     public String chapterDashboard(@PathVariable Long courseId,
                                    @PathVariable Long chapterId,
                                    Model model,
                                    HttpServletRequest request,
                                    Authentication authentication) {
+        String             email   = extractEmail(authentication);
+        Course             course  = getCourse(courseId);
+        Chapter            chapter = getChapter(chapterId);
+        ChapterResourcesDTO data   = chapterViewService.getChapterResources(courseId, chapterId, email);
 
-        Course  course  = getCourse(courseId);
-        Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new RuntimeException("Chapter not found"));
-
-        User    user       = resolveUser(authentication);
-        boolean isTeacher  = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_TEACHER"));
-
-        List<Resource> sharedResources;
-        List<Resource> myResources = new java.util.ArrayList<>();
-
-        if (isTeacher) {
-            sharedResources = resourceService.getChapterTeacherResources(chapterId);
-        } else {
-            sharedResources = resourceService.getChapterTeacherResources(chapterId); // students see teacher resources
-            myResources     = resourceService.getChapterResourcesByUser(chapterId, user.getUserId()); // + their own
-        }
-
-        long pdfCount  = sharedResources.stream().filter(r -> "PDF" .equalsIgnoreCase(r.getResourceType())).count();
-        long noteCount = sharedResources.stream().filter(r -> "Note".equalsIgnoreCase(r.getResourceType())).count()
-                + myResources.stream().filter(r -> "Note".equalsIgnoreCase(r.getResourceType())).count();
-
-        model.addAttribute("course",          course);
-        model.addAttribute("chapter",         chapter);
-        model.addAttribute("resources",       sharedResources);
-        model.addAttribute("myResources",     myResources);
-        model.addAttribute("pdfCount",        pdfCount);
-        model.addAttribute("noteCount",       noteCount);
-        model.addAttribute("isTeacher",       isTeacher);
-        model.addAttribute("currentPath",     request.getRequestURI());
+        model.addAttribute("course",      course);
+        model.addAttribute("chapter",     chapter);
+        model.addAttribute("resources",   data.sharedResources());
+        model.addAttribute("myResources", data.myResources());
+        model.addAttribute("pdfCount",    data.pdfCount());
+        model.addAttribute("noteCount",   data.noteCount());
+        model.addAttribute("isTeacher",   data.isTeacher());
+        model.addAttribute("currentPath", request.getRequestURI());
         return "courseResources/index";
     }
 
-    // ── helper — works for both OAuth2 (Google) and form login ───────────────
-
-    private User resolveUser(Authentication authentication) {
-        String email = extractEmail(authentication);
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found for email: " + email));
-    }
+    // Static helper — used by other controllers to extract email
 
     public static String extractEmail(Authentication authentication) {
         Object principal = authentication.getPrincipal();
-
-        if (principal instanceof OidcUser oidcUser) {
-            return oidcUser.getEmail();
-        }
-        if (principal instanceof OAuth2User oauth2User) {
-            return oauth2User.getAttribute("email");
-        }
+        if (principal instanceof OidcUser  u) return u.getEmail();
+        if (principal instanceof OAuth2User u) return u.getAttribute("email");
         return authentication.getName();
     }
 
-    private Course getCourse(Long courseId) {
-        return courseRepository.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Course not found"));
-    }
+    private Course  getCourse(Long id)  { return courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found")); }
+    private Chapter getChapter(Long id) { return chapterRepository.findById(id).orElseThrow(() -> new RuntimeException("Chapter not found")); }
 }

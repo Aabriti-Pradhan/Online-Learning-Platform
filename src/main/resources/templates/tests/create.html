@@ -12,7 +12,6 @@
 
         .create-wrap { max-width: 780px; }
 
-        /* Test header card */
         .test-header-card {
             background: white; border: 1px solid var(--color-border);
             border-radius: var(--radius-lg); padding: 1.5rem;
@@ -25,7 +24,6 @@
         }
         .test-title-input::placeholder { color: #9ca3af; }
 
-        /* Type selector */
         .type-selector { display: flex; gap: 0.75rem; margin-top: 1rem; }
         .type-btn {
             flex: 1; padding: 0.65rem; border-radius: var(--radius-md);
@@ -38,10 +36,8 @@
         .type-btn.selected.exam { border-color: #d97706; background: #fffbeb; color: #d97706; }
         .type-btn:not(.selected):hover { border-color: #9ca3af; }
 
-        /* Timer input (only for exam) */
         #timerWrap { display: none; margin-top: 0.75rem; }
 
-        /* Question card */
         .question-card {
             background: white; border: 1px solid var(--color-border);
             border-radius: var(--radius-lg); padding: 1.5rem;
@@ -79,10 +75,8 @@
             font-family: inherit; background: transparent;
         }
         .correct-radio { display: none; }
-
         .q-delete { position: absolute; top: 1rem; right: 1rem; }
 
-        /* Add question button */
         .add-q-btn {
             width: 100%; padding: 0.9rem; border: 2px dashed var(--color-border);
             border-radius: var(--radius-lg); background: white;
@@ -92,7 +86,6 @@
         }
         .add-q-btn:hover { border-color: var(--color-primary); color: var(--color-primary); background: #f5f3ff; }
 
-        /* Sticky footer */
         .save-bar {
             position: sticky; bottom: 0; background: white;
             border-top: 1px solid var(--color-border);
@@ -100,6 +93,22 @@
             display: flex; align-items: center; justify-content: space-between;
         }
         .q-counter { font-size: 0.85rem; color: var(--color-text-secondary); }
+
+        /* ── Validation toast ── */
+        .val-toast {
+            position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+            background: #1f2937; color: white;
+            padding: 0.75rem 1.25rem; border-radius: 0.75rem;
+            font-size: 0.88rem; font-weight: 500;
+            display: flex; align-items: center; gap: 0.6rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            z-index: 9999; opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+        .val-toast.show { opacity: 1; }
+        .val-toast.error  i { color: #f87171; }
+        .val-toast.success i { color: #34d399; }
     </style>
 </head>
 <body>
@@ -114,7 +123,11 @@
             <div class="d-flex align-items-center mb-4 page-header gap-3">
                 <div>
                     <h2 class="fw-bold mb-0">Create Test</h2>
-                    <p class="text-muted small mb-0"><span th:text="${course.courseName}"></span> <span class="text-muted">/</span> <span th:text="${chapter.chapterTitle}"></span></p>
+                    <p class="text-muted small mb-0">
+                        <span th:text="${course.courseName}"></span>
+                        <span class="text-muted">/</span>
+                        <span th:text="${chapter.chapterTitle}"></span>
+                    </p>
                 </div>
                 <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests'}"
                    class="btn btn-sm btn-outline-secondary rounded-2">
@@ -127,7 +140,6 @@
                 <!-- Test header card -->
                 <div class="test-header-card">
                     <input type="text" id="testTitle" class="test-title-input" placeholder="Test title...">
-
                     <div class="type-selector">
                         <button class="type-btn quiz selected" onclick="selectType('QUIZ', this)">
                             <i class="bi bi-patch-question"></i> Quiz
@@ -136,7 +148,6 @@
                             <i class="bi bi-stopwatch"></i> Practice Exam
                         </button>
                     </div>
-
                     <div id="timerWrap">
                         <label class="form-label small fw-semibold mt-2">Timer (minutes)</label>
                         <input type="number" id="timerMinutes" class="form-control form-control-sm"
@@ -168,13 +179,36 @@
     </div>
 </div>
 
+<!-- Validation Toast -->
+<div class="val-toast" id="valToast">
+    <i class="bi bi-exclamation-circle-fill"></i>
+    <span id="valToastMsg"></span>
+</div>
+
 <script th:src="@{/js/script.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     const COURSE_ID  = /*[[${course.courseId}]]*/ null;
     const CHAPTER_ID = /*[[${chapter.chapterId}]]*/ null;
     let   selectedType = 'QUIZ';
     let   qCount       = 0;
+    let   toastTimer   = null;
 
+    // ── Toast helper ──────────────────────────────────────────────────────────
+    function showToast(msg, type = 'error') {
+        const toast = document.getElementById('valToast');
+        const icon  = toast.querySelector('i');
+        document.getElementById('valToastMsg').innerText = msg;
+        toast.className = `val-toast ${type}`;
+        icon.className  = type === 'error' ? 'bi bi-exclamation-circle-fill' : 'bi bi-check-circle-fill';
+        // force reflow so transition fires
+        void toast.offsetWidth;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ── Type selector ─────────────────────────────────────────────────────────
     function selectType(type, btn) {
         selectedType = type;
         document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
@@ -182,6 +216,7 @@
         document.getElementById('timerWrap').style.display = type === 'PRACTICE_EXAM' ? 'block' : 'none';
     }
 
+    // ── Add question ──────────────────────────────────────────────────────────
     function addQuestion() {
         qCount++;
         updateCounter();
@@ -211,6 +246,7 @@
         div.querySelector('.q-text-input').focus();
     }
 
+    // ── Select correct answer ─────────────────────────────────────────────────
     function selectCorrect(idx, letter) {
         ['A','B','C','D'].forEach(l => {
             document.getElementById(`opt-${idx}-${l}`).classList.toggle('correct', l === letter);
@@ -218,11 +254,11 @@
         document.getElementById(`radio-${idx}-${letter}`).checked = true;
     }
 
+    // ── Remove question ───────────────────────────────────────────────────────
     function removeQuestion(idx) {
         document.getElementById('q-' + idx).remove();
         qCount--;
         updateCounter();
-        // Re-number
         document.querySelectorAll('.question-card').forEach((card, i) => {
             card.querySelector('.q-number').innerText = 'Question ' + (i + 1);
         });
@@ -233,16 +269,26 @@
         document.getElementById('qCounter').innerText = n + ' question' + (n !== 1 ? 's' : '');
     }
 
+    // ── Save test ─────────────────────────────────────────────────────────────
     async function saveTest() {
         const title = document.getElementById('testTitle').value.trim();
-        if (!title) { alert('Please enter a test title.'); return; }
+        if (!title) {
+            showToast('Please enter a test title.');
+            document.getElementById('testTitle').focus();
+            return;
+        }
 
         const cards = document.querySelectorAll('.question-card');
-        if (cards.length === 0) { alert('Please add at least one question.'); return; }
+        if (cards.length === 0) {
+            showToast('Please add at least one question.');
+            return;
+        }
 
         const questions = [];
         let valid = true;
+
         cards.forEach((card, i) => {
+            if (!valid) return;
             const idx    = card.dataset.idx;
             const qtext  = document.getElementById('qtext-' + idx)?.value.trim();
             const optA   = document.getElementById('optA-' + idx)?.value.trim();
@@ -254,10 +300,14 @@
             radios.forEach(r => { if (r.checked) correct = r.value; });
 
             if (!qtext || !optA || !optB || !optC || !optD) {
-                alert(`Question ${i+1}: please fill in all options.`); valid = false; return;
+                showToast(`Question ${i + 1}: please fill in all fields.`);
+                valid = false;
+                return;
             }
             if (!correct) {
-                alert(`Question ${i+1}: please select the correct answer.`); valid = false; return;
+                showToast(`Question ${i + 1}: please select the correct answer.`);
+                valid = false;
+                return;
             }
             questions.push({ questionText: qtext, optionA: optA, optionB: optB,
                 optionC: optC, optionD: optD, correctAns: correct });
@@ -276,9 +326,12 @@
         });
 
         if (res.ok) {
-            window.location.href = `/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests`;
+            showToast('Test saved!', 'success');
+            setTimeout(() => {
+                window.location.href = `/your-courses/${COURSE_ID}/chapters/${CHAPTER_ID}/tests`;
+            }, 800);
         } else {
-            alert('Failed to save test. Please try again.');
+            showToast('Failed to save test. Please try again.');
         }
     }
 

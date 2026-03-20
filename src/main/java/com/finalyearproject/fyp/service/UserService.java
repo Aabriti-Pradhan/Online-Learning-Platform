@@ -9,4 +9,5 @@ public interface UserService {
     boolean isEmailTaken(String email);
     User findByEmail(String email);
     boolean checkPassword(String rawPassword, String hashedPassword);
+    User registerOAuthUser(String email, String name, String role);
 }
