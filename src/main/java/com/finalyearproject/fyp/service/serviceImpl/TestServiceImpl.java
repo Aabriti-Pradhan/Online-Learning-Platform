@@ -39,8 +39,11 @@ public class TestServiceImpl implements TestService {
             long qCount = uctqRepository.findByTest(t).size();
             long aCount = uctqaRepository.findByTest(t).stream()
                     .map(UserCourseTestQuestionAttempt::getAttemptId).distinct().count();
+            User creator = uct.getUser();
             return new TestSummaryDTO(t.getTestId(), t.getTestTitle(),
-                    parseType(t.getTestType()), t.getCreatedAt(), qCount, aCount);
+                    parseType(t.getTestType()), t.getCreatedAt(), qCount, aCount, t.isAiGenerated(),
+                    creator != null ? creator.getUsername() : "Unknown",
+                    creator != null ? creator.getRole() : "UNKNOWN");
         }).toList();
     }
 
@@ -61,8 +64,11 @@ public class TestServiceImpl implements TestService {
                 return new AttemptDTO(aid, a != null ? a.getScore() : 0, qCount);
             }).toList();
 
+            User creator = uct.getUser();
             return new StudentTestDTO(t.getTestId(), t.getTestTitle(),
-                    parseType(t.getTestType()), parseTimer(t.getTestType()), qCount, past);
+                    parseType(t.getTestType()), parseTimer(t.getTestType()), qCount, past, t.isAiGenerated(),
+                    creator != null ? creator.getUsername() : "Unknown",
+                    creator != null ? creator.getRole() : "UNKNOWN");
         }).toList();
     }
 
@@ -100,7 +106,8 @@ public class TestServiceImpl implements TestService {
         );
 
         return new TestSummaryDTO(test.getTestId(), test.getTestTitle(),
-                req.testType(), test.getCreatedAt(), req.questions().size(), 0);
+                req.testType(), test.getCreatedAt(), req.questions().size(), 0, false,
+                user.getUsername(), user.getRole());
     }
 
     @Override
@@ -119,7 +126,8 @@ public class TestServiceImpl implements TestService {
         saveQuestions(req.questions(), test, course, user);
 
         return new TestSummaryDTO(test.getTestId(), test.getTestTitle(),
-                req.testType(), test.getCreatedAt(), req.questions().size(), 0);
+                req.testType(), test.getCreatedAt(), req.questions().size(), 0, false,
+                user.getUsername(), user.getRole());
     }
 
     @Override

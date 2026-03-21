@@ -8,5 +8,8 @@ public record TestSummaryDTO(
         String        testType,
         LocalDateTime createdAt,
         long          questionCount,
-        long          attemptCount
+        long          attemptCount,
+        boolean       aiGenerated,
+        String        createdByName,
+        String        createdByRole
 ) {}

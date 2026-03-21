@@ -43,11 +43,17 @@ public class TestController {
         model.addAttribute("currentPath", request.getRequestURI());
 
         if (isTeacher) {
-            model.addAttribute("testSummaries", testService.getTestsForTeacher(chapterId));
+            var allSummaries = testService.getTestsForTeacher(chapterId);
+            model.addAttribute("testSummaries",        allSummaries);
+            model.addAttribute("teacherTestSummaries", allSummaries.stream().filter(t -> "TEACHER".equals(t.createdByRole())).toList());
+            model.addAttribute("studentTestSummaries", allSummaries.stream().filter(t -> "STUDENT".equals(t.createdByRole())).toList());
             return "tests/index";
         } else {
             String email = YourCoursesController.extractEmail(auth);
-            model.addAttribute("testData", testService.getTestsForStudent(chapterId, email));
+            var allTestData = testService.getTestsForStudent(chapterId, email);
+            model.addAttribute("testData",        allTestData);
+            model.addAttribute("teacherTestData", allTestData.stream().filter(t -> "TEACHER".equals(t.createdByRole())).toList());
+            model.addAttribute("studentTestData", allTestData.stream().filter(t -> "STUDENT".equals(t.createdByRole())).toList());
             return "tests/take";
         }
     }

@@ -9,67 +9,61 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
         .test-card {
             background: white; border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg); padding: 1.4rem 1.5rem;
+            border-radius: var(--radius-lg); padding: 1.2rem 1.5rem;
             box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.15s;
-            position: relative;
-            z-index: 1;
             display: grid;
             grid-template-columns: 48px 1fr auto;
             align-items: center;
             gap: 1rem;
-
-        }
-        .test-card a.btn {
-            position: relative;
-            z-index: 2;
-            pointer-events: auto;
+            width: 100%;
+            max-width: 100%;
         }
         .test-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-1px); }
+
         .test-icon { width: 48px; height: 48px; border-radius: var(--radius-md);
             display: flex; align-items: center; justify-content: center;
             font-size: 1.3rem; flex-shrink: 0; }
         .test-icon.quiz { background: #ede9fe; color: #6c47ff; }
         .test-icon.exam { background: #fef3c7; color: #d97706; }
+
+        .test-info { min-width: 0; }
+        .test-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
+        .created-by { font-size: 0.72rem; color: #9ca3af; margin-bottom: 3px; }
+        .test-meta { font-size: 0.78rem; color: var(--color-text-secondary); }
+
+        .test-actions {
+            display: flex; flex-direction: row; align-items: center;
+            gap: 0.5rem; flex-shrink: 0;
+        }
+        .test-actions a.btn, .test-actions button.btn {
+            position: relative; z-index: 2; pointer-events: auto;
+        }
+
         .badge-type { font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
             border-radius: 99px; text-transform: uppercase; }
         .badge-quiz { background: #ede9fe; color: #6c47ff; }
         .badge-exam { background: #fef3c7; color: #d97706; }
+        .badge-ai { background: #d1fae5; color: #065f46; font-size: 0.62rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 99px; text-transform: uppercase; vertical-align: middle; }
+
         .past-attempt { font-size: 0.78rem; background: #f8fafc; border: 1px solid var(--color-border);
             border-radius: var(--radius-sm); padding: 4px 10px;
             display: inline-flex; align-items: center; gap: 4px;
-            position: relative;
-            z-index: 5;
-            pointer-events: auto;}
-        .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
-        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
-        .test-info {
-            min-width: 0;
-            position: relative;
-            z-index: 1;
-        }
-        .test-actions {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-end;
-            gap: 0.6rem;
-            margin-left: 50px;
-            z-index: 2;
-        }
-        .test-title {
-            font-weight: 700;
-            font-size: 0.95rem;
+            position: relative; z-index: 5; pointer-events: auto; }
+        .past-attempt a { color: #6c47ff; text-decoration: none; font-weight: 700; }
+
+        .section-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--color-text-secondary);
+            margin-bottom: 0.75rem; padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--color-border);
         }
 
-        .test-meta {
-            font-size: 0.78rem;
-            color: var(--color-text-secondary);
-        }
-        .test-list {
-            width: 100%;
-            max-width: 100%;
-        }
+        .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
@@ -93,67 +87,189 @@
                     </nav>
                     <h2 class="fw-bold mb-0">Available Tests</h2>
                 </div>
+                <button class="btn btn-outline-secondary rounded-3"
+                        onclick="openAiModal()"
+                        title="Generate test from chapter PDFs using AI">
+                    <i class="bi bi-stars me-1"></i> Generate with AI
+                </button>
             </div>
 
-            <!-- Test cards -->
-            <div class="d-flex flex-column gap-3" th:if="${!testData.isEmpty()}" style="max-width:100%;">
-                <div th:each="t : ${testData}" class="test-card test-list">
+            <!-- ══ TEACHER TESTS ══ -->
+            <div class="mb-4" th:if="${!teacherTestData.isEmpty()}">
+                <div class="section-label">
+                    <i class="bi bi-person-workspace me-1"></i> Teacher Tests
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    <div th:each="t : ${teacherTestData}" class="test-card">
 
-                    <!-- Icon -->
-                    <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
-                        <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
-                    </div>
-
-                    <!-- Info -->
-                    <div class="test-info">
-                        <div class="test-title" th:text="${t.testTitle}">Title</div>
-                        <div class="test-meta">
-                            <span class="badge-type"
-                                  th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
-                                  th:text="${t.testType}">QUIZ
-                            </span>
-                            <div class="d-flex gap-2 flex-wrap mt-1" th:if="${!t.pastAttempts.isEmpty()}">
-                                <span class="past-attempt" th:each="a : ${t.pastAttempts}">
-                                    <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
-                                    <span th:text="${a.score} + '/' + ${a.total}"></span>
-                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}">view</a>
-                                </span>
-                            </div>
-                            <span th:text="${t.questionCount} + ' questions'"></span>
-                            <span th:if="${t.timerMinutes != null}">
-                                <i class="bi bi-stopwatch"></i>
-                                <span th:text="${t.timerMinutes} + ' min'"></span>
-                            </span>
+                        <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
+                            <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
                         </div>
 
-                    </div>
+                        <div class="test-info">
+                            <div class="test-title">
+                                <span th:text="${t.testTitle}">Title</span>
+                                <span th:if="${t.aiGenerated}" class="badge-ai ms-1">AI</span>
+                            </div>
+                            <div class="created-by">
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${t.createdByName}"></span>
+                            </div>
+                            <div class="test-meta">
+                                <span class="badge-type"
+                                      th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
+                                      th:text="${t.testType}">QUIZ</span>
+                                &nbsp;
+                                <span th:text="${t.questionCount} + ' questions'"></span>
+                                <span th:if="${t.timerMinutes != null}">
+                                    &nbsp;·&nbsp;<i class="bi bi-stopwatch"></i>
+                                    <span th:text="${t.timerMinutes} + ' min'"></span>
+                                </span>
+                                <div class="d-flex gap-2 flex-wrap mt-1" th:if="${!t.pastAttempts.isEmpty()}">
+                                    <span class="past-attempt" th:each="a : ${t.pastAttempts}">
+                                        <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
+                                        <span th:text="${a.score} + '/' + ${a.total}"></span>
+                                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}">view</a>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Actions -->
-                    <div class="test-actions">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
-                           class="btn btn-sm btn-dark rounded-2">
-                            <i class="bi bi-play-fill me-1"></i>
-                            <span th:text="${t.pastAttempts.isEmpty()} ? 'Start' : 'Retake'">Start</span>
-                        </a>
-                        <button class="btn btn-sm btn-outline-secondary rounded-2"
-                                th:attr="data-test-id=${t.testId}, data-course-id=${course.courseId}, data-test-title=${t.testTitle}"
-                                onclick="openShareModal(this)">
-                            <i class="bi bi-share me-1"></i> Share
-                        </button>
+                        <div class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
+                               class="btn btn-sm btn-dark rounded-2">
+                                <i class="bi bi-play-fill me-1"></i>
+                                <span th:text="${t.pastAttempts.isEmpty()} ? 'Start' : 'Retake'">Start</span>
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary rounded-2"
+                                    th:attr="data-test-id=${t.testId}, data-course-id=${course.courseId}, data-test-title=${t.testTitle}"
+                                    onclick="openShareModal(this)">
+                                <i class="bi bi-share me-1"></i> Share
+                            </button>
+                        </div>
                     </div>
-
                 </div>
             </div>
 
+            <!-- ══ STUDENT TESTS ══ -->
+            <div class="mb-4" th:if="${!studentTestData.isEmpty()}">
+                <div class="section-label">
+                    <i class="bi bi-people me-1"></i> Student Tests
+                </div>
+                <div class="d-flex flex-column gap-3">
+                    <div th:each="t : ${studentTestData}" class="test-card">
+
+                        <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
+                            <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
+                        </div>
+
+                        <div class="test-info">
+                            <div class="test-title">
+                                <span th:text="${t.testTitle}">Title</span>
+                                <span th:if="${t.aiGenerated}" class="badge-ai ms-1">AI</span>
+                            </div>
+                            <div class="created-by">
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${t.createdByName}"></span>
+                            </div>
+                            <div class="test-meta">
+                                <span class="badge-type"
+                                      th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
+                                      th:text="${t.testType}">QUIZ</span>
+                                &nbsp;
+                                <span th:text="${t.questionCount} + ' questions'"></span>
+                                <span th:if="${t.timerMinutes != null}">
+                                    &nbsp;·&nbsp;<i class="bi bi-stopwatch"></i>
+                                    <span th:text="${t.timerMinutes} + ' min'"></span>
+                                </span>
+                                <div class="d-flex gap-2 flex-wrap mt-1" th:if="${!t.pastAttempts.isEmpty()}">
+                                    <span class="past-attempt" th:each="a : ${t.pastAttempts}">
+                                        <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
+                                        <span th:text="${a.score} + '/' + ${a.total}"></span>
+                                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}">view</a>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
+                               class="btn btn-sm btn-dark rounded-2">
+                                <i class="bi bi-play-fill me-1"></i>
+                                <span th:text="${t.pastAttempts.isEmpty()} ? 'Start' : 'Retake'">Start</span>
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary rounded-2"
+                                    th:attr="data-test-id=${t.testId}, data-course-id=${course.courseId}, data-test-title=${t.testTitle}"
+                                    onclick="openShareModal(this)">
+                                <i class="bi bi-share me-1"></i> Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
             <div class="empty-state" th:if="${testData.isEmpty()}">
                 <i class="bi bi-patch-question"></i>
                 <p class="fw-semibold">No tests available yet</p>
-                <p class="small">Your teacher hasn't created any tests for this course.</p>
+                <p class="small">No tests have been created for this chapter yet.</p>
             </div>
 
         </div>
     </div>
 </div>
+
+<!-- AI Test Generation Modal -->
+<div id="aiModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:1rem;padding:2rem;max-width:440px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.18);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-stars me-2" style="color:#6c47ff;"></i>Generate Test with AI</h5>
+            <button onclick="closeAiModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9ca3af;">&times;</button>
+        </div>
+        <p class="text-muted small mb-3">AI will read the PDF resources in this chapter and automatically generate multiple choice questions.</p>
+        <input type="hidden" id="aiCourseId" th:value="${course.courseId}">
+        <input type="hidden" id="aiChapterId" th:value="${chapter.chapterId}">
+
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Test Title <span class="text-muted">(optional)</span></label>
+            <input type="text" id="aiTestTitle" class="form-control form-control-sm rounded-2"
+                   placeholder="Leave blank to auto-generate title">
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-semibold">Number of Questions</label>
+            <select id="aiQuestionCount" class="form-select form-select-sm rounded-2">
+                <option value="3">3 questions</option>
+                <option value="5" selected>5 questions</option>
+                <option value="8">8 questions</option>
+                <option value="10">10 questions</option>
+            </select>
+        </div>
+
+        <div id="aiGeneratingMsg" style="display:none;text-align:center;padding:1rem 0;">
+            <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
+            <span class="text-muted small">Generating questions... this may take up to 30 seconds.</span>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+            <button onclick="closeAiModal()" style="padding:0.5rem 1.25rem;border:1px solid #e5e7eb;border-radius:0.75rem;background:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="aiGenerateBtn" onclick="generateAiTest()"
+                    style="padding:0.5rem 1.25rem;border:none;border-radius:0.75rem;background:#6c47ff;color:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
+                <i class="bi bi-stars me-1"></i> Generate
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- AI Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    <div id="aiToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="aiToastMsg">Done</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/js/script.js}"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -165,11 +281,9 @@
             <button onclick="closeShareModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9ca3af;">&times;</button>
         </div>
         <p class="text-muted small mb-3" id="shareTestTitle"></p>
-
         <div id="friendsList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">
             <p class="text-muted small text-center py-3">Loading friends...</p>
         </div>
-
         <div class="d-flex gap-2 justify-content-end mt-3">
             <button onclick="closeShareModal()" style="padding:0.5rem 1.25rem;border:1px solid #e5e7eb;border-radius:0.75rem;background:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
             <button onclick="confirmShare()" style="padding:0.5rem 1.25rem;border:none;border-radius:0.75rem;background:var(--color-accent);color:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
@@ -179,8 +293,8 @@
     </div>
 </div>
 
-<!-- Toast -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+<!-- Share Toast -->
+<div class="position-fixed bottom-0 start-0 p-3" style="z-index:1100;">
     <div id="shareToast" class="toast align-items-center text-bg-dark border-0" role="alert">
         <div class="d-flex">
             <div class="toast-body" id="shareToastMsg">Done</div>
@@ -193,9 +307,8 @@
     const COURSE_ID  = /*[[${course.courseId}]]*/ null;
     const CHAPTER_ID = /*[[${chapter.chapterId}]]*/ null;
 
-    let shareTestId    = null;
-    let shareTestTitle = null;
-    let alreadyShared  = [];
+    let shareTestId = null;
+    let alreadyShared = [];
 
     const shareModal = document.getElementById('shareModal');
     const toastEl    = document.getElementById('shareToast');
@@ -205,9 +318,8 @@
     function showToast(msg) { toastMsg.innerText = msg; bsToast.show(); }
 
     function openShareModal(btn) {
-        shareTestId    = btn.getAttribute('data-test-id');
-        shareTestTitle = btn.getAttribute('data-test-title');
-        document.getElementById('shareTestTitle').innerText = 'Sharing: ' + shareTestTitle;
+        shareTestId = btn.getAttribute('data-test-id');
+        document.getElementById('shareTestTitle').innerText = 'Sharing: ' + btn.getAttribute('data-test-title');
         shareModal.style.display = 'flex';
         loadFriends();
     }
@@ -218,68 +330,92 @@
         alreadyShared = [];
     }
 
-    shareModal.addEventListener('click', function(e) {
-        if (e.target === this) closeShareModal();
-    });
+    shareModal.addEventListener('click', function(e) { if (e.target === this) closeShareModal(); });
 
     async function loadFriends() {
         const container = document.getElementById('friendsList');
         container.innerHTML = '<p class="text-muted small text-center py-3">Loading...</p>';
-
-        // Fetch friends and already-shared list in parallel
         const [friendsRes, sharedRes] = await Promise.all([
             fetch('/friends-list'),
             fetch('/shared-tests/already-shared/' + shareTestId)
         ]);
-
         const friends = await friendsRes.json();
         alreadyShared = await sharedRes.json();
-
         if (!friends || friends.length === 0) {
-            container.innerHTML = '<p class="text-muted small text-center py-3">You have no friends yet. Add friends to share tests.</p>';
+            container.innerHTML = '<p class="text-muted small text-center py-3">You have no friends yet.</p>';
             return;
         }
-
         container.innerHTML = friends.map(f => {
             const already = alreadyShared.includes(f.userId);
-            return `
-            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;border:1px solid #e5e7eb;border-radius:0.75rem;">
-                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2d4356,#435d73);
-                            display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">
-                    ${f.username ? f.username.charAt(0).toUpperCase() : '?'}
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:0.85rem;">${f.username}</div>
-                    <div style="font-size:0.72rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.email}</div>
-                </div>
-                ${already
-                ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:2px 10px;font-weight:600;">Shared</span>'
-                : `<input type="checkbox" class="friend-checkbox form-check-input" value="${f.userId}" style="width:18px;height:18px;cursor:pointer;">`
-            }
+            return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;border:1px solid #e5e7eb;border-radius:0.75rem;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2d4356,#435d73);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">${f.username ? f.username.charAt(0).toUpperCase() : '?'}</div>
+                <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:0.85rem;">${f.username}</div><div style="font-size:0.72rem;color:#9ca3af;">${f.email}</div></div>
+                ${already ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:2px 10px;font-weight:600;">Shared</span>' : `<input type="checkbox" class="friend-checkbox form-check-input" value="${f.userId}" style="width:18px;height:18px;cursor:pointer;">`}
             </div>`;
         }).join('');
     }
 
     async function confirmShare() {
-        const selected = [...document.querySelectorAll('.friend-checkbox:checked')]
-            .map(cb => parseInt(cb.value));
-
-        if (selected.length === 0) {
-            showToast('Please select at least one friend.');
-            return;
-        }
-
+        const selected = [...document.querySelectorAll('.friend-checkbox:checked')].map(cb => parseInt(cb.value));
+        if (selected.length === 0) { showToast('Please select at least one friend.'); return; }
         const res = await fetch('/shared-tests/share', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ testId: parseInt(shareTestId), courseId: COURSE_ID, friendIds: selected })
         });
+        if (res.ok) { showToast('Test shared successfully!'); closeShareModal(); }
+        else { showToast('Failed to share. Please try again.'); }
+    }
+</script>
 
-        if (res.ok) {
-            showToast('Test shared successfully!');
-            closeShareModal();
-        } else {
-            showToast('Failed to share. Please try again.');
+<script>
+    function openAiModal() {
+        document.getElementById('aiModal').style.display = 'flex';
+        document.getElementById('aiTestTitle').value = '';
+        document.getElementById('aiGeneratingMsg').style.display = 'none';
+        document.getElementById('aiGenerateBtn').disabled = false;
+    }
+
+    function closeAiModal() {
+        document.getElementById('aiModal').style.display = 'none';
+    }
+
+    document.getElementById('aiModal').addEventListener('click', function(e) {
+        if (e.target === this) closeAiModal();
+    });
+
+    async function generateAiTest() {
+        const courseId  = document.getElementById('aiCourseId').value;
+        const chapterId = document.getElementById('aiChapterId').value;
+        const title     = document.getElementById('aiTestTitle').value.trim();
+        const count     = parseInt(document.getElementById('aiQuestionCount').value);
+
+        document.getElementById('aiGeneratingMsg').style.display = 'block';
+        document.getElementById('aiGenerateBtn').disabled = true;
+
+        try {
+            const res = await fetch('/your-courses/' + courseId + '/chapters/' + chapterId + '/tests/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ testTitle: title, questionCount: count })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeAiModal();
+                document.getElementById('aiToastMsg').innerText = '✓ Generated "' + data.testTitle + '" with ' + data.questionCount + ' questions!';
+                new bootstrap.Toast(document.getElementById('aiToast')).show();
+                setTimeout(() => location.reload(), 1800);
+            } else {
+                document.getElementById('aiGeneratingMsg').style.display = 'none';
+                document.getElementById('aiGenerateBtn').disabled = false;
+                document.getElementById('aiToastMsg').innerText = 'Error: ' + (data.error || 'Unknown error');
+                new bootstrap.Toast(document.getElementById('aiToast')).show();
+            }
+        } catch (e) {
+            document.getElementById('aiGeneratingMsg').style.display = 'none';
+            document.getElementById('aiGenerateBtn').disabled = false;
+            document.getElementById('aiToastMsg').innerText = 'Network error. Please try again.';
+            new bootstrap.Toast(document.getElementById('aiToast')).show();
         }
     }
 </script>

@@ -8,5 +8,8 @@ public record StudentTestDTO(
         String           testType,
         Integer          timerMinutes,
         long             questionCount,
-        List<AttemptDTO> pastAttempts
+        List<AttemptDTO> pastAttempts,
+        boolean          aiGenerated,
+        String           createdByName,
+        String           createdByRole
 ) {}

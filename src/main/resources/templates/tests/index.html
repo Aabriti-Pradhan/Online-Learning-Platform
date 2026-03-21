@@ -48,6 +48,10 @@
 
         .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+        .badge-ai { background: #d1fae5; color: #065f46; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; vertical-align: middle; }
+        .section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-secondary); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--color-border); }
+        .created-by { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+        .badge-ai { background: #d1fae5; color: #065f46; font-size: 0.62rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; vertical-align: middle; }
         .test-list {
             width: 100%;
             max-width: 100%;
@@ -83,8 +87,14 @@
                     <h2 class="fw-bold mb-0">Tests</h2>
                     <p class="text-muted small mb-0" th:text="${chapter.chapterTitle}"></p>
                 </div>
-                <div th:if="${isTeacher}">
-                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/create'}"
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary rounded-3"
+                            onclick="openAiModal()"
+                            title="Generate test from chapter PDFs using AI">
+                        <i class="bi bi-stars me-1"></i> Generate with AI
+                    </button>
+                    <a th:if="${isTeacher}"
+                       th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/create'}"
                        class="btn btn-dark rounded-3">
                         <i class="bi bi-plus-lg me-1"></i> Create Test
                     </a>
@@ -104,51 +114,107 @@
                 </div>
             </div>
 
-            <!-- Test list -->
-            <div class="d-flex flex-column flex-wrap gap-3" th:if="${!testSummaries.isEmpty()}">
-                <div class="test-card test-list" th:each="t : ${testSummaries}">
+            <!-- ══ TEACHER TESTS ══ -->
+            <div class="mb-4" th:if="${!teacherTestSummaries.isEmpty()}">
+                <div class="section-label"><i class="bi bi-person-workspace me-1"></i> Teacher Tests</div>
+                <div class="d-flex flex-column gap-3">
+                    <div class="test-card test-list" th:each="t : ${teacherTestSummaries}">
 
-                    <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
-                        <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
-                    </div>
+                        <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
+                            <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
+                        </div>
 
-                    <div class="test-info">
-                        <div class="test-title" th:text="${t.testTitle}">Test Title</div>
-                        <div class="test-meta">
-                            <span class="badge-type me-2"
-                                  th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
-                                  th:text="${t.testType}">QUIZ</span>
-                            <span th:text="${t.questionCount} + ' questions'"></span>
-                            <span class="mx-1">·</span>
-                            <span th:text="${t.attemptCount} + ' attempts'"></span>
+                        <div class="test-info">
+                            <div class="test-title">
+                                <span th:text="${t.testTitle}">Test Title</span>
+                                <span th:if="${t.aiGenerated}" class="badge-ai ms-1">AI</span>
+                            </div>
+                            <div class="created-by">
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${t.createdByName}"></span>
+                            </div>
+                            <div class="test-meta">
+                                <span class="badge-type"
+                                      th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
+                                      th:text="${t.testType}">QUIZ</span>
+                                <span th:text="${t.questionCount} + ' questions'"></span>
+                                <span>·</span>
+                                <span th:text="${t.attemptCount} + ' attempts'"></span>
+                            </div>
+                        </div>
+
+                        <div th:if="${isTeacher}" class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/edit'}"
+                               class="btn btn-sm btn-outline-secondary rounded-2">
+                                <i class="bi bi-pencil me-1"></i> Edit
+                            </a>
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/results'}"
+                               class="btn btn-sm btn-outline-secondary rounded-2">
+                                <i class="bi bi-bar-chart me-1"></i> Results
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger rounded-2"
+                                    th:attr="data-test-id=${t.testId}"
+                                    onclick="openDeleteModal(this)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                        <div th:unless="${isTeacher}" class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
+                               class="btn btn-sm btn-dark rounded-2">
+                                <i class="bi bi-play-fill me-1"></i> Take Test
+                            </a>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Teacher actions -->
-                    <div th:if="${isTeacher}" class="test-actions">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/edit'}"
-                           class="btn btn-sm btn-outline-secondary rounded-2">
-                            <i class="bi bi-pencil me-1"></i> Edit
-                        </a>
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/results'}"
-                           class="btn btn-sm btn-outline-secondary rounded-2">
-                            <i class="bi bi-bar-chart me-1"></i> Results
-                        </a>
-                        <button class="btn btn-sm btn-outline-danger rounded-2"
-                                th:attr="data-test-id=${t.testId}"
-                                onclick="openDeleteModal(this)">
-                            <i class="bi bi-trash3"></i>
-                        </button>
+            <!-- ══ STUDENT TESTS ══ -->
+            <div class="mb-4" th:if="${!studentTestSummaries.isEmpty()}">
+                <div class="section-label"><i class="bi bi-people me-1"></i> Student Tests</div>
+                <div class="d-flex flex-column gap-3">
+                    <div class="test-card test-list" th:each="t : ${studentTestSummaries}">
+
+                        <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
+                            <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
+                        </div>
+
+                        <div class="test-info">
+                            <div class="test-title">
+                                <span th:text="${t.testTitle}">Test Title</span>
+                                <span th:if="${t.aiGenerated}" class="badge-ai ms-1">AI</span>
+                            </div>
+                            <div class="created-by">
+                                <i class="bi bi-person me-1"></i>
+                                <span th:text="${t.createdByName}"></span>
+                            </div>
+                            <div class="test-meta">
+                                <span class="badge-type"
+                                      th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
+                                      th:text="${t.testType}">QUIZ</span>
+                                <span th:text="${t.questionCount} + ' questions'"></span>
+                                <span>·</span>
+                                <span th:text="${t.attemptCount} + ' attempts'"></span>
+                            </div>
+                        </div>
+
+                        <div th:if="${isTeacher}" class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/results'}"
+                               class="btn btn-sm btn-outline-secondary rounded-2">
+                                <i class="bi bi-bar-chart me-1"></i> Results
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger rounded-2"
+                                    th:attr="data-test-id=${t.testId}"
+                                    onclick="openDeleteModal(this)">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                        <div th:unless="${isTeacher}" class="test-actions">
+                            <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
+                               class="btn btn-sm btn-dark rounded-2">
+                                <i class="bi bi-play-fill me-1"></i> Take Test
+                            </a>
+                        </div>
                     </div>
-
-                    <!-- Student actions -->
-                    <div th:unless="${isTeacher}" class="test-actions">
-                        <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
-                           class="btn btn-sm btn-dark rounded-2">
-                            <i class="bi bi-play-fill me-1"></i> Take Test
-                        </a>
-                    </div>
-
                 </div>
             </div>
 
@@ -160,6 +226,48 @@
                 <p class="small" th:unless="${isTeacher}">Your teacher hasn't created any tests yet.</p>
             </div>
 
+        </div>
+    </div>
+</div>
+
+
+<!-- AI Test Generation Modal -->
+<div id="aiModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:1rem;padding:2rem;max-width:440px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.18);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-stars me-2" style="color:#6c47ff;"></i>Generate Test with AI</h5>
+            <button onclick="closeAiModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9ca3af;">&times;</button>
+        </div>
+        <p class="text-muted small mb-3">AI will read the PDF resources in this chapter and automatically generate multiple choice questions.</p>
+        <input type="hidden" id="aiCourseId" th:value="${course.courseId}">
+        <input type="hidden" id="aiChapterId" th:value="${chapter.chapterId}">
+
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">Test Title <span class="text-muted">(optional)</span></label>
+            <input type="text" id="aiTestTitle" class="form-control form-control-sm rounded-2"
+                   placeholder="Leave blank to auto-generate title">
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-semibold">Number of Questions</label>
+            <select id="aiQuestionCount" class="form-select form-select-sm rounded-2">
+                <option value="3">3 questions</option>
+                <option value="5" selected>5 questions</option>
+                <option value="8">8 questions</option>
+                <option value="10">10 questions</option>
+            </select>
+        </div>
+
+        <div id="aiGeneratingMsg" style="display:none;text-align:center;padding:1rem 0;">
+            <div class="spinner-border spinner-border-sm text-secondary me-2"></div>
+            <span class="text-muted small">Generating questions... this may take up to 30 seconds.</span>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end">
+            <button onclick="closeAiModal()" style="padding:0.5rem 1.25rem;border:1px solid #e5e7eb;border-radius:0.75rem;background:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+            <button id="aiGenerateBtn" onclick="generateAiTest()"
+                    style="padding:0.5rem 1.25rem;border:none;border-radius:0.75rem;background:#6c47ff;color:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
+                <i class="bi bi-stars me-1"></i> Generate
+            </button>
         </div>
     </div>
 </div>
@@ -238,6 +346,58 @@
                 }
             });
     });
+</script>
+
+<script>
+    function openAiModal() {
+        document.getElementById('aiModal').style.display = 'flex';
+        document.getElementById('aiTestTitle').value = '';
+        document.getElementById('aiGeneratingMsg').style.display = 'none';
+        document.getElementById('aiGenerateBtn').disabled = false;
+    }
+
+    function closeAiModal() {
+        document.getElementById('aiModal').style.display = 'none';
+    }
+
+    document.getElementById('aiModal').addEventListener('click', function(e) {
+        if (e.target === this) closeAiModal();
+    });
+
+    async function generateAiTest() {
+        const courseId  = document.getElementById('aiCourseId').value;
+        const chapterId = document.getElementById('aiChapterId').value;
+        const title     = document.getElementById('aiTestTitle').value.trim();
+        const count     = parseInt(document.getElementById('aiQuestionCount').value);
+
+        document.getElementById('aiGeneratingMsg').style.display = 'block';
+        document.getElementById('aiGenerateBtn').disabled = true;
+
+        try {
+            const res = await fetch('/your-courses/' + courseId + '/chapters/' + chapterId + '/tests/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ testTitle: title, questionCount: count })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                closeAiModal();
+                document.getElementById('deleteToastMessage').innerText = '✓ Generated "' + data.testTitle + '" with ' + data.questionCount + ' questions!';
+                new bootstrap.Toast(document.getElementById('deleteToast')).show();
+                setTimeout(() => location.reload(), 1800);
+            } else {
+                document.getElementById('aiGeneratingMsg').style.display = 'none';
+                document.getElementById('aiGenerateBtn').disabled = false;
+                document.getElementById('deleteToastMessage').innerText = 'Error: ' + (data.error || 'Unknown error');
+                new bootstrap.Toast(document.getElementById('deleteToast')).show();
+            }
+        } catch (e) {
+            document.getElementById('aiGeneratingMsg').style.display = 'none';
+            document.getElementById('aiGenerateBtn').disabled = false;
+            document.getElementById('deleteToastMessage').innerText = 'Network error. Please try again.';
+            new bootstrap.Toast(document.getElementById('deleteToast')).show();
+        }
+    }
 </script>
 </body>
 </html>

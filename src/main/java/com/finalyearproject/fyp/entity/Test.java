@@ -21,6 +21,7 @@ public class Test {
     private String testType;
     private String testTitle;
     private LocalDateTime createdAt;
+    private boolean isAiGenerated = false;
 
     @OneToMany(mappedBy = "test")
     private List<UserCourseTest> userCourseTests;
