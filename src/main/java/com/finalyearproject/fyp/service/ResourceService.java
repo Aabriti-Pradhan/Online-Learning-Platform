@@ -1,5 +1,6 @@
 package com.finalyearproject.fyp.service;
 
+import com.finalyearproject.fyp.dto.UserResourceDTO;
 import com.finalyearproject.fyp.entity.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,6 +16,9 @@ public interface ResourceService {
 
     /** Returns all resources belonging to a user (across all courses). */
     List<Resource> getUserResources(String email);
+
+    /** Returns all resources with course/chapter info for the Your Resources page. */
+    List<UserResourceDTO> getUserResourcesWithContext(String email);
 
     /** Returns all resources for a specific course. */
     List<Resource> getCourseResources(Long courseId);

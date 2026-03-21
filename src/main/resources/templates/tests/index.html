@@ -11,19 +11,17 @@
         body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
 
         .test-card {
+            display: grid;
+            grid-template-columns: 48px 1fr auto; /* icon | info | actions */
+            align-items: center;
+            gap: 1rem;
+
             background: white;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
             padding: 1.2rem 1.5rem;
             box-shadow: var(--shadow-sm);
             transition: box-shadow 0.2s, transform 0.15s;
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-            flex-wrap: wrap;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
         }
         .test-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-1px); }
 
@@ -50,6 +48,10 @@
 
         .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+        .test-list {
+            width: 100%;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -103,8 +105,8 @@
             </div>
 
             <!-- Test list -->
-            <div class="d-flex flex-row flex-wrap gap-3" th:if="${!testSummaries.isEmpty()}">
-                <div class="test-card" th:each="t : ${testSummaries}">
+            <div class="d-flex flex-column flex-wrap gap-3" th:if="${!testSummaries.isEmpty()}">
+                <div class="test-card test-list" th:each="t : ${testSummaries}">
 
                     <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
                         <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
@@ -116,8 +118,6 @@
                             <span class="badge-type me-2"
                                   th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
                                   th:text="${t.testType}">QUIZ</span>
-                        </div>
-                        <div class="test-meta">
                             <span th:text="${t.questionCount} + ' questions'"></span>
                             <span class="mx-1">·</span>
                             <span th:text="${t.attemptCount} + ' attempts'"></span>

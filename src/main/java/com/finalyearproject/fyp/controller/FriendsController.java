@@ -18,7 +18,7 @@ public class FriendsController {
 
     private final FriendshipService friendshipService;
 
-    // ── Friends page ──────────────────────────────────────────────────────────
+    //  Friends page
 
     @GetMapping("/friends")
     public String friendsPage(Model model, Authentication auth, HttpServletRequest request) {
@@ -34,7 +34,7 @@ public class FriendsController {
         return "friends/index";
     }
 
-    // ── Send friend request ───────────────────────────────────────────────────
+    //  Send friend request
 
     @PostMapping("/friends/request/{targetUserId}")
     @ResponseBody
@@ -47,7 +47,7 @@ public class FriendsController {
         }
     }
 
-    // ── Accept friend request ─────────────────────────────────────────────────
+    //  Accept friend request
 
     @PostMapping("/friends/accept/{friendshipId}")
     @ResponseBody
@@ -60,7 +60,7 @@ public class FriendsController {
         }
     }
 
-    // ── Decline friend request ────────────────────────────────────────────────
+    //  Decline friend request
 
     @PostMapping("/friends/decline/{friendshipId}")
     @ResponseBody
@@ -73,7 +73,7 @@ public class FriendsController {
         }
     }
 
-    // ── Remove friend ─────────────────────────────────────────────────────────
+    //  Remove friend
 
     @DeleteMapping("/friends/{friendshipId}")
     @ResponseBody
@@ -86,7 +86,21 @@ public class FriendsController {
         }
     }
 
-    // ── Cancel outgoing request ───────────────────────────────────────────────
+    //  Friends list as JSON (used by share modal)
+    // Only returns STUDENT friends — teachers cannot receive shared tests
+
+    @GetMapping("/friends-list")
+    @ResponseBody
+    public ResponseEntity<?> friendsList(Authentication auth) {
+        String email = YourCoursesController.extractEmail(auth);
+        var students = friendshipService.getFriendsPageData(email).friends()
+                .stream()
+                .filter(f -> "STUDENT".equals(f.role()))
+                .toList();
+        return ResponseEntity.ok(students);
+    }
+
+    //  Cancel outgoing request
 
     @DeleteMapping("/friends/cancel/{targetUserId}")
     @ResponseBody

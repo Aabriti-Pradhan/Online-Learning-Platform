@@ -1,6 +1,6 @@
 package com.finalyearproject.fyp.controller;
 
-import com.finalyearproject.fyp.entity.Resource;
+import com.finalyearproject.fyp.dto.UserResourceDTO;
 import com.finalyearproject.fyp.service.ResourceService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class YourResourcesController {
                                 Authentication authentication) {
 
         String email = YourCoursesController.extractEmail(authentication);
-        List<Resource> resources = resourceService.getUserResources(email);
+        List<UserResourceDTO> resources = resourceService.getUserResourcesWithContext(email);
 
         model.addAttribute("pdfs",        resources);
         model.addAttribute("currentPath", request.getRequestURI());

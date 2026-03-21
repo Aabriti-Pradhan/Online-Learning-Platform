@@ -119,7 +119,11 @@
                                       th:classappend="${res.resourceType == 'PDF'} ? ' badge-pdf' : ' badge-note'"
                                       th:text="${res.resourceType}">PDF</span>
                             </td>
-                            <td class="text-muted small" th:text="${#temporals.format(res.uploadedAt, 'dd MMM yyyy')}">01 Jan 2025</td>
+                            <td class="text-muted small">
+                                <span th:text="${res.courseName}">Course</span>
+                                <span class="text-muted mx-1">/</span>
+                                <span th:text="${res.chapterTitle}">Chapter</span>
+                            </td>
                             <td class="text-muted small"
                                 th:text="${res.uploadedAt != null} ? ${#temporals.format(res.uploadedAt, 'dd MMM yyyy')} : '—'">—</td>
                             <td class="text-end">

@@ -1,7 +1,7 @@
 <nav th:fragment="topbar" id="topbar">
 
     <style>
-        /* Bell icon & dropdown */
+        /*  Bell icon & dropdown  */
         .notif-wrap {
             position: relative;
         }
@@ -71,6 +71,7 @@
         .notif-icon.FRIEND_REQUEST  { background: #ffe4e6; color: #e11d48; }
         .notif-icon.FRIEND_ACCEPTED { background: #dcfce7; color: #16a34a; }
         .notif-icon.TEST_SUBMITTED  { background: #f3f4f6; color: #374151; }
+        .notif-icon.TEST_SHARED      { background: #e0f2fe; color: #0284c7; }
 
         .notif-content { flex: 1; min-width: 0; }
         .notif-title   { font-size: 0.82rem; font-weight: 700; color: var(--color-text-primary);
@@ -139,7 +140,7 @@
     </div>
 
     <script>
-        // Date/time
+        //  Date/time
         function updateDateTime() {
             const now = new Date();
             const date = now.toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -149,7 +150,7 @@
         updateDateTime();
         setInterval(updateDateTime, 1000);
 
-        // Notification icons by type
+        //  Notification icons by type
         const TYPE_ICONS = {
             ENROLLMENT:      'bi-person-plus',
             NEW_CHAPTER:     'bi-collection',
@@ -157,10 +158,11 @@
             NEW_TEST:        'bi-patch-question',
             FRIEND_REQUEST:  'bi-person-heart',
             FRIEND_ACCEPTED: 'bi-people',
-            TEST_SUBMITTED:  'bi-check-circle'
+            TEST_SUBMITTED:  'bi-check-circle',
+            TEST_SHARED:     'bi-share'
         };
 
-        // Relative time
+        //  Relative time
         function relativeTime(isoString) {
             const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
             if (diff < 60)   return 'Just now';
@@ -169,7 +171,7 @@
             return Math.floor(diff / 86400) + 'd ago';
         }
 
-        // Render notifications
+        //  Render notifications
         function renderNotifications(notifications) {
             const list = document.getElementById('notifList');
             if (!notifications || notifications.length === 0) {
@@ -192,7 +194,7 @@
             `).join('');
         }
 
-        // Poll for notifications
+        //  Poll for notifications
         function pollNotifications() {
             fetch('/notifications/summary')
                 .then(r => r.ok ? r.json() : null)
@@ -213,7 +215,7 @@
         pollNotifications();
         setInterval(pollNotifications, 30000);
 
-        // Toggle dropdown
+        //  Toggle dropdown
         function toggleNotifDropdown() {
             document.getElementById('notifDropdown').classList.toggle('open');
         }
@@ -226,7 +228,7 @@
             }
         });
 
-        // Handle click on a notification
+        //  Handle click on a notification
         function handleNotifClick(notifId, type, referenceId) {
             // Mark as read
             fetch(`/notifications/${notifId}/read`, { method: 'POST' })
@@ -239,6 +241,8 @@
             // TEST_SUBMITTED                                  → testId
             if (type === 'FRIEND_REQUEST' || type === 'FRIEND_ACCEPTED') {
                 window.location.href = '/friends';
+            } else if (type === 'TEST_SHARED') {
+                window.location.href = '/shared-tests';
             } else if (referenceId) {
                 window.location.href = '/your-courses';
             }
@@ -246,7 +250,7 @@
             document.getElementById('notifDropdown').classList.remove('open');
         }
 
-        // Mark all as read
+        //  Mark all as read
         function markAllRead() {
             fetch('/notifications/read-all', { method: 'POST' })
                 .then(() => pollNotifications());

@@ -1,5 +1,6 @@
 package com.finalyearproject.fyp.service.serviceImpl;
 
+import com.finalyearproject.fyp.dto.UserResourceDTO;
 import com.finalyearproject.fyp.entity.*;
 import com.finalyearproject.fyp.repository.*;
 import com.finalyearproject.fyp.service.LocalFileStorageService;
@@ -102,6 +103,26 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public List<UserResourceDTO> getUserResourcesWithContext(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        return ucrRepository.findByUser(user).stream().map(ucr -> {
+            String courseName  = ucr.getCourse()  != null ? ucr.getCourse().getCourseName()    : "—";
+            String chapterTitle = ucr.getChapter() != null ? ucr.getChapter().getChapterTitle() : "—";
+            Resource r = ucr.getResource();
+            return new UserResourceDTO(
+                    r.getResourceId(),
+                    r.getResourceName(),
+                    r.getResourceType(),
+                    r.getResourcePath(),
+                    r.getUploadedAt(),
+                    courseName,
+                    chapterTitle
+            );
+        }).toList();
+    }
+
+    @Override
     @Transactional
     public void deleteResource(Long resourceId) throws Exception {
         Resource resource = resourceRepository.findById(resourceId)
@@ -111,7 +132,7 @@ public class ResourceServiceImpl implements ResourceService {
         resourceRepository.delete(resource);
     }
 
-    // helpers
+    //helpers
 
     private Resource saveResourceRecord(User user, Course course, Chapter chapter,
                                         String originalName, String type,

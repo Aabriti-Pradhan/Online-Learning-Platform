@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shared Tests — PrepHunt</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
+        .shared-tab {
+            display: flex; gap: 0.5rem;
+            border-bottom: 2px solid var(--color-border);
+            margin-bottom: 1.5rem;
+        }
+        .shared-tab-btn {
+            padding: 0.6rem 1.2rem; border: none; background: none;
+            font-family: inherit; font-size: 0.92rem; font-weight: 600;
+            color: var(--color-text-secondary); cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .shared-tab-btn.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+
+        /* ── Test card — horizontal row layout ── */
+        .test-list {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .test-card {
+            background: white;
+            width: 100%;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            display: grid;
+            grid-template-columns: 44px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 1rem;
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .test-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+        /* Icon circle */
+        .test-icon {
+            width: 44px; height: 44px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .test-icon.QUIZ          { background: #ede9fe; color: #6c47ff; }
+        .test-icon.PRACTICE_EXAM { background: #fef3c7; color: #d97706; }
+
+        /* Middle text area — grid handles overflow automatically */
+        .test-info { min-width: 0; overflow: hidden; }
+        .test-title {
+            font-weight: 700; font-size: 0.92rem;
+            color: var(--color-text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .test-meta {
+            font-size: 0.76rem; color: var(--color-text-secondary); margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            flex-wrap: wrap;
+        }
+
+        /* Right side */
+        .test-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.4rem;
+            flex-shrink: 0;
+            z-index: 2;
+            pointer-events: auto;
+            position: relative;
+        }
+
+        .badge-type {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; padding: 2px 8px; border-radius: 99px;
+            white-space: nowrap;
+        }
+        .badge-quiz { background: #ede9fe; color: #6c47ff; }
+        .badge-exam { background: #fef3c7; color: #d97706; }
+
+        .shared-by-badge {
+            font-size: 0.7rem; background: #f0fdf4; color: #16a34a;
+            border-radius: 99px; padding: 2px 10px; font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .empty-state {
+            text-align: center; padding: 3rem 1rem; color: var(--color-text-secondary);
+        }
+        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.4; }
+        .empty-state p { font-size: 0.9rem; margin: 0; }
+    </style>
+</head>
+<body>
+<div class="container-fluid px-4 py-3">
+    <div th:replace="navigation/index :: topbar"></div>
+    <div class="row align-items-stretch">
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+        <div class="col">
+
+            <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
+                <h2 class="fw-bold">Shared Tests</h2>
+            </div>
+
+            <!-- Tabs -->
+            <div class="shared-tab">
+                <button class="shared-tab-btn active" onclick="switchTab('received', this)">
+                    <i class="bi bi-inbox me-1"></i> Received
+                    <span th:if="${!#lists.isEmpty(sharedWithMe)}"
+                          style="background:var(--color-accent);color:white;font-size:0.65rem;
+                                 font-weight:700;border-radius:99px;padding:1px 6px;margin-left:4px;"
+                          th:text="${#lists.size(sharedWithMe)}"></span>
+                </button>
+                <button class="shared-tab-btn" onclick="switchTab('sent', this)">
+                    <i class="bi bi-send me-1"></i> Sent
+                </button>
+            </div>
+
+            <!-- ══════════ RECEIVED ══════════ -->
+            <div id="tab-received" class="tab-panel active">
+
+                <div th:if="${#lists.isEmpty(sharedWithMe)}" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p class="fw-semibold mb-1">No tests received yet</p>
+                    <p>When a friend shares a test with you it will appear here.</p>
+                </div>
+
+                <div class="d-flex flex-column gap-3 test-list" th:if="${!#lists.isEmpty(sharedWithMe)}">
+                    <div th:each="st : ${sharedWithMe}" class="test-card">
+
+                        <!-- Icon -->
+                        <div class="test-icon"
+                             th:classappend="${st.testType == 'QUIZ'} ? ' QUIZ' : ' PRACTICE_EXAM'">
+                            <i class="bi"
+                               th:classappend="${st.testType == 'QUIZ'} ? ' bi-patch-question' : ' bi-stopwatch'"></i>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="test-info">
+                            <div class="test-title" th:text="${st.testTitle}">Test Title</div>
+                            <div class="test-meta">
+                                <span th:text="${st.courseName}">Course</span>
+                                <span th:text="${st.questionCount} + ' questions'">0 questions</span>
+                                <span class="badge-type"
+                                      th:classappend="${st.testType == 'QUIZ'} ? ' badge-quiz' : ' badge-exam'"
+                                      th:text="${st.testType}">QUIZ</span>
+                                <span th:if="${st.timerMinutes != null}">
+                                    <i class="bi bi-stopwatch"></i>
+                                    <span th:text="${st.timerMinutes} + ' min'"></span>
+                                </span>
+                            </div>
+                            <div class="mt-1">
+                                <span class="shared-by-badge">
+                                    <i class="bi bi-person-check me-1"></i>
+                                    Shared by <span th:text="${st.sharedByUsername}"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="test-actions">
+                            <a th:if="${st.chapterId != null}"
+                               class="btn btn-sm btn-dark rounded-2"
+                               th:href="@{'/your-courses/' + ${st.courseId} + '/chapters/' + ${st.chapterId} + '/tests/' + ${st.testId} + '/take'}">
+                                <i class="bi bi-play-fill me-1"></i> Take Test
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════ SENT ══════════ -->
+            <div id="tab-sent" class="tab-panel">
+
+                <div th:if="${#lists.isEmpty(sharedByMe)}" class="empty-state">
+                    <i class="bi bi-send"></i>
+                    <p class="fw-semibold mb-1">No tests sent yet</p>
+                    <p>Share a test with a friend from the tests page.</p>
+                </div>
+
+                <div class="d-flex flex-column gap-3 test-list" th:if="${!#lists.isEmpty(sharedByMe)}">
+                    <div th:each="st : ${sharedByMe}" class="test-card">
+
+                        <!-- Icon -->
+                        <div class="test-icon"
+                             th:classappend="${st.testType == 'QUIZ'} ? ' QUIZ' : ' PRACTICE_EXAM'">
+                            <i class="bi"
+                               th:classappend="${st.testType == 'QUIZ'} ? ' bi-patch-question' : ' bi-stopwatch'"></i>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="test-info">
+                            <div class="test-title" th:text="${st.testTitle}">Test Title</div>
+                            <div class="test-meta">
+                                <span th:text="${st.courseName}">Course</span>
+                                &nbsp;·&nbsp;
+                                <span th:text="${st.questionCount} + ' questions'">0 questions</span>
+                            </div>
+                            <div class="mt-1">
+                                <span style="font-size:0.72rem;color:#9ca3af;">
+                                    Shared <span th:text="${#temporals.format(st.sharedAt, 'dd MMM yyyy')}"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Badge -->
+                        <div class="test-actions">
+                            <span class="badge-type"
+                                  th:classappend="${st.testType == 'QUIZ'} ? ' badge-quiz' : ' badge-exam'"
+                                  th:text="${st.testType}">QUIZ</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div th:replace="footer/index :: footer"></div>
+</div>
+
+<script th:src="@{/js/script.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.shared-tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        btn.classList.add('active');
+    }
+</script>
+</body>
+</html>

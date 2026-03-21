@@ -14,8 +14,12 @@
             border-radius: var(--radius-lg); padding: 1.4rem 1.5rem;
             box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.15s;
             position: relative;
-            overflow: hidden;
             z-index: 1;
+            display: grid;
+            grid-template-columns: 48px 1fr auto;
+            align-items: center;
+            gap: 1rem;
+
         }
         .test-card a.btn {
             position: relative;
@@ -34,9 +38,38 @@
         .badge-exam { background: #fef3c7; color: #d97706; }
         .past-attempt { font-size: 0.78rem; background: #f8fafc; border: 1px solid var(--color-border);
             border-radius: var(--radius-sm); padding: 4px 10px;
-            display: inline-flex; align-items: center; gap: 4px; }
+            display: inline-flex; align-items: center; gap: 4px;
+            position: relative;
+            z-index: 5;
+            pointer-events: auto;}
         .empty-state { text-align: center; padding: 4rem; color: var(--color-text-secondary); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
+        .test-info {
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .test-actions {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            gap: 0.6rem;
+            margin-left: 50px;
+            z-index: 2;
+        }
+        .test-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .test-meta {
+            font-size: 0.78rem;
+            color: var(--color-text-secondary);
+        }
+        .test-list {
+            width: 100%;
+            max-width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -63,43 +96,52 @@
             </div>
 
             <!-- Test cards -->
-            <div class="row g-3" th:if="${!testData.isEmpty()}">
-                <div class="col-md-4 col-sm-6" th:each="t : ${testData}">
-                    <div class="test-card h-100 d-flex flex-column">
+            <div class="d-flex flex-column gap-3" th:if="${!testData.isEmpty()}" style="max-width:100%;">
+                <div th:each="t : ${testData}" class="test-card test-list">
 
-                        <div class="test-icon mb-3" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
-                            <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
-                        </div>
+                    <!-- Icon -->
+                    <div class="test-icon" th:classappend="${t.testType == 'QUIZ'} ? 'quiz' : 'exam'">
+                        <i th:class="${t.testType == 'QUIZ'} ? 'bi bi-patch-question' : 'bi bi-stopwatch'"></i>
+                    </div>
 
-                        <div class="fw-bold mb-1" th:text="${t.testTitle}">Title</div>
-
-                        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                    <!-- Info -->
+                    <div class="test-info">
+                        <div class="test-title" th:text="${t.testTitle}">Title</div>
+                        <div class="test-meta">
                             <span class="badge-type"
                                   th:classappend="${t.testType == 'QUIZ'} ? 'badge-quiz' : 'badge-exam'"
-                                  th:text="${t.testType}">QUIZ</span>
-                            <span style="font-size:0.78rem;color:#9ca3af;" th:text="${t.questionCount} + ' questions'"></span>
-                            <span th:if="${t.timerMinutes != null}" style="font-size:0.78rem;color:#9ca3af;">
-                                <i class="bi bi-clock me-1"></i>
+                                  th:text="${t.testType}">QUIZ
+                            </span>
+                            <div class="d-flex gap-2 flex-wrap mt-1" th:if="${!t.pastAttempts.isEmpty()}">
+                                <span class="past-attempt" th:each="a : ${t.pastAttempts}">
+                                    <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
+                                    <span th:text="${a.score} + '/' + ${a.total}"></span>
+                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}">view</a>
+                                </span>
+                            </div>
+                            <span th:text="${t.questionCount} + ' questions'"></span>
+                            <span th:if="${t.timerMinutes != null}">
+                                <i class="bi bi-stopwatch"></i>
                                 <span th:text="${t.timerMinutes} + ' min'"></span>
                             </span>
                         </div>
 
-                        <!-- Past attempts -->
-                        <div class="d-flex gap-2 flex-wrap mb-3" th:if="${!t.pastAttempts.isEmpty()}">
-                            <span class="past-attempt" th:each="a : ${t.pastAttempts}">
-                                <i class="bi bi-clock-history" style="color:#9ca3af;"></i>
-                                <span th:text="${a.score} + '/' + ${a.total}"></span>
-                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/result/' + ${a.attemptId}}"
-                                   style="color:#6c47ff;text-decoration:none;font-weight:700;">view</a>
-                            </span>
-                        </div>
+                    </div>
 
+                    <!-- Actions -->
+                    <div class="test-actions">
                         <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters/' + ${chapter.chapterId} + '/tests/' + ${t.testId} + '/take'}"
-                           class="btn btn-dark rounded-3 mt-auto">
+                           class="btn btn-sm btn-dark rounded-2">
                             <i class="bi bi-play-fill me-1"></i>
                             <span th:text="${t.pastAttempts.isEmpty()} ? 'Start' : 'Retake'">Start</span>
                         </a>
+                        <button class="btn btn-sm btn-outline-secondary rounded-2"
+                                th:attr="data-test-id=${t.testId}, data-course-id=${course.courseId}, data-test-title=${t.testTitle}"
+                                onclick="openShareModal(this)">
+                            <i class="bi bi-share me-1"></i> Share
+                        </button>
                     </div>
+
                 </div>
             </div>
 
@@ -113,5 +155,133 @@
     </div>
 </div>
 <script th:src="@{/js/script.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Share Test Modal -->
+<div id="shareModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:1rem;padding:2rem;max-width:420px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.15);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-share me-2"></i>Share Test</h5>
+            <button onclick="closeShareModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#9ca3af;">&times;</button>
+        </div>
+        <p class="text-muted small mb-3" id="shareTestTitle"></p>
+
+        <div id="friendsList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;">
+            <p class="text-muted small text-center py-3">Loading friends...</p>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-3">
+            <button onclick="closeShareModal()" style="padding:0.5rem 1.25rem;border:1px solid #e5e7eb;border-radius:0.75rem;background:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+            <button onclick="confirmShare()" style="padding:0.5rem 1.25rem;border:none;border-radius:0.75rem;background:var(--color-accent);color:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
+                <i class="bi bi-send me-1"></i> Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    <div id="shareToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="shareToastMsg">Done</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const COURSE_ID  = /*[[${course.courseId}]]*/ null;
+    const CHAPTER_ID = /*[[${chapter.chapterId}]]*/ null;
+
+    let shareTestId    = null;
+    let shareTestTitle = null;
+    let alreadyShared  = [];
+
+    const shareModal = document.getElementById('shareModal');
+    const toastEl    = document.getElementById('shareToast');
+    const toastMsg   = document.getElementById('shareToastMsg');
+    const bsToast    = new bootstrap.Toast(toastEl, { delay: 2500 });
+
+    function showToast(msg) { toastMsg.innerText = msg; bsToast.show(); }
+
+    function openShareModal(btn) {
+        shareTestId    = btn.getAttribute('data-test-id');
+        shareTestTitle = btn.getAttribute('data-test-title');
+        document.getElementById('shareTestTitle').innerText = 'Sharing: ' + shareTestTitle;
+        shareModal.style.display = 'flex';
+        loadFriends();
+    }
+
+    function closeShareModal() {
+        shareModal.style.display = 'none';
+        shareTestId = null;
+        alreadyShared = [];
+    }
+
+    shareModal.addEventListener('click', function(e) {
+        if (e.target === this) closeShareModal();
+    });
+
+    async function loadFriends() {
+        const container = document.getElementById('friendsList');
+        container.innerHTML = '<p class="text-muted small text-center py-3">Loading...</p>';
+
+        // Fetch friends and already-shared list in parallel
+        const [friendsRes, sharedRes] = await Promise.all([
+            fetch('/friends-list'),
+            fetch('/shared-tests/already-shared/' + shareTestId)
+        ]);
+
+        const friends = await friendsRes.json();
+        alreadyShared = await sharedRes.json();
+
+        if (!friends || friends.length === 0) {
+            container.innerHTML = '<p class="text-muted small text-center py-3">You have no friends yet. Add friends to share tests.</p>';
+            return;
+        }
+
+        container.innerHTML = friends.map(f => {
+            const already = alreadyShared.includes(f.userId);
+            return `
+            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;border:1px solid #e5e7eb;border-radius:0.75rem;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#2d4356,#435d73);
+                            display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;flex-shrink:0;">
+                    ${f.username ? f.username.charAt(0).toUpperCase() : '?'}
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.85rem;">${f.username}</div>
+                    <div style="font-size:0.72rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.email}</div>
+                </div>
+                ${already
+                ? '<span style="font-size:0.72rem;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:2px 10px;font-weight:600;">Shared</span>'
+                : `<input type="checkbox" class="friend-checkbox form-check-input" value="${f.userId}" style="width:18px;height:18px;cursor:pointer;">`
+            }
+            </div>`;
+        }).join('');
+    }
+
+    async function confirmShare() {
+        const selected = [...document.querySelectorAll('.friend-checkbox:checked')]
+            .map(cb => parseInt(cb.value));
+
+        if (selected.length === 0) {
+            showToast('Please select at least one friend.');
+            return;
+        }
+
+        const res = await fetch('/shared-tests/share', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ testId: parseInt(shareTestId), courseId: COURSE_ID, friendIds: selected })
+        });
+
+        if (res.ok) {
+            showToast('Test shared successfully!');
+            closeShareModal();
+        } else {
+            showToast('Failed to share. Please try again.');
+        }
+    }
+</script>
 </body>
 </html>
