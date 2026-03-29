@@ -82,7 +82,6 @@
             box-shadow: none !important;
         }
 
-        /* Remove on focus */
         .nav-collapsible-btn:focus,
         .nav-item:focus,
         .nav-subitem:focus {
@@ -90,7 +89,6 @@
             box-shadow: 0 0 0 2px rgba(108, 71, 255, 0.2);
         }
 
-        /* Remove on click (important) */
         .nav-collapsible-btn:active,
         .nav-item:active,
         .nav-subitem:active {
@@ -98,7 +96,6 @@
             box-shadow: none !important;
         }
 
-        /* Remove Bootstrap focus ring */
         button:focus,
         button:active,
         a:focus,
@@ -107,7 +104,6 @@
             box-shadow: none !important;
         }
 
-        /* Kill EVERYTHING causing outline */
         *:focus {
             outline: none !important;
             box-shadow: none !important;
@@ -118,7 +114,6 @@
             box-shadow: none !important;
         }
 
-        /* Specifically for your sidebar elements */
         .nav-collapsible-btn,
         .nav-item,
         .nav-subitem {
@@ -127,7 +122,6 @@
             box-shadow: none !important;
         }
 
-        /* Also kill any border that may be applied */
         .nav-item,
         .nav-subitem {
             border: none !important;
@@ -140,7 +134,7 @@
             background-color: transparent;
         }
 
-        /* Fix: sidebar as flex column, user profile fixed at top, nav scrolls */
+        /* Sidebar layout */
         .sidebar-trial {
             display: flex !important;
             flex-direction: column !important;
@@ -162,14 +156,183 @@
             scrollbar-width: none;
         }
         .sidebar-nav-wrap::-webkit-scrollbar { display: none; }
+
+        /* Clickable user card */
+        .user-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 0.5rem 0.625rem;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.18s ease;
+            font-family: inherit;
+            position: relative;
+            background: rgba(74,124,89,0.07);
+        }
+        .user-profile-btn:hover {
+            background: rgba(74,124,89,0.07);
+        }
+        .user-profile-btn .edit-hint {
+            margin-left: auto;
+            font-size: 0.72rem;
+            color: #9ca3af;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            white-space: nowrap;
+        }
+        .user-profile-btn:hover .edit-hint {
+            opacity: 1;
+        }
+
+        /* Profile modal */
+        .profile-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .profile-modal-overlay.show {
+            display: flex;
+        }
+        .profile-modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            position: relative;
+            animation: slideUp 0.22s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(24px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .profile-modal-close {
+            position: absolute;
+            top: 1rem; right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #6b7280;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .profile-modal-close:hover { background: #f3f4f6; color: #111; }
+        .profile-modal h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem;
+            color: #111827;
+        }
+        .profile-modal .modal-subtitle {
+            font-size: 0.82rem;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+        .profile-modal label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.3rem;
+        }
+        .profile-modal input[type="text"],
+        .profile-modal input[type="password"],
+        .profile-modal input[type="email"] {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+            background: #fafafa;
+        }
+        .profile-modal input:focus {
+            border-color: #4a7c59;
+            background: #fff;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(74,124,89,0.12) !important;
+        }
+        .profile-modal .form-group {
+            margin-bottom: 1rem;
+        }
+        .profile-modal .form-hint {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+        .profile-modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .btn-profile-save {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            background: #4a7c59;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-profile-save:hover { background: #3a6347; }
+        .btn-profile-cancel {
+            padding: 0.6rem 1rem;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .btn-profile-cancel:hover { background: #e5e7eb; }
+        .profile-alert {
+            padding: 0.55rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1rem;
+        }
+        .profile-alert.success { background: #d1fae5; color: #065f46; }
+        .profile-alert.error   { background: #fee2e2; color: #991b1b; }
+        .profile-modal .divider {
+            border: none;
+            border-top: 1.5px solid #f3f4f6;
+            margin: 1rem 0;
+        }
+        .profile-modal .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #9ca3af;
+            margin-bottom: 0.75rem;
+        }
     </style>
 
     <div class="sidebar-trial">
 
-        <!-- ── User profile (fixed at top, never scrolls) ── -->
+        <!-- User profile card (clickable) -->
         <div class="sidebar-user-wrap">
-            <div class="user-profile" style="position:static;margin-bottom:0;">
-                <div class="avatar-circle">
+            <button class="user-profile-btn" onclick="openProfileModal()" type="button" title="Edit profile">
+                <div class="avatar-circle" style="flex-shrink:0;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
@@ -179,7 +342,15 @@
                     <div class="username" th:text="${loggedInUser != null} ? ${loggedInUser.username} : 'User'">User</div>
                     <div class="user-email" th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></div>
                 </div>
-            </div>
+                <span class="edit-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         style="width:13px;height:13px;vertical-align:middle;margin-right:3px;">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit
+                </span>
+            </button>
         </div>
 
         <div class="sidebar-nav-wrap">
@@ -202,12 +373,6 @@
                     <div class="nav-course-list" id="teacherList"
                          th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
                         <div style="margin-left: 0.75rem; padding-top: 2px;">
-
-                            <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
-                            <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
-                            <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
-                            <!--                            <span>All Courses</span>-->
-                            <!--                        </a>-->
 
                             <div th:each="course : ${userCourses}" class="nav-group"
                                  th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
@@ -289,12 +454,6 @@
                     <div class="nav-course-list" id="studentList"
                          th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
                         <div style="margin-left: 0.75rem; padding-top: 2px;">
-
-                            <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
-                            <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
-                            <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
-                            <!--                            <span>All Enrolled</span>-->
-                            <!--                        </a>-->
 
                             <div th:each="course : ${userCourses}" class="nav-group"
                                  th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
@@ -380,19 +539,79 @@
         </div><!-- end sidebar-nav-wrap -->
     </div>
 
+    <!-- ══════════════════════════════════════════════════ -->
+    <!--   PROFILE EDIT MODAL                              -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="profile-modal-overlay" id="profileModalOverlay" onclick="handleOverlayClick(event)">
+        <div class="profile-modal" id="profileModal">
+            <button class="profile-modal-close" onclick="closeProfileModal()" title="Close">&#x2715;</button>
+
+            <h2>Edit Profile</h2>
+            <p class="modal-subtitle"
+               th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></p>
+
+            <!-- Flash messages from redirect -->
+            <div th:if="${profileSuccess}" class="profile-alert success" th:text="${profileSuccess}"></div>
+            <div th:if="${profileError}"   class="profile-alert error"   th:text="${profileError}"></div>
+
+            <form th:action="@{/profile/update}" method="post">
+                <!-- Pass current page so we redirect back here after save -->
+                <input type="hidden" name="redirectUrl" id="profileRedirectUrl" value="/">
+
+                <div class="section-label">Basic Info</div>
+
+                <div class="form-group">
+                    <label for="profileUsername">Username</label>
+                    <input type="text"
+                           id="profileUsername"
+                           name="username"
+                           th:value="${loggedInUser != null} ? ${loggedInUser.username} : ''"
+                           placeholder="Enter new username"
+                           autocomplete="username">
+                </div>
+
+                <hr class="divider">
+
+                <div class="section-label">Change Password</div>
+
+                <div class="form-group">
+                    <label for="profilePassword">New Password</label>
+                    <input type="password"
+                           id="profilePassword"
+                           name="password"
+                           placeholder="Leave blank to keep current"
+                           autocomplete="new-password">
+                    <div class="form-hint">Minimum 6 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="profileConfirmPassword">Confirm Password</label>
+                    <input type="password"
+                           id="profileConfirmPassword"
+                           name="confirmPassword"
+                           placeholder="Repeat new password"
+                           autocomplete="new-password">
+                </div>
+
+                <div class="profile-modal-actions">
+                    <button type="button" class="btn-profile-cancel" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="btn-profile-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Toggle All Courses / Enrolled Courses section
+        // Navigation helpers
         function toggleList(listId, btn) {
             const list = document.getElementById(listId);
             if (!list) return;
             const isOpen = list.classList.contains('open');
 
             if (isOpen) {
-                // Already open — just collapse, stay on page
                 list.classList.remove('open');
                 btn.classList.remove('list-open');
             } else {
-                // Closed — open it and navigate to /your-courses
                 list.classList.add('open');
                 btn.classList.add('list-open');
                 if (window.location.pathname !== '/your-courses') {
@@ -401,7 +620,6 @@
             }
         }
 
-        // Toggle individual course row
         function toggleCourse(btn) {
             const group  = btn.closest('.nav-group');
             const href   = btn.getAttribute('data-href');
@@ -409,15 +627,12 @@
             const onPage = href && window.location.pathname.startsWith(href);
 
             if (isOpen && onPage) {
-                // Already here and open — just collapse
                 group.classList.remove('open');
             } else {
-                // Navigate (which will reload and auto-open via Thymeleaf)
                 window.location.href = href;
             }
         }
 
-        // On load: sync chevron on top buttons if list is already open
         document.addEventListener('DOMContentLoaded', function () {
             ['teacherList', 'studentList'].forEach(function(id) {
                 const list = document.getElementById(id);
@@ -426,6 +641,48 @@
                     if (btn) btn.classList.add('list-open');
                 }
             });
+        });
+
+        // Profile modal
+        function openProfileModal() {
+            // Set redirect URL to current page so we return here after save
+            const redirectInput = document.getElementById('profileRedirectUrl');
+            if (redirectInput) {
+                redirectInput.value = window.location.pathname + window.location.search;
+            }
+            document.getElementById('profileModalOverlay').classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // Auto-open if there was a flash message (means we just came back from a save)
+            const hasAlert = document.querySelector('.profile-modal .profile-alert');
+            if (hasAlert) {
+                document.getElementById('profileModalOverlay').classList.add('show');
+            }
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModalOverlay').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function handleOverlayClick(event) {
+            // Close only when clicking the dark backdrop, not the modal itself
+            if (event.target === document.getElementById('profileModalOverlay')) {
+                closeProfileModal();
+            }
+        }
+
+        // Re-open modal automatically if there's a flash message (after redirect)
+        document.addEventListener('DOMContentLoaded', function () {
+            const hasAlert = document.querySelector('#profileModal .profile-alert');
+            if (hasAlert) {
+                openProfileModal();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeProfileModal();
         });
     </script>
 

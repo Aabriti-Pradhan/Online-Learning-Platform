@@ -71,4 +71,18 @@ public class UserServiceImpl implements UserService {
         return BCrypt.checkpw(rawPassword, hashedPassword);
     }
 
+    @Override
+    public User updateProfile(String email, String newUsername, String newPassword) {
+        User user = userDao.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+        if (newUsername != null && !newUsername.isBlank()) {
+            user.setUsername(newUsername);
+        }
+        if (newPassword != null && !newPassword.isBlank()) {
+            user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        }
+        return userDao.save(user);
+    }
 }

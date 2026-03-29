@@ -10,4 +10,5 @@ public interface UserService {
     User findByEmail(String email);
     boolean checkPassword(String rawPassword, String hashedPassword);
     User registerOAuthUser(String email, String name, String role);
+    User updateProfile(String email, String newUsername, String newPassword);
 }
