@@ -43,7 +43,7 @@ public class HuggingFaceServiceImpl implements HuggingFaceService {
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
-    // ── Send prompt using OpenAI-compatible Chat Completions API ─────────────
+    // Send prompt using OpenAI-compatible Chat Completions API
 
     @Override
     public String prompt(String userPrompt) throws Exception {
@@ -91,7 +91,7 @@ public class HuggingFaceServiceImpl implements HuggingFaceService {
                 + response.body());
     }
 
-    // ── Extract text from PDF ─────────────────────────────────────────────────
+    // Extract text from PDF
 
     @Override
     public String extractPdfText(String relativePath) throws Exception {
@@ -108,7 +108,7 @@ public class HuggingFaceServiceImpl implements HuggingFaceService {
         }
     }
 
-    // ── Generate MCQ questions from text ─────────────────────────────────────
+    // Generate MCQ questions from text
 
     @Override
     public List<GeneratedQuestion> generateQuestionsFromText(
@@ -133,7 +133,7 @@ public class HuggingFaceServiceImpl implements HuggingFaceService {
         return parseQuestions(raw);
     }
 
-    // ── Parse AI response into structured questions ───────────────────────────
+    // Parse AI response into structured questions
 
     private List<GeneratedQuestion> parseQuestions(String raw) {
         List<GeneratedQuestion> questions = new ArrayList<>();

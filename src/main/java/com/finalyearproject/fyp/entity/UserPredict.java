@@ -6,20 +6,19 @@ import lombok.Setter;
 
 @Setter
 @Getter
-
 @Entity
 @Table(name = "user_predict")
 public class UserPredict {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long predictionId;
+    private Long userPredictId;
 
-    @ManyToOne
-    @JoinColumn(name = "userId")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne(mappedBy = "userPredict")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "prediction_id", nullable = false)
     private Prediction prediction;
-
 }

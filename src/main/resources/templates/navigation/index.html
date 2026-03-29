@@ -1,4 +1,4 @@
-<nav th:fragment="topbar" id="topbar">
+<nav class="topbar" th:fragment="topbar" id="topbar">
 
     <style>
         /*  Bell icon & dropdown  */
@@ -92,6 +92,14 @@
             font-size: 0.85rem; color: #9ca3af;
         }
 
+        /* Motivational widget */
+        .motiv-text { text-align: center; }
+        .motiv-score { font-size: 1.1rem; font-weight: 800; color: #6c47ff; letter-spacing: -0.02em; }
+        .motiv-msg { font-size: 0.78rem; color: #6b7280; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+        .motiv-trend-up     { color: #16a34a; font-weight: 700; }
+        .motiv-trend-down   { color: #dc2626; font-weight: 700; }
+        .motiv-trend-stable { color: #9ca3af; font-weight: 700; }
+
         .notif-footer {
             text-align: center; padding: 0.6rem;
             border-top: 1px solid var(--color-border);
@@ -108,8 +116,12 @@
             </a>
         </div>
 
-        <div class="text-muted small">
-            <span id="dateTime"></span>
+        <!-- Motivational progress widget -->
+        <div id="motivationWidget" style="cursor:pointer;" onclick="window.location.href='/progress-tracker'"
+             title="Click to view your full progress tracker">
+            <div id="motivationContent" style="text-align:center;min-width:220px;">
+                <span id="dateTime" class="text-muted small"></span>
+            </div>
         </div>
 
         <div class="d-flex align-items-center gap-3">
@@ -149,6 +161,30 @@
         }
         updateDateTime();
         setInterval(updateDateTime, 1000);
+
+        // ── Motivation widget ──────────────────────────────────────────────
+        function pollMotivation() {
+            fetch('/prediction/motivation')
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (!data || data.overallPct === 0) return; // no data yet, keep clock
+                    const container = document.getElementById('motivationContent');
+                    const trendIcon = data.trend === 'UP' ? '<i class="bi bi-caret-up-fill"></i>' : data.trend === 'DOWN' ? '<i class="bi bi-caret-down-fill"></i>' : '<i class="bi bi-arrow-right"></i>';
+                    const trendClass = data.trend === 'UP' ? 'motiv-trend-up' : data.trend === 'DOWN' ? 'motiv-trend-down' : 'motiv-trend-stable';
+                    container.innerHTML = `
+                        <div class="motiv-text">
+                            <div>
+                                <span class="${trendClass}" style="font-size:0.82rem;margin-left:6px;">${trendIcon} ${data.weeklyPct}% this week</span>
+                            </div>
+                            <div class="motiv-msg">${data.message}</div>
+                        </div>`;
+                })
+                .catch(() => {}); // silently fail — keep showing clock
+        }
+
+        // Poll motivation every 5 minutes, first call after 2 seconds
+        setTimeout(pollMotivation, 2000);
+        setInterval(pollMotivation, 300000);
 
         //  Notification icons by type
         const TYPE_ICONS = {

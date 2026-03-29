@@ -18,6 +18,12 @@ public interface UserCourseTestQuestionAttemptRepository
     @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.test = :test AND ucta.user = :user")
     List<UserCourseTestQuestionAttempt> findByTestAndUser(@Param("test") Test test, @Param("user") User user);
 
+    @Query("SELECT u FROM UserCourseTestQuestionAttempt u WHERE u.user = :user")
+    List<UserCourseTestQuestionAttempt> findByUser(@Param("user") User user);
+
+    @Query("SELECT u FROM UserCourseTestQuestionAttempt u WHERE u.attemptId = :attemptId")
+    List<UserCourseTestQuestionAttempt> findByAttemptId(@Param("attemptId") Long attemptId);
+
     @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.test = :test")
     List<UserCourseTestQuestionAttempt> findByTest(@Param("test") Test test);
 }

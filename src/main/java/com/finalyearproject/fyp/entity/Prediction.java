@@ -8,21 +8,17 @@ import java.time.LocalDateTime;
 
 @Setter
 @Getter
-
 @Entity
 @Table(name = "prediction")
 public class Prediction {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long predictionId;
 
-    private String predictionType;
-    private String value;
+    private String        predictionType; // MOTIVATION, STUDY_PLAN, WEAK_AREAS
+    @Column(columnDefinition = "TEXT")
+    private String        value;
     private LocalDateTime generatedAt;
-
-    @OneToOne
-    @MapsId
-    @JoinColumn(name = "predictionId")
-    private UserPredict userPredict;
 
 }

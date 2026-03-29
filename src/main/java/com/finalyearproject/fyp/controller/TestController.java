@@ -115,6 +115,7 @@ public class TestController {
     public String editTestPage(@PathVariable Long courseId,
                                @PathVariable Long chapterId,
                                @PathVariable Long testId,
+                               @org.springframework.web.bind.annotation.RequestParam(required = false, defaultValue = "false") boolean readOnly,
                                Model model) {
         Test    test    = testService.getTestById(testId);
         String  raw     = test.getTestType();
@@ -127,6 +128,7 @@ public class TestController {
         model.addAttribute("testType",      type);
         model.addAttribute("timerMinutes",  timer);
         model.addAttribute("questions",     testService.getQuestionsForTest(testId));
+        model.addAttribute("readOnly",      readOnly);
         return "tests/edit";
     }
 

@@ -97,6 +97,18 @@ body {
     border-radius: var(--radius-lg);
     display: block;
     box-shadow: 0 0 10px -2px rgba(0, 0, 0, 0.3);
+    position: fixed;
+    top: 120px;
+    left: 30px;
+    height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+}
+
+.sidebar-trial::-webkit-scrollbar {
+    display: none;
+    scrollbar-width: none;
 }
 
 @keyframes slideInLeft {
@@ -117,6 +129,13 @@ body {
     padding-bottom: var(--space-xl);
     margin-bottom: var(--space-lg);
     border-bottom: 1px solid var(--color-border);
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: #FFF9F9;
 }
 
 .logo {
@@ -143,6 +162,8 @@ body {
     border-radius: var(--radius-lg);
     margin-bottom: var(--space-xl);
     transition: var(--transition-base);
+    position: fixed;
+    z-index: 4;
 }
 
 .user-profile:hover {
@@ -292,6 +313,10 @@ body {
     margin-left: 280px;
     padding: var(--space-2xl) var(--space-2xl);
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.besides{
+    margin-left: 300px; !important;
 }
 
 @keyframes fadeInUp {
@@ -665,13 +690,15 @@ body {
 /* Footer */
 .page-footer {
     margin-top: var(--space-2xl);
-    padding-top: var(--space-xl);
     border-top: 2px solid var(--color-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
     color: var(--color-text-secondary);
+    background: #FFF9F9;
+    border-top: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
 }
 
 .footer-right {

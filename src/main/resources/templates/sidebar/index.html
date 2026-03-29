@@ -139,218 +139,245 @@
         button.nav-item:not(.active):not(:hover) {
             background-color: transparent;
         }
+
+        /* Fix: sidebar as flex column, user profile fixed at top, nav scrolls */
+        .sidebar-trial {
+            display: flex !important;
+            flex-direction: column !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        .sidebar-user-wrap {
+            padding: var(--space-lg) var(--space-md) var(--space-md);
+            flex-shrink: 0;
+            background: white;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            z-index: 2;
+        }
+        .sidebar-nav-wrap {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: var(--space-md);
+            scrollbar-width: none;
+        }
+        .sidebar-nav-wrap::-webkit-scrollbar { display: none; }
     </style>
 
     <div class="sidebar-trial">
 
-        <!-- ── User profile ── -->
-        <div class="user-profile">
-            <div class="avatar-circle">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-            </div>
-            <div class="user-info">
-                <div class="username" th:text="${loggedInUser != null} ? ${loggedInUser.username} : 'User'">User</div>
-                <div class="user-email" th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></div>
+        <!-- ── User profile (fixed at top, never scrolls) ── -->
+        <div class="sidebar-user-wrap">
+            <div class="user-profile" style="position:static;margin-bottom:0;">
+                <div class="avatar-circle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="user-info">
+                    <div class="username" th:text="${loggedInUser != null} ? ${loggedInUser.username} : 'User'">User</div>
+                    <div class="user-email" th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></div>
+                </div>
             </div>
         </div>
 
-        <nav class="sidebar-nav">
+        <div class="sidebar-nav-wrap">
+            <nav class="sidebar-nav">
 
-            <!-- ════════════ TEACHER NAV ════════════ -->
-            <div class="nav-section" sec:authorize="hasRole('TEACHER')">
-                <div class="nav-label">My Courses</div>
+                <!-- ════════════ TEACHER NAV ════════════ -->
+                <div class="nav-section" sec:authorize="hasRole('TEACHER')">
+                    <div class="nav-label">My Courses</div>
 
-                <!-- All Courses toggle -->
-                <button class="nav-item"
-                        id="teacherTopBtn"
-                        th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
-                        onclick="toggleList('teacherList', this)">
-                    <i class="bi bi-grid"></i>
-                    <span>All Courses</span>
-                    <i class="bi bi-chevron-down nav-chevron"></i>
-                </button>
+                    <!-- All Courses toggle -->
+                    <button class="nav-item"
+                            id="teacherTopBtn"
+                            th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
+                            onclick="toggleList('teacherList', this)">
+                        <i class="bi bi-grid"></i>
+                        <span>All Courses</span>
+                        <i class="bi bi-chevron-down nav-chevron"></i>
+                    </button>
 
-                <div class="nav-course-list" id="teacherList"
-                     th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
-                    <div style="margin-left: 0.75rem; padding-top: 2px;">
+                    <div class="nav-course-list" id="teacherList"
+                         th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
+                        <div style="margin-left: 0.75rem; padding-top: 2px;">
 
-                        <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
-                        <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
-                        <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
-                        <!--                            <span>All Courses</span>-->
-                        <!--                        </a>-->
+                            <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
+                            <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
+                            <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
+                            <!--                            <span>All Courses</span>-->
+                            <!--                        </a>-->
 
-                        <div th:each="course : ${userCourses}" class="nav-group"
-                             th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
+                            <div th:each="course : ${userCourses}" class="nav-group"
+                                 th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
 
-                            <button class="nav-item" style="font-size:0.88rem;"
-                                    th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
-                                    th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
-                                    onclick="toggleCourse(this)">
-                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                </svg>
-                                <span th:text="${course.courseName}">Course</span>
-                                <i class="bi bi-chevron-down nav-chevron"></i>
-                            </button>
+                                <button class="nav-item" style="font-size:0.88rem;"
+                                        th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
+                                        th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
+                                        onclick="toggleCourse(this)">
+                                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                    </svg>
+                                    <span th:text="${course.courseName}">Course</span>
+                                    <i class="bi bi-chevron-down nav-chevron"></i>
+                                </button>
 
-                            <div class="nav-subitems">
-                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
-                                   class="nav-subitem"
-                                   th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
-                                    <i class="bi bi-collection me-2"></i><span>Chapters</span>
-                                </a>
+                                <div class="nav-subitems">
+                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
+                                       class="nav-subitem"
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
+                                        <i class="bi bi-collection me-2"></i><span>Chapters</span>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
 
+                        </div>
                     </div>
+
+                    <div class="nav-label mt-3">Tools</div>
+
+                    <a href="/progress-tracker" class="nav-item"
+                       th:classappend="${currentPath == '/progress-tracker'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6"  y1="20" x2="6"  y2="16"></line>
+                        </svg>
+                        <span>Progress</span>
+                    </a>
+
+                    <a href="/friends" class="nav-item"
+                       th:classappend="${currentPath == '/friends'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Students</span>
+                    </a>
                 </div>
 
-                <div class="nav-label mt-3">Tools</div>
+                <!-- ════════════ STUDENT NAV ════════════ -->
+                <div class="nav-section" sec:authorize="hasRole('STUDENT')">
 
-                <a href="/progress" class="nav-item"
-                   th:classappend="${currentPath == '/progress'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="20" x2="12" y2="10"></line>
-                        <line x1="18" y1="20" x2="18" y2="4"></line>
-                        <line x1="6"  y1="20" x2="6"  y2="16"></line>
-                    </svg>
-                    <span>Progress</span>
-                </a>
+                    <div class="nav-label">Browse Courses</div>
 
-                <a href="/friends" class="nav-item"
-                   th:classappend="${currentPath == '/friends'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span>Students</span>
-                </a>
-            </div>
+                    <a href="/repository" class="nav-item"
+                       th:classappend="${currentPath == '/repository'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span>Browse Courses</span>
+                    </a>
 
-            <!-- ════════════ STUDENT NAV ════════════ -->
-            <div class="nav-section" sec:authorize="hasRole('STUDENT')">
+                    <div class="nav-label mt-2">Enrolled Courses</div>
 
-                <div class="nav-label">Browse Courses</div>
+                    <!-- Enrolled Courses toggle -->
+                    <button class="nav-item"
+                            id="studentTopBtn"
+                            th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
+                            onclick="toggleList('studentList', this)">
+                        <i class="bi bi-grid"></i>
+                        <span>Enrolled Courses</span>
+                        <i class="bi bi-chevron-down nav-chevron"></i>
+                    </button>
 
-                <a href="/repository" class="nav-item"
-                   th:classappend="${currentPath == '/repository'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <span>Browse Courses</span>
-                </a>
+                    <div class="nav-course-list" id="studentList"
+                         th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
+                        <div style="margin-left: 0.75rem; padding-top: 2px;">
 
-                <div class="nav-label mt-2">Enrolled Courses</div>
+                            <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
+                            <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
+                            <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
+                            <!--                            <span>All Enrolled</span>-->
+                            <!--                        </a>-->
 
-                <!-- Enrolled Courses toggle -->
-                <button class="nav-item"
-                        id="studentTopBtn"
-                        th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
-                        onclick="toggleList('studentList', this)">
-                    <i class="bi bi-grid"></i>
-                    <span>Enrolled Courses</span>
-                    <i class="bi bi-chevron-down nav-chevron"></i>
-                </button>
+                            <div th:each="course : ${userCourses}" class="nav-group"
+                                 th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
 
-                <div class="nav-course-list" id="studentList"
-                     th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
-                    <div style="margin-left: 0.75rem; padding-top: 2px;">
+                                <button class="nav-item" style="font-size:0.88rem;"
+                                        th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
+                                        th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
+                                        onclick="toggleCourse(this)">
+                                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                    </svg>
+                                    <span th:text="${course.courseName}">Course</span>
+                                    <i class="bi bi-chevron-down nav-chevron"></i>
+                                </button>
 
-                        <!--                        <a href="/your-courses" class="nav-item" style="font-size:0.88rem;"-->
-                        <!--                           th:classappend="${currentPath == '/your-courses'} ? ' active' : ''">-->
-                        <!--                            <i class="bi bi-grid-fill me-2" style="font-size:0.8rem;width:20px;text-align:center;"></i>-->
-                        <!--                            <span>All Enrolled</span>-->
-                        <!--                        </a>-->
-
-                        <div th:each="course : ${userCourses}" class="nav-group"
-                             th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
-
-                            <button class="nav-item" style="font-size:0.88rem;"
-                                    th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
-                                    th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
-                                    onclick="toggleCourse(this)">
-                                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                                </svg>
-                                <span th:text="${course.courseName}">Course</span>
-                                <i class="bi bi-chevron-down nav-chevron"></i>
-                            </button>
-
-                            <div class="nav-subitems">
-                                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
-                                   class="nav-subitem"
-                                   th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
-                                    <i class="bi bi-collection me-2"></i><span>Chapters</span>
-                                </a>
+                                <div class="nav-subitems">
+                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
+                                       class="nav-subitem"
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
+                                        <i class="bi bi-collection me-2"></i><span>Chapters</span>
+                                    </a>
+                                </div>
                             </div>
-                        </div>
 
+                        </div>
                     </div>
+
+                    <div class="nav-label mt-3">Main</div>
+
+                    <a href="/your-resources" class="nav-item"
+                       th:classappend="${currentPath == '/your-resources'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        <span>Your Resources</span>
+                    </a>
+
+                    <a href="/progress-tracker" class="nav-item"
+                       th:classappend="${currentPath == '/progress-tracker'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6"  y1="20" x2="6"  y2="16"></line>
+                        </svg>
+                        <span>Progress Tracker</span>
+                    </a>
+
+                    <a href="/chat-ai" class="nav-item"
+                       th:classappend="${currentPath == '/chat-ai'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Chat AI</span>
+                    </a>
+
+                    <a href="/friends" class="nav-item"
+                       th:classappend="${currentPath == '/friends'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Friends</span>
+                    </a>
+
+                    <a href="/shared-tests" class="nav-item"
+                       th:classappend="${currentPath == '/shared-tests'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                        <span>Shared Tests</span>
+                    </a>
                 </div>
 
-                <div class="nav-label mt-3">Main</div>
-
-                <a href="/your-resources" class="nav-item"
-                   th:classappend="${currentPath == '/your-resources'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                    </svg>
-                    <span>Your Resources</span>
-                </a>
-
-                <a href="/progress" class="nav-item"
-                   th:classappend="${currentPath == '/progress'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="20" x2="12" y2="10"></line>
-                        <line x1="18" y1="20" x2="18" y2="4"></line>
-                        <line x1="6"  y1="20" x2="6"  y2="16"></line>
-                    </svg>
-                    <span>Progress Tracker</span>
-                </a>
-
-                <a href="/chat-ai" class="nav-item"
-                   th:classappend="${currentPath == '/chat-ai'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>Chat AI</span>
-                </a>
-
-                <a href="/friends" class="nav-item"
-                   th:classappend="${currentPath == '/friends'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span>Friends</span>
-                </a>
-
-                <a href="/shared-tests" class="nav-item"
-                   th:classappend="${currentPath == '/shared-tests'} ? ' active' : ''">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="18" cy="5" r="3"></circle>
-                        <circle cx="6" cy="12" r="3"></circle>
-                        <circle cx="18" cy="19" r="3"></circle>
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-                    </svg>
-                    <span>Shared Tests</span>
-                </a>
-            </div>
-
-        </nav>
+            </nav>
+        </div><!-- end sidebar-nav-wrap -->
     </div>
 
     <script>
