@@ -2,9 +2,11 @@ package com.finalyearproject.fyp.repository;
 
 import com.finalyearproject.fyp.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,4 +28,12 @@ public interface UserCourseTestQuestionAttemptRepository
 
     @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.test = :test")
     List<UserCourseTestQuestionAttempt> findByTest(@Param("test") Test test);
+
+    @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.course = :course")
+    List<UserCourseTestQuestionAttempt> findByCourse(@Param("course") Course course);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM UserCourseTestQuestionAttempt ucta WHERE ucta.course = :course")
+    void deleteByCourse(@Param("course") Course course);
 }

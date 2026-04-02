@@ -7,8 +7,8 @@ import com.finalyearproject.fyp.entity.Course;
 import java.util.List;
 
 public interface CourseService {
-    CourseDTO    createCourse(String userEmail, CreateCourseRequest request);
-    CourseDTO    updateCourse(Long courseId, CreateCourseRequest request);
-    void         deleteCourse(Long courseId);
+    CourseDTO createCourse(String userEmail, CreateCourseRequest request);
+    CourseDTO updateCourse(Long courseId, CreateCourseRequest request);
+    void deleteCourse(Long courseId);
     List<Course> getCoursesForUser(String userEmail);
 }

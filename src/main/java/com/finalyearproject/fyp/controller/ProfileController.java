@@ -1,59 +1,46 @@
 package com.finalyearproject.fyp.controller;
 
-import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.util.Map;
+
+@RestController
 @RequestMapping("/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 
     private final UserService userService;
 
-    /**
-     * Handle profile update form submission.
-     * Redirects back to the referring page (the sidebar modal closes after redirect).
-     */
     @PostMapping("/update")
-    public String updateProfile(
+    public ResponseEntity<?> updateProfile(
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String password,
             @RequestParam(required = false) String confirmPassword,
-            @RequestParam(defaultValue = "/") String redirectUrl,
-            Authentication authentication,
-            RedirectAttributes redirectAttributes) {
+            Authentication authentication) {
 
         String email = YourCoursesController.extractEmail(authentication);
         if (email == null) {
-            return "redirect:/login";
+            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
         }
 
-        // Validate password confirmation
         if (password != null && !password.isBlank()) {
             if (!password.equals(confirmPassword)) {
-                redirectAttributes.addFlashAttribute("profileError", "Passwords do not match.");
-                return "redirect:" + redirectUrl;
+                return ResponseEntity.badRequest().body(Map.of("message", "Passwords do not match"));
             }
             if (password.length() < 6) {
-                redirectAttributes.addFlashAttribute("profileError", "Password must be at least 6 characters.");
-                return "redirect:" + redirectUrl;
+                return ResponseEntity.badRequest().body(Map.of("message", "Password must be at least 6 characters"));
             }
         }
 
         try {
             userService.updateProfile(email, username, password);
-            redirectAttributes.addFlashAttribute("profileSuccess", "Profile updated successfully.");
+            return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("profileError", "Failed to update profile: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-
-        return "redirect:" + redirectUrl;
     }
 }

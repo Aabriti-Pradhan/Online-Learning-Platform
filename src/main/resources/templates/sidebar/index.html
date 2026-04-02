@@ -74,67 +74,28 @@
         .nav-collapsible-btn.list-open .nav-chevron { transform: rotate(180deg); }
         .nav-group.open > .nav-collapsible-btn .nav-chevron { transform: rotate(180deg); }
 
-        /* Remove all focus/active outlines completely */
-        .nav-collapsible-btn,
-        .nav-item,
-        .nav-subitem {
-            outline: none !important;
-            box-shadow: none !important;
+        .nav-collapsible-btn, .nav-item, .nav-subitem {
+            outline: none !important; box-shadow: none !important;
         }
-
-        .nav-collapsible-btn:focus,
-        .nav-item:focus,
-        .nav-subitem:focus {
+        .nav-collapsible-btn:focus, .nav-item:focus, .nav-subitem:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(108, 71, 255, 0.2);
         }
-
-        .nav-collapsible-btn:active,
-        .nav-item:active,
-        .nav-subitem:active {
-            outline: none !important;
-            box-shadow: none !important;
+        .nav-collapsible-btn:active, .nav-item:active, .nav-subitem:active {
+            outline: none !important; box-shadow: none !important;
         }
-
-        button:focus,
-        button:active,
-        a:focus,
-        a:active {
-            outline: none !important;
-            box-shadow: none !important;
+        button:focus, button:active, a:focus, a:active {
+            outline: none !important; box-shadow: none !important;
         }
-
-        *:focus {
-            outline: none !important;
-            box-shadow: none !important;
+        *:focus         { outline: none !important; box-shadow: none !important; }
+        *:focus-visible { outline: none !important; box-shadow: none !important; }
+        .nav-collapsible-btn, .nav-item, .nav-subitem {
+            border: none !important; outline: none !important; box-shadow: none !important;
         }
+        .nav-item, .nav-subitem { border: none !important; }
+        button.nav-item { background-color: transparent; }
+        button.nav-item:not(.active):not(:hover) { background-color: transparent; }
 
-        *:focus-visible {
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        .nav-collapsible-btn,
-        .nav-item,
-        .nav-subitem {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-        }
-
-        .nav-item,
-        .nav-subitem {
-            border: none !important;
-        }
-
-        button.nav-item {
-            background-color: transparent;
-        }
-        button.nav-item:not(.active):not(:hover) {
-            background-color: transparent;
-        }
-
-        /* Sidebar layout */
         .sidebar-trial {
             display: flex !important;
             flex-direction: column !important;
@@ -157,6 +118,22 @@
         }
         .sidebar-nav-wrap::-webkit-scrollbar { display: none; }
 
+        /* Admin badge */
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 3px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: #7c3aed;
+            color: #fff;
+            padding: 1px 7px;
+            border-radius: 20px;
+        }
+
         /* Clickable user card */
         .user-profile-btn {
             display: flex;
@@ -171,23 +148,8 @@
             text-align: left;
             transition: background 0.18s ease;
             font-family: inherit;
-            position: relative;
-            background: rgba(74,124,89,0.07);
         }
-        .user-profile-btn:hover {
-            background: rgba(74,124,89,0.07);
-        }
-        .user-profile-btn .edit-hint {
-            margin-left: auto;
-            font-size: 0.72rem;
-            color: #9ca3af;
-            opacity: 0;
-            transition: opacity 0.18s ease;
-            white-space: nowrap;
-        }
-        .user-profile-btn:hover .edit-hint {
-            opacity: 1;
-        }
+        .user-profile-btn:hover { background: rgba(74,124,89,0.07); }
 
         /* Profile modal */
         .profile-modal-overlay {
@@ -199,9 +161,7 @@
             align-items: center;
             justify-content: center;
         }
-        .profile-modal-overlay.show {
-            display: flex;
-        }
+        .profile-modal-overlay.show { display: flex; }
         .profile-modal {
             background: #fff;
             border-radius: 16px;
@@ -210,46 +170,33 @@
             max-width: 420px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.18);
             position: relative;
-            animation: slideUp 0.22s ease;
+            animation: pmSlideUp 0.22s ease;
         }
-        @keyframes slideUp {
-            from { transform: translateY(24px); opacity: 0; }
+        @keyframes pmSlideUp {
+            from { transform: translateY(20px); opacity: 0; }
             to   { transform: translateY(0);    opacity: 1; }
         }
         .profile-modal-close {
             position: absolute;
             top: 1rem; right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #6b7280;
-            line-height: 1;
-            padding: 2px 6px;
-            border-radius: 6px;
+            background: none; border: none;
+            font-size: 1.3rem; cursor: pointer;
+            color: #6b7280; line-height: 1;
+            padding: 2px 6px; border-radius: 6px;
         }
         .profile-modal-close:hover { background: #f3f4f6; color: #111; }
         .profile-modal h2 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin: 0 0 0.25rem;
-            color: #111827;
+            font-size: 1.1rem; font-weight: 700;
+            margin: 0 0 0.2rem; color: #111827;
         }
         .profile-modal .modal-subtitle {
-            font-size: 0.82rem;
-            color: #6b7280;
-            margin-bottom: 1.5rem;
+            font-size: 0.82rem; color: #6b7280; margin-bottom: 1.4rem;
         }
         .profile-modal label {
-            display: block;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.3rem;
+            display: block; font-size: 0.82rem;
+            font-weight: 600; color: #374151; margin-bottom: 0.3rem;
         }
-        .profile-modal input[type="text"],
-        .profile-modal input[type="password"],
-        .profile-modal input[type="email"] {
+        .profile-modal input {
             width: 100%;
             padding: 0.55rem 0.75rem;
             border: 1.5px solid #e5e7eb;
@@ -266,72 +213,66 @@
             outline: none !important;
             box-shadow: 0 0 0 3px rgba(74,124,89,0.12) !important;
         }
-        .profile-modal .form-group {
-            margin-bottom: 1rem;
+        .profile-modal .form-group { margin-bottom: 1rem; }
+        .profile-modal .form-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; }
+        .profile-modal .divider { border: none; border-top: 1.5px solid #f3f4f6; margin: 1rem 0; }
+        .profile-modal .section-label {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: #9ca3af; margin-bottom: 0.75rem;
         }
-        .profile-modal .form-hint {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            margin-top: 0.25rem;
-        }
-        .profile-modal-actions {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
+        .profile-modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
         .btn-profile-save {
-            flex: 1;
-            padding: 0.6rem 1rem;
-            background: #4a7c59;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
+            flex: 1; padding: 0.6rem 1rem;
+            background: #4a7c59; color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
             transition: background 0.15s;
         }
         .btn-profile-save:hover { background: #3a6347; }
+        .btn-profile-save:disabled { background: #9ca3af; cursor: not-allowed; }
         .btn-profile-cancel {
             padding: 0.6rem 1rem;
-            background: #f3f4f6;
-            color: #374151;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
+            background: #f3f4f6; color: #374151;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
             transition: background 0.15s;
         }
         .btn-profile-cancel:hover { background: #e5e7eb; }
-        .profile-alert {
-            padding: 0.55rem 0.75rem;
+
+        /* Sidebar-scoped toast (sits at bottom of viewport) */
+        .profile-toast {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: #1f2937;
+            color: #fff;
+            padding: 0.6rem 1.4rem;
             border-radius: 8px;
-            font-size: 0.83rem;
-            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            font-family: inherit;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            white-space: nowrap;
         }
-        .profile-alert.success { background: #d1fae5; color: #065f46; }
-        .profile-alert.error   { background: #fee2e2; color: #991b1b; }
-        .profile-modal .divider {
-            border: none;
-            border-top: 1.5px solid #f3f4f6;
-            margin: 1rem 0;
+        .profile-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
-        .profile-modal .section-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #9ca3af;
-            margin-bottom: 0.75rem;
-        }
+        .profile-toast.success { background: #166534; }
+        .profile-toast.error   { background: #991b1b; }
     </style>
 
     <div class="sidebar-trial">
 
-        <!-- User profile card (clickable) -->
+        <!-- ── Clickable user card ── -->
         <div class="sidebar-user-wrap">
-            <button class="user-profile-btn" onclick="openProfileModal()" type="button" title="Edit profile">
+            <button class="user-profile-btn" onclick="openProfileModal()" type="button">
                 <div class="avatar-circle" style="flex-shrink:0;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -339,28 +280,67 @@
                     </svg>
                 </div>
                 <div class="user-info">
-                    <div class="username" th:text="${loggedInUser != null} ? ${loggedInUser.username} : 'User'">User</div>
-                    <div class="user-email" th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></div>
+                    <div class="username"
+                         th:text="${loggedInUser != null} ? ${loggedInUser.username} : 'User'">User</div>
+                    <div th:if="${loggedInUser != null and loggedInUser.role == 'ADMIN'}">
+                        <span class="admin-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                 style="width:10px;height:10px;">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            Admin
+                        </span>
+                    </div>
+                    <div class="user-email"
+                         th:if="${loggedInUser != null and loggedInUser.role != 'ADMIN'}"
+                         th:text="${loggedInUser.email}"></div>
                 </div>
-                <span class="edit-hint">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                         style="width:13px;height:13px;vertical-align:middle;margin-right:3px;">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                    Edit
-                </span>
             </button>
         </div>
 
         <div class="sidebar-nav-wrap">
             <nav class="sidebar-nav">
 
+                <!-- ════════════ ADMIN NAV ════════════ -->
+                <div class="nav-section" sec:authorize="hasRole('ADMIN')">
+                    <div class="nav-label">Administration</div>
+
+                    <a href="/admin" class="nav-item"
+                       th:classappend="${currentPath == '/admin'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/admin/users" class="nav-item"
+                       th:classappend="${currentPath == '/admin/users'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Users</span>
+                    </a>
+
+                    <a href="/admin/courses" class="nav-item"
+                       th:classappend="${currentPath == '/admin/courses'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                        <span>Courses</span>
+                    </a>
+                </div>
+
                 <!-- ════════════ TEACHER NAV ════════════ -->
                 <div class="nav-section" sec:authorize="hasRole('TEACHER')">
                     <div class="nav-label">My Courses</div>
 
-                    <!-- All Courses toggle -->
                     <button class="nav-item"
                             id="teacherTopBtn"
                             th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
@@ -373,10 +353,8 @@
                     <div class="nav-course-list" id="teacherList"
                          th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
                         <div style="margin-left: 0.75rem; padding-top: 2px;">
-
                             <div th:each="course : ${userCourses}" class="nav-group"
                                  th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
-
                                 <button class="nav-item" style="font-size:0.88rem;"
                                         th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
                                         th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
@@ -388,7 +366,6 @@
                                     <span th:text="${course.courseName}">Course</span>
                                     <i class="bi bi-chevron-down nav-chevron"></i>
                                 </button>
-
                                 <div class="nav-subitems">
                                     <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                        class="nav-subitem"
@@ -397,7 +374,6 @@
                                     </a>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -441,7 +417,6 @@
 
                     <div class="nav-label mt-2">Enrolled Courses</div>
 
-                    <!-- Enrolled Courses toggle -->
                     <button class="nav-item"
                             id="studentTopBtn"
                             th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' active' : ''"
@@ -454,10 +429,8 @@
                     <div class="nav-course-list" id="studentList"
                          th:classappend="${currentPath != null and currentPath.startsWith('/your-courses')} ? ' open' : ''">
                         <div style="margin-left: 0.75rem; padding-top: 2px;">
-
                             <div th:each="course : ${userCourses}" class="nav-group"
                                  th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' open' : ''">
-
                                 <button class="nav-item" style="font-size:0.88rem;"
                                         th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''"
                                         th:attr="data-href='/your-courses/' + ${course.courseId} + '/chapters'"
@@ -469,7 +442,6 @@
                                     <span th:text="${course.courseName}">Course</span>
                                     <i class="bi bi-chevron-down nav-chevron"></i>
                                 </button>
-
                                 <div class="nav-subitems">
                                     <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                        class="nav-subitem"
@@ -478,7 +450,6 @@
                                     </a>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
@@ -539,75 +510,62 @@
         </div><!-- end sidebar-nav-wrap -->
     </div>
 
-    <!-- ══════════════════════════════════════════════════ -->
-    <!--   PROFILE EDIT MODAL                              -->
-    <!-- ══════════════════════════════════════════════════ -->
+    <!-- ══════════ PROFILE EDIT MODAL ══════════ -->
     <div class="profile-modal-overlay" id="profileModalOverlay" onclick="handleOverlayClick(event)">
-        <div class="profile-modal" id="profileModal">
-            <button class="profile-modal-close" onclick="closeProfileModal()" title="Close">&#x2715;</button>
+        <div class="profile-modal">
+            <button class="profile-modal-close" onclick="closeProfileModal()" type="button">&#x2715;</button>
 
             <h2>Edit Profile</h2>
             <p class="modal-subtitle"
                th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></p>
 
-            <!-- Flash messages from redirect -->
-            <div th:if="${profileSuccess}" class="profile-alert success" th:text="${profileSuccess}"></div>
-            <div th:if="${profileError}"   class="profile-alert error"   th:text="${profileError}"></div>
+            <div class="section-label">Basic info</div>
+            <div class="form-group">
+                <label for="profileUsername">Username</label>
+                <input type="text"
+                       id="profileUsername"
+                       th:value="${loggedInUser != null} ? ${loggedInUser.username} : ''"
+                       placeholder="Enter new username"
+                       autocomplete="username">
+            </div>
 
-            <form th:action="@{/profile/update}" method="post">
-                <!-- Pass current page so we redirect back here after save -->
-                <input type="hidden" name="redirectUrl" id="profileRedirectUrl" value="/">
+            <hr class="divider">
 
-                <div class="section-label">Basic Info</div>
+            <div class="section-label">Change password</div>
+            <div class="form-group">
+                <label for="profilePassword">New password</label>
+                <input type="password"
+                       id="profilePassword"
+                       placeholder="Leave blank to keep current"
+                       autocomplete="new-password">
+                <div class="form-hint">Minimum 6 characters</div>
+            </div>
+            <div class="form-group">
+                <label for="profileConfirmPassword">Confirm password</label>
+                <input type="password"
+                       id="profileConfirmPassword"
+                       placeholder="Repeat new password"
+                       autocomplete="new-password">
+            </div>
 
-                <div class="form-group">
-                    <label for="profileUsername">Username</label>
-                    <input type="text"
-                           id="profileUsername"
-                           name="username"
-                           th:value="${loggedInUser != null} ? ${loggedInUser.username} : ''"
-                           placeholder="Enter new username"
-                           autocomplete="username">
-                </div>
-
-                <hr class="divider">
-
-                <div class="section-label">Change Password</div>
-
-                <div class="form-group">
-                    <label for="profilePassword">New Password</label>
-                    <input type="password"
-                           id="profilePassword"
-                           name="password"
-                           placeholder="Leave blank to keep current"
-                           autocomplete="new-password">
-                    <div class="form-hint">Minimum 6 characters</div>
-                </div>
-
-                <div class="form-group">
-                    <label for="profileConfirmPassword">Confirm Password</label>
-                    <input type="password"
-                           id="profileConfirmPassword"
-                           name="confirmPassword"
-                           placeholder="Repeat new password"
-                           autocomplete="new-password">
-                </div>
-
-                <div class="profile-modal-actions">
-                    <button type="button" class="btn-profile-cancel" onclick="closeProfileModal()">Cancel</button>
-                    <button type="submit" class="btn-profile-save">Save Changes</button>
-                </div>
-            </form>
+            <div class="profile-modal-actions">
+                <button type="button" class="btn-profile-cancel" onclick="closeProfileModal()">Cancel</button>
+                <button type="button" class="btn-profile-save" id="profileSaveBtn" onclick="submitProfile()">
+                    Save changes
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- Toast -->
+    <div class="profile-toast" id="profileToast"></div>
+
     <script>
-        // Navigation helpers
+        /* ── Navigation ─────────────────────────── */
         function toggleList(listId, btn) {
             const list = document.getElementById(listId);
             if (!list) return;
             const isOpen = list.classList.contains('open');
-
             if (isOpen) {
                 list.classList.remove('open');
                 btn.classList.remove('list-open');
@@ -625,7 +583,6 @@
             const href   = btn.getAttribute('data-href');
             const isOpen = group.classList.contains('open');
             const onPage = href && window.location.pathname.startsWith(href);
-
             if (isOpen && onPage) {
                 group.classList.remove('open');
             } else {
@@ -634,7 +591,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            ['teacherList', 'studentList'].forEach(function(id) {
+            ['teacherList', 'studentList'].forEach(function (id) {
                 const list = document.getElementById(id);
                 if (list && list.classList.contains('open')) {
                     const btn = list.previousElementSibling;
@@ -643,47 +600,88 @@
             });
         });
 
-        // Profile modal
+        /* ── Profile modal ──────────────────────── */
         function openProfileModal() {
-            // Set redirect URL to current page so we return here after save
-            const redirectInput = document.getElementById('profileRedirectUrl');
-            if (redirectInput) {
-                redirectInput.value = window.location.pathname + window.location.search;
-            }
             document.getElementById('profileModalOverlay').classList.add('show');
             document.body.style.overflow = 'hidden';
-
-            // Auto-open if there was a flash message (means we just came back from a save)
-            const hasAlert = document.querySelector('.profile-modal .profile-alert');
-            if (hasAlert) {
-                document.getElementById('profileModalOverlay').classList.add('show');
-            }
         }
 
         function closeProfileModal() {
             document.getElementById('profileModalOverlay').classList.remove('show');
             document.body.style.overflow = '';
+            // Clear password fields on close
+            document.getElementById('profilePassword').value = '';
+            document.getElementById('profileConfirmPassword').value = '';
         }
 
-        function handleOverlayClick(event) {
-            // Close only when clicking the dark backdrop, not the modal itself
-            if (event.target === document.getElementById('profileModalOverlay')) {
-                closeProfileModal();
-            }
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('profileModalOverlay')) closeProfileModal();
         }
 
-        // Re-open modal automatically if there's a flash message (after redirect)
-        document.addEventListener('DOMContentLoaded', function () {
-            const hasAlert = document.querySelector('#profileModal .profile-alert');
-            if (hasAlert) {
-                openProfileModal();
-            }
-        });
-
-        // Close on Escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeProfileModal();
         });
+
+        /* ── Toast ──────────────────────────────── */
+        function showProfileToast(msg, type) {
+            const toast = document.getElementById('profileToast');
+            toast.textContent = msg;
+            toast.className   = 'profile-toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        /* ── Submit via fetch (no page reload) ──── */
+        async function submitProfile() {
+            const username        = document.getElementById('profileUsername').value.trim();
+            const password        = document.getElementById('profilePassword').value;
+            const confirmPassword = document.getElementById('profileConfirmPassword').value;
+            const saveBtn         = document.getElementById('profileSaveBtn');
+
+            // Client-side validation
+            if (password && password !== confirmPassword) {
+                showProfileToast('Passwords do not match', 'error');
+                return;
+            }
+            if (password && password.length < 6) {
+                showProfileToast('Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            saveBtn.disabled    = true;
+            saveBtn.textContent = 'Saving…';
+
+            try {
+                const body = new URLSearchParams();
+                if (username)        body.append('username',        username);
+                if (password)        body.append('password',        password);
+                if (confirmPassword) body.append('confirmPassword', confirmPassword);
+
+                const res  = await fetch('/profile/update', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body:    body.toString()
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    closeProfileModal();
+                    showProfileToast(data.message, 'success');
+                    // Update the displayed username in the sidebar without reload
+                    if (username) {
+                        const el = document.querySelector('.sidebar-user-wrap .username');
+                        if (el) el.textContent = username;
+                    }
+                } else {
+                    showProfileToast(data.message, 'error');
+                }
+            } catch (e) {
+                showProfileToast('Request failed. Please try again.', 'error');
+            } finally {
+                saveBtn.disabled    = false;
+                saveBtn.textContent = 'Save changes';
+            }
+        }
     </script>
 
 </aside>

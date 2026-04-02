@@ -20,6 +20,9 @@ public class User {
     private String password;
     private String role;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isActive = true;
+
     @OneToMany(mappedBy = "user")
     private List<UserCourse> userCourses;
 

@@ -71,6 +71,9 @@ body {
     background: var(--color-bg);
     line-height: 1.6;
     overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* App Container */
@@ -78,6 +81,18 @@ body {
     display: flex;
     min-height: 100vh;
     position: relative;
+}
+
+/* ── Top-level page wrapper: grows to fill viewport, pushes footer down ── */
+.container-fluid.px-4.py-3 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* The row holding sidebar + main content should grow */
+.container-fluid.px-4.py-3 > .row {
+    flex: 1;
 }
 
 /* Sidebar Styles */

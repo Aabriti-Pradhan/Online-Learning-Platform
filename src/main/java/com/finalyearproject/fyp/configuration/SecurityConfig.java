@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,7 +26,7 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserService         userService;
+    private final UserService           userService;
     private final CustomOidcUserService customOidcUserService;
 
     @Bean
@@ -33,13 +34,15 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
-                        .frameOptions(frame -> frame.sameOrigin())  // allow iframes from same origin (PDF viewer)
+                        .frameOptions(frame -> frame.sameOrigin())
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/login", "/register", "/select-role", "/repository",
                                 "/css/**", "/js/**", "/images/**", "/files/**"
                         ).permitAll()
+                        // Admin-only routes
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
@@ -52,10 +55,12 @@ public class SecurityConfig {
 
                             if (existing == null) {
                                 response.sendRedirect("/select-role");
+                            } else if ("ADMIN".equals(existing.getRole())) {
+                                response.sendRedirect("/admin");
                             } else if ("TEACHER".equals(existing.getRole())) {
                                 response.sendRedirect("/your-courses");
                             } else {
-                                response.sendRedirect("/your-courses");   // students land on courses too
+                                response.sendRedirect("/your-courses");
                             }
                         })
                 )
@@ -66,7 +71,16 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/your-courses", true)
+                        .successHandler((request, response, authentication) -> {
+                            // Redirect admin to /admin dashboard after login
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                            if (isAdmin) {
+                                response.sendRedirect("/admin");
+                            } else {
+                                response.sendRedirect("/your-courses");
+                            }
+                        })
                         .failureUrl("/login?error")
                         .permitAll()
                 );
@@ -84,6 +98,8 @@ public class SecurityConfig {
         return email -> {
             User user = userService.findByEmail(email);
             if (user == null) throw new UsernameNotFoundException("User not found");
+            // Block deactivated accounts from logging in
+            if (!user.isActive()) throw new DisabledException("Account has been deactivated");
             return new org.springframework.security.core.userdetails.User(
                     user.getEmail(),
                     user.getPassword() == null ? "" : user.getPassword(),
