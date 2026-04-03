@@ -44,10 +44,10 @@ public class Post {
     private List<Post> replies;
 
     // User mentions in this post
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostUserMention> userMentions;
 
     // Course mentions in this post
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostCourseMention> courseMentions;
 }

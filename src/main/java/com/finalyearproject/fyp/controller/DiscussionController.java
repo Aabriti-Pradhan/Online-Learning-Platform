@@ -111,8 +111,11 @@ public class DiscussionController {
         }
         try {
             String email = YourCoursesController.extractEmail(auth);
-            discussionService.deletePost(postId, email);
-            return ResponseEntity.ok(Map.of("message", "Post deleted."));
+            boolean isThread = discussionService.deletePost(postId, email);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Post deleted.",
+                    "isThread", isThread
+            ));
         } catch (SecurityException e) {
             return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }

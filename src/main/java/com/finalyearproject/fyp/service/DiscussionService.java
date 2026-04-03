@@ -21,5 +21,5 @@ public interface DiscussionService {
     PostDetailDTO createPost(String authorEmail, CreatePostRequest request);
 
     // Soft-delete a post (only the author can do this)
-    void deletePost(Long postId, String requesterEmail);
+    boolean deletePost(Long postId, String requesterEmail);
 }

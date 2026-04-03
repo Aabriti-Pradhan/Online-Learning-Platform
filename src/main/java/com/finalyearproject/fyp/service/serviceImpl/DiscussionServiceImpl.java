@@ -169,7 +169,7 @@ public class DiscussionServiceImpl implements DiscussionService {
 
     @Override
     @Transactional
-    public void deletePost(Long postId, String requesterEmail) {
+    public boolean deletePost(Long postId, String requesterEmail) {
         Post post   = getPostById(postId);
         User caller = getUserByEmail(requesterEmail);
 
@@ -177,10 +177,23 @@ public class DiscussionServiceImpl implements DiscussionService {
             throw new SecurityException("You can only delete your own posts.");
         }
 
-        post.setDeleted(true);
-        post.setContent("[deleted]");
-        post.setUpdatedAt(LocalDateTime.now());
-        postRepository.save(post);
+        if (post.getParentPost() == null) {
+
+            // delete mentions first (avoid FK issues)
+            postUserMentionRepository.deleteByPostId(postId);
+            postCourseMentionRepository.deleteByPostId(postId);
+
+            // delete the post → cascades to replies automatically
+            postRepository.delete(post);
+            return true;
+
+        } else {
+            post.setDeleted(true);
+            post.setContent("[deleted]");
+            post.setUpdatedAt(LocalDateTime.now());
+            postRepository.save(post);
+            return false;
+        }
     }
 
     // Private helpers
