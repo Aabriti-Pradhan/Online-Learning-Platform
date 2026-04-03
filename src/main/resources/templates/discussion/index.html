@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Discussion — PrepHunt</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
+        /* Search bar */
+        .discussion-search-wrap {
+            position: relative;
+            max-width: 480px;
+        }
+        .discussion-search-wrap input {
+            padding-left: 2.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: white;
+            height: 42px;
+        }
+        .discussion-search-wrap input:focus {
+            border-color: var(--color-accent);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+        }
+        .discussion-search-wrap .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        /* New thread button */
+        .btn-new-thread {
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.55rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: system-ui;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-new-thread:hover { background: #3a6347; }
+
+        /* Thread cards */
+        .thread-card {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.15s, transform 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .thread-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .thread-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .thread-body { flex: 1; min-width: 0; }
+
+        .thread-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--color-text-primary);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .thread-preview {
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .thread-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.78rem;
+            color: #9ca3af;
+            flex-wrap: wrap;
+        }
+
+        .thread-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .mention-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #ede9fe;
+            color: #6c47ff;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 99px;
+            padding: 1px 8px;
+        }
+
+        .course-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #d1fae5;
+            color: #065f46;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 99px;
+            padding: 1px 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--color-text-secondary);
+        }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.35; }
+        .empty-state p { font-size: 0.9rem; margin: 0; }
+
+        /* New Thread Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 560px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            position: relative;
+            animation: slideUp 0.22s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .modal-close {
+            position: absolute;
+            top: 1rem; right: 1rem;
+            background: none; border: none;
+            font-size: 1.3rem; cursor: pointer;
+            color: #6b7280; line-height: 1;
+            padding: 2px 6px; border-radius: 6px;
+        }
+        .modal-close:hover { background: #f3f4f6; color: #111; }
+
+        .modal-box h2 {
+            font-size: 1.15rem; font-weight: 700;
+            margin: 0 0 1.5rem; color: #111827;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block; font-size: 0.82rem;
+            font-weight: 600; color: #374151; margin-bottom: 0.3rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.6rem 0.85rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+            background: #fafafa;
+            resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #4a7c59;
+            background: #fff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+        }
+
+        /* Mention tag chips inside the input area */
+        .tag-input-wrap {
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fafafa;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+            cursor: text;
+            min-height: 44px;
+            position: relative;
+        }
+        .tag-input-wrap:focus-within {
+            border-color: #4a7c59;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+        }
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px 2px 8px;
+            border-radius: 99px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .tag-chip.user-chip   { background: #ede9fe; color: #6c47ff; }
+        .tag-chip.course-chip-tag { background: #d1fae5; color: #065f46; }
+        .tag-chip button {
+            background: none; border: none; padding: 0;
+            cursor: pointer; font-size: 0.75rem; line-height: 1;
+            color: inherit; opacity: 0.6;
+        }
+        .tag-chip button:hover { opacity: 1; }
+        .tag-input-wrap input {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            font-size: 0.88rem;
+            font-family: inherit;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Autocomplete dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 10000;
+            overflow: hidden;
+            display: none;
+        }
+        .autocomplete-dropdown.show { display: block; }
+        .autocomplete-item {
+            padding: 0.55rem 1rem;
+            cursor: pointer;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .autocomplete-item:hover { background: #f9fafb; }
+        .autocomplete-item .ac-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: white; flex-shrink: 0;
+        }
+        .autocomplete-item .ac-icon.user   { background: #6c47ff; }
+        .autocomplete-item .ac-icon.course { background: #065f46; }
+
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-submit {
+            flex: 1; padding: 0.65rem 1rem;
+            background: var(--color-accent); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .btn-submit:hover { background: #3a6347; }
+        .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-cancel {
+            padding: 0.65rem 1rem;
+            background: #f3f4f6; color: #374151;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .btn-cancel:hover { background: #e5e7eb; }
+
+        /* Login nudge banner */
+        .login-nudge {
+            background: linear-gradient(135deg, rgba(74,124,89,0.08), rgba(74,124,89,0.03));
+            border: 1px solid rgba(74,124,89,0.2);
+            border-radius: var(--radius-lg);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .login-nudge p { margin: 0; font-size: 0.9rem; color: var(--color-text-secondary); }
+        .login-nudge a {
+            background: var(--color-accent); color: white;
+            border-radius: var(--radius-md); padding: 0.45rem 1rem;
+            font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; white-space: nowrap;
+        }
+        .login-nudge a:hover { background: #3a6347; }
+
+        /* Toast */
+        .disc-toast {
+            position: fixed;
+            bottom: 1.5rem; left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: #1f2937; color: #fff;
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px; font-size: 0.85rem;
+            font-family: inherit; z-index: 10001;
+            opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none; white-space: nowrap;
+        }
+        .disc-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .disc-toast.success { background: #166534; }
+        .disc-toast.error   { background: #991b1b; }
+    </style>
+</head>
+
+<body>
+<div class="container-fluid px-4 py-3">
+
+    <div th:replace="navigation/index :: topbar"></div>
+
+    <div class="row align-items-stretch">
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+
+        <div class="col besides">
+
+            <!-- Page header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
+                <div>
+                    <h2 class="fw-bold mb-0">Discussion</h2>
+                    <p class="text-muted mb-0" style="font-size:0.88rem;">Browse threads, ask questions, share knowledge</p>
+                </div>
+                <!-- Only show "New Thread" button if logged in -->
+                <button th:if="${isLoggedIn}" class="btn-new-thread" onclick="openNewThreadModal()">
+                    <i class="bi bi-plus-lg"></i> New Thread
+                </button>
+                <a th:unless="${isLoggedIn}" href="/login" class="btn-new-thread" style="text-decoration:none;">
+                    <i class="bi bi-plus-lg"></i> New Thread
+                </a>
+            </div>
+
+            <!-- Login nudge for guests -->
+            <div th:unless="${isLoggedIn}" class="login-nudge">
+                <p><i class="bi bi-info-circle me-1"></i> You are browsing as a guest. Log in to start or reply to discussions.</p>
+                <a href="/login">Log in / Sign up</a>
+            </div>
+
+            <!-- Search bar -->
+            <form method="get" action="/discussion" class="d-flex gap-2 mb-4">
+                <div class="discussion-search-wrap flex-grow-1">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" name="search" class="form-control"
+                           th:value="${search}"
+                           placeholder="Search threads by title or keyword...">
+                </div>
+                <button type="submit" class="btn-new-thread" style="flex-shrink:0;">Search</button>
+                <a th:if="${search != null}" href="/discussion"
+                   class="btn-cancel d-flex align-items-center" style="text-decoration:none;">Clear</a>
+            </form>
+
+            <!-- Thread list -->
+            <div class="d-flex flex-column gap-3" th:if="${!#lists.isEmpty(threads)}">
+                <a th:each="t : ${threads}"
+                   th:href="@{'/discussion/' + ${t.postId}}"
+                   class="thread-card">
+
+                    <!-- Avatar with first letter of author -->
+                    <div class="thread-avatar"
+                         th:text="${t.authorUsername != null and !t.authorUsername.isEmpty()} ? ${t.authorUsername.substring(0,1)} : '?'">
+                    </div>
+
+                    <div class="thread-body">
+                        <div class="thread-title" th:text="${t.title}">Thread Title</div>
+                        <div class="thread-preview" th:text="${t.content}">Preview...</div>
+
+                        <div class="thread-meta">
+                            <span class="thread-meta-item">
+                                <i class="bi bi-person"></i>
+                                <span th:text="${t.authorUsername}">Author</span>
+                            </span>
+                            <span class="thread-meta-item">
+                                <i class="bi bi-clock"></i>
+                                <span th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy')}">Date</span>
+                            </span>
+                            <span class="thread-meta-item">
+                                <i class="bi bi-chat-dots"></i>
+                                <span th:text="${t.replyCount} + ' replies'">0 replies</span>
+                            </span>
+
+                            <!-- @user mention chips -->
+                            <span th:each="u : ${t.mentionedUsernames}" class="mention-chip">
+                                <i class="bi bi-at" style="font-size:0.65rem;"></i>
+                                <span th:text="${u}">user</span>
+                            </span>
+
+                            <!-- #course chips -->
+                            <span th:each="c : ${t.mentionedCourseNames}" class="course-chip">
+                                <i class="bi bi-book" style="font-size:0.65rem;"></i>
+                                <span th:text="${c}">course</span>
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Empty state -->
+            <div th:if="${#lists.isEmpty(threads)}" class="empty-state">
+                <i class="bi bi-chat-square-text"></i>
+                <p class="fw-semibold mb-1"
+                   th:text="${search != null} ? 'No threads match your search' : 'No discussions yet'">
+                    No discussions yet
+                </p>
+                <p th:text="${search != null} ? 'Try a different keyword.' : 'Be the first to start a thread!'">
+                    Be the first to start a thread!
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <div th:replace="footer/index :: footer"></div>
+</div>
+
+<!-- ══════════ NEW THREAD MODAL ══════════ -->
+<div class="modal-overlay" id="newThreadOverlay" onclick="handleModalOverlayClick(event)">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeNewThreadModal()">&#x2715;</button>
+        <h2><i class="bi bi-pencil-square me-2"></i>Start a New Thread</h2>
+
+        <div class="form-group">
+            <label for="threadTitle">Title <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="threadTitle" placeholder="What's your thread about?" maxlength="200">
+        </div>
+
+        <div class="form-group">
+            <label for="threadContent">Content <span style="color:#ef4444;">*</span></label>
+            <textarea id="threadContent" rows="5" placeholder="Write your post here..."></textarea>
+        </div>
+
+        <!-- @mention users -->
+        <div class="form-group">
+            <label>Mention Users <span style="color:#9ca3af;font-weight:400;">(optional — type a username)</span></label>
+            <div class="tag-input-wrap" id="userTagWrap" onclick="document.getElementById('userTagInput').focus()">
+                <input type="text" id="userTagInput" placeholder="@username..."
+                       oninput="onUserTagInput(this.value)"
+                       onkeydown="onTagKeydown(event, 'user')">
+                <div class="autocomplete-dropdown" id="userDropdown"></div>
+            </div>
+        </div>
+
+        <!-- #mention courses -->
+        <div class="form-group">
+            <label>Mention Courses <span style="color:#9ca3af;font-weight:400;">(optional — type a course name)</span></label>
+            <div class="tag-input-wrap" id="courseTagWrap" onclick="document.getElementById('courseTagInput').focus()">
+                <input type="text" id="courseTagInput" placeholder="#course name..."
+                       oninput="onCourseTagInput(this.value)"
+                       onkeydown="onTagKeydown(event, 'course')">
+                <div class="autocomplete-dropdown" id="courseDropdown"></div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeNewThreadModal()">Cancel</button>
+            <button class="btn-submit" id="submitThreadBtn" onclick="submitNewThread()">
+                <i class="bi bi-send me-1"></i> Post Thread
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="disc-toast" id="discToast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // State
+    const selectedUsers   = [];  // { id, username }
+    const selectedCourses = [];  // { id, name }
+
+    // Modal open / close
+    function openNewThreadModal() {
+        document.getElementById('newThreadOverlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeNewThreadModal() {
+        document.getElementById('newThreadOverlay').classList.remove('show');
+        document.body.style.overflow = '';
+        // Reset
+        document.getElementById('threadTitle').value   = '';
+        document.getElementById('threadContent').value = '';
+        document.getElementById('userTagInput').value  = '';
+        document.getElementById('courseTagInput').value = '';
+        selectedUsers.length   = 0;
+        selectedCourses.length = 0;
+        renderChips('user');
+        renderChips('course');
+        hideDropdown('user');
+        hideDropdown('course');
+    }
+    function handleModalOverlayClick(e) {
+        if (e.target === document.getElementById('newThreadOverlay')) closeNewThreadModal();
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNewThreadModal(); });
+
+    // Chip rendering
+    function renderChips(type) {
+        const wrap  = document.getElementById(type === 'user' ? 'userTagWrap' : 'courseTagWrap');
+        const input = document.getElementById(type === 'user' ? 'userTagInput' : 'courseTagInput');
+        const data  = type === 'user' ? selectedUsers : selectedCourses;
+
+        // Remove existing chips
+        wrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+
+        data.forEach((item, idx) => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip ' + (type === 'user' ? 'user-chip' : 'course-chip-tag');
+            chip.innerHTML = `
+                ${type === 'user' ? '@' : '#'}${type === 'user' ? item.username : item.name}
+                <button type="button" onclick="removeChip('${type}', ${idx})" title="Remove">&#x2715;</button>
+            `;
+            wrap.insertBefore(chip, input);
+        });
+    }
+
+    function removeChip(type, idx) {
+        const arr = type === 'user' ? selectedUsers : selectedCourses;
+        arr.splice(idx, 1);
+        renderChips(type);
+    }
+
+    // Autocomplete
+    let userDebounce   = null;
+    let courseDebounce = null;
+
+    function onUserTagInput(val) {
+        clearTimeout(userDebounce);
+        if (!val.trim()) { hideDropdown('user'); return; }
+        userDebounce = setTimeout(async () => {
+            const res  = await fetch(`/discussion/search/users?q=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            showDropdown('user', data.map(u => ({ id: u.id, label: '@' + u.username, item: { id: u.id, username: u.username } })));
+        }, 200);
+    }
+
+    function onCourseTagInput(val) {
+        clearTimeout(courseDebounce);
+        if (!val.trim()) { hideDropdown('course'); return; }
+        courseDebounce = setTimeout(async () => {
+            const res  = await fetch(`/discussion/search/courses?q=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            showDropdown('course', data.map(c => ({ id: c.id, label: '#' + c.name, item: { id: c.id, name: c.name } })));
+        }, 200);
+    }
+
+    function showDropdown(type, items) {
+        const dd = document.getElementById(type === 'user' ? 'userDropdown' : 'courseDropdown');
+        if (!items.length) { hideDropdown(type); return; }
+        dd.innerHTML = items.map(i => `
+            <div class="autocomplete-item" onclick="selectItem('${type}', ${JSON.stringify(i.item).replace(/"/g, '&quot;')})">
+                <div class="ac-icon ${type}">${i.label.charAt(1).toUpperCase()}</div>
+                <span>${i.label}</span>
+            </div>
+        `).join('');
+        dd.classList.add('show');
+    }
+
+    function hideDropdown(type) {
+        const dd = document.getElementById(type === 'user' ? 'userDropdown' : 'courseDropdown');
+        dd.classList.remove('show');
+        dd.innerHTML = '';
+    }
+
+    function selectItem(type, item) {
+        const arr = type === 'user' ? selectedUsers : selectedCourses;
+        const key = type === 'user' ? 'id' : 'id';
+        if (!arr.find(x => x.id === item.id)) arr.push(item);
+        renderChips(type);
+        document.getElementById(type === 'user' ? 'userTagInput' : 'courseTagInput').value = '';
+        hideDropdown(type);
+    }
+
+    function onTagKeydown(event, type) {
+        if (event.key === 'Escape') hideDropdown(type);
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#userTagWrap'))   hideDropdown('user');
+        if (!e.target.closest('#courseTagWrap')) hideDropdown('course');
+    });
+
+    // Submit new thread
+    async function submitNewThread() {
+        const title   = document.getElementById('threadTitle').value.trim();
+        const content = document.getElementById('threadContent').value.trim();
+        const btn     = document.getElementById('submitThreadBtn');
+
+        if (!title)   { showToast('Please enter a title.', 'error'); return; }
+        if (!content) { showToast('Please enter some content.', 'error'); return; }
+
+        btn.disabled    = true;
+        btn.textContent = 'Posting…';
+
+        try {
+            const res = await fetch('/discussion/post', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    content,
+                    parentPostId:       null,
+                    mentionedUserIds:   selectedUsers.map(u => u.id),
+                    mentionedCourseIds: selectedCourses.map(c => c.id)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to post.', 'error'); return; }
+            closeNewThreadModal();
+            showToast('Thread posted!', 'success');
+            setTimeout(() => window.location.href = '/discussion/' + data.postId, 800);
+        } catch (e) {
+            showToast('Request failed. Please try again.', 'error');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Post Thread';
+        }
+    }
+
+    // Toast
+    function showToast(msg, type) {
+        const t = document.getElementById('discToast');
+        t.textContent = msg;
+        t.className   = 'disc-toast ' + (type || '');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+</script>
+</body>
+</html>

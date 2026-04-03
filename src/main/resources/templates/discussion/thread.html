@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${thread.title} + ' — PrepHunt'">Thread — PrepHunt</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            color: var(--color-text-secondary); font-size: 0.88rem;
+            text-decoration: none; margin-bottom: 1.25rem; transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--color-accent); }
+
+        /* Root post */
+        .root-post {
+            background: white; border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg); padding: 1.75rem;
+            box-shadow: var(--shadow-sm); margin-bottom: 2rem;
+        }
+        .root-post-title  { font-size: 1.4rem; font-weight: 800; color: var(--color-text-primary); margin-bottom: 1rem; line-height: 1.3; }
+        .root-post-content{ font-size: 0.95rem; color: var(--color-text-primary); line-height: 1.7; margin-bottom: 1.25rem; white-space: pre-wrap; }
+        .post-meta        { display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; color: #9ca3af; flex-wrap: wrap; }
+        .post-meta-item   { display: flex; align-items: center; gap: 0.3rem; }
+
+        /* Mention chips */
+        .mention-chip { display: inline-flex; align-items: center; gap: 3px; background: #ede9fe; color: #6c47ff; font-size: 0.72rem; font-weight: 600; border-radius: 99px; padding: 2px 9px; }
+        .course-chip  { display: inline-flex; align-items: center; gap: 3px; background: #d1fae5; color: #065f46; font-size: 0.72rem; font-weight: 600; border-radius: 99px; padding: 2px 9px; }
+
+        /* Avatars */
+        .post-avatar       { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.88rem; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+        .post-avatar.small { width: 30px; height: 30px; font-size: 0.75rem; }
+
+        /* Replies */
+        .replies-header { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 1rem; }
+        .reply-card         { display: flex; gap: 0.75rem; padding: 1rem 1.25rem; background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+        .reply-card.deleted { background: #f9fafb; border-color: #f3f4f6; }
+        .reply-body   { flex: 1; min-width: 0; }
+        .reply-author { font-weight: 700; font-size: 0.88rem; color: var(--color-text-primary); margin-bottom: 0.2rem; }
+        .reply-content              { font-size: 0.9rem; color: var(--color-text-primary); line-height: 1.6; white-space: pre-wrap; margin-bottom: 0.5rem; }
+        .reply-content.deleted-text { color: #9ca3af; font-style: italic; }
+        .reply-meta { font-size: 0.75rem; color: #9ca3af; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+        /* Nesting connector */
+        .nested-replies { margin-left: 2.5rem; margin-top: 0.75rem; padding-left: 1rem; border-left: 2px solid #e5e7eb; display: flex; flex-direction: column; gap: 0.75rem; }
+
+        /* Action buttons in meta row */
+        .btn-reply-meta {
+            background: none; border: none; padding: 0;
+            color: var(--color-accent); font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            display: flex; align-items: center; gap: 0.3rem;
+        }
+        .btn-reply-meta:hover { text-decoration: underline; }
+
+        .btn-delete-meta {
+            background: none; border: none; padding: 0;
+            color: #ef4444; font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-delete-meta:hover { text-decoration: underline; }
+
+        /* Inline reply form (nested) */
+        .inline-reply-form         { display: none; margin-top: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; }
+        .inline-reply-form.show    { display: block; }
+        .inline-reply-form textarea { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.88rem; font-family: inherit; resize: vertical; background: white; box-sizing: border-box; }
+        .inline-reply-form textarea:focus { border-color: #4a7c59; outline: none; box-shadow: 0 0 0 3px rgba(74,124,89,0.12); }
+        .inline-reply-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+        .btn-inline-submit { background: var(--color-accent); color: white; border: none; border-radius: 7px; padding: 0.4rem 1rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+        .btn-inline-submit:hover { background: #3a6347; }
+        .btn-inline-cancel { background: #f3f4f6; color: #6b7280; border: none; border-radius: 7px; padding: 0.4rem 0.9rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+        /* Main reply compose (hidden by default — toggled by Reply button on root post) */
+        .reply-compose         { display: none; background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; box-shadow: var(--shadow-sm); margin-top: 1.5rem; }
+        .reply-compose.show    { display: block; }
+        .reply-compose h5      { font-size: 0.88rem; font-weight: 700; color: var(--color-text-primary); margin-bottom: 1rem; }
+
+        .form-group       { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }
+        .form-group textarea { width: 100%; padding: 0.6rem 0.85rem; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 0.9rem; font-family: inherit; transition: border-color 0.15s; box-sizing: border-box; background: #fafafa; resize: vertical; }
+        .form-group textarea:focus { border-color: #4a7c59; background: #fff; outline: none; box-shadow: 0 0 0 3px rgba(74,124,89,0.12); }
+
+        /* Tag input */
+        .tag-input-wrap { border: 1.5px solid #e5e7eb; border-radius: 8px; background: #fafafa; padding: 0.5rem 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; cursor: text; min-height: 42px; position: relative; }
+        .tag-input-wrap:focus-within { border-color: #4a7c59; background: #fff; box-shadow: 0 0 0 3px rgba(74,124,89,0.12); }
+        .tag-chip               { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px 2px 8px; border-radius: 99px; font-size: 0.78rem; font-weight: 600; }
+        .tag-chip.user-chip     { background: #ede9fe; color: #6c47ff; }
+        .tag-chip.course-chip-tag { background: #d1fae5; color: #065f46; }
+        .tag-chip button { background: none; border: none; padding: 0; cursor: pointer; font-size: 0.75rem; line-height: 1; color: inherit; opacity: 0.6; }
+        .tag-chip button:hover { opacity: 1; }
+        .tag-input-wrap input { border: none !important; outline: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; font-size: 0.88rem; font-family: inherit; flex: 1; min-width: 120px; }
+
+        /* Autocomplete dropdown */
+        .autocomplete-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 10000; overflow: hidden; display: none; }
+        .autocomplete-dropdown.show { display: block; }
+        .autocomplete-item { padding: 0.55rem 1rem; cursor: pointer; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem; }
+        .autocomplete-item:hover { background: #f9fafb; }
+        .autocomplete-item .ac-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: white; flex-shrink: 0; }
+        .autocomplete-item .ac-icon.user   { background: #6c47ff; }
+        .autocomplete-item .ac-icon.course { background: #065f46; }
+
+        .btn-submit          { background: var(--color-accent); color: white; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+        .btn-submit:hover    { background: #3a6347; }
+        .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-cancel-reply    { background: #f3f4f6; color: #374151; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .btn-cancel-reply:hover { background: #e5e7eb; }
+
+        /* Login nudge */
+        .login-nudge { background: linear-gradient(135deg, rgba(74,124,89,0.08), rgba(74,124,89,0.03)); border: 1px solid rgba(74,124,89,0.2); border-radius: var(--radius-lg); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+        .login-nudge p { margin: 0; font-size: 0.9rem; color: var(--color-text-secondary); }
+        .login-nudge a { background: var(--color-accent); color: white; border-radius: var(--radius-md); padding: 0.45rem 1rem; font-size: 0.85rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+        .login-nudge a:hover { background: #3a6347; }
+
+        /* Toast */
+        .disc-toast         { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(12px); background: #1f2937; color: #fff; padding: 0.6rem 1.4rem; border-radius: 8px; font-size: 0.85rem; font-family: inherit; z-index: 10001; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
+        .disc-toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .disc-toast.success { background: #166534; }
+        .disc-toast.error   { background: #991b1b; }
+    </style>
+</head>
+
+<body>
+<!--
+    currentUserId is injected by the controller (null for guests).
+    Thymeleaf compares it against each post's authorId so that the
+    Delete button only renders for the author of that specific post.
+-->
+<div class="container-fluid px-4 py-3">
+
+    <div th:replace="navigation/index :: topbar"></div>
+
+    <div class="row align-items-stretch">
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+
+        <div class="col besides">
+
+            <a href="/discussion" class="back-link">
+                <i class="bi bi-arrow-left"></i> Back to Discussions
+            </a>
+
+            <!-- ══════════ ROOT POST ══════════ -->
+            <div class="root-post">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="post-avatar"
+                         th:text="${thread.authorUsername != null and !thread.authorUsername.isEmpty()} ? ${thread.authorUsername.substring(0,1)} : '?'"></div>
+                    <div>
+                        <div style="font-weight:700;font-size:0.9rem;" th:text="${thread.authorUsername}">Author</div>
+                        <div style="font-size:0.75rem;color:#9ca3af;"
+                             th:text="${#temporals.format(thread.createdAt, 'MMM dd, yyyy · HH:mm')}">Date</div>
+                    </div>
+                </div>
+
+                <div class="root-post-title"  th:text="${thread.title}">Thread Title</div>
+                <div class="root-post-content" th:text="${thread.content}">Content</div>
+
+                <!-- Mention chips -->
+                <div class="d-flex flex-wrap gap-2 mb-3"
+                     th:if="${!#lists.isEmpty(thread.mentionedUsernames) or !#lists.isEmpty(thread.mentionedCourseNames)}">
+                    <span th:each="u : ${thread.mentionedUsernames}" class="mention-chip">
+                        <i class="bi bi-at" style="font-size:0.65rem;"></i><span th:text="${u}">u</span>
+                    </span>
+                    <span th:each="c : ${thread.mentionedCourseNames}" class="course-chip">
+                        <i class="bi bi-book" style="font-size:0.65rem;"></i><span th:text="${c}">c</span>
+                    </span>
+                </div>
+
+                <div class="post-meta">
+                    <span class="post-meta-item">
+                        <i class="bi bi-chat-dots"></i>
+                        <span th:text="${#lists.size(thread.replies)} + ' replies'">0 replies</span>
+                    </span>
+
+                    <!-- Reply button on root post — toggles the compose box -->
+                    <button th:if="${isLoggedIn}" class="btn-reply-meta" onclick="toggleMainReply()">
+                        <i class="bi bi-reply"></i> Reply
+                    </button>
+
+                    <!-- Delete — only visible to the thread author -->
+                    <button th:if="${isLoggedIn and currentUserId != null and thread.authorId == currentUserId}"
+                            class="btn-delete-meta"
+                            th:attr="data-post-id=${thread.postId}"
+                            onclick="deletePost(this)">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- ══════════ MAIN REPLY COMPOSE (hidden by default) ══════════ -->
+            <div th:if="${isLoggedIn}" class="reply-compose" id="mainReplyCompose">
+                <h5><i class="bi bi-reply me-1"></i>Write a Reply</h5>
+
+                <div class="form-group">
+                    <textarea id="mainReplyContent" rows="4" placeholder="Share your thoughts..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Mention Users <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                    <div class="tag-input-wrap" id="mainUserTagWrap" onclick="document.getElementById('mainUserTagInput').focus()">
+                        <input type="text" id="mainUserTagInput" placeholder="@username..."
+                               oninput="onUserTagInput(this.value)"
+                               onkeydown="if(event.key==='Escape') hideDropdown('mainUserDropdown')">
+                        <div class="autocomplete-dropdown" id="mainUserDropdown"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mention Courses <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                    <div class="tag-input-wrap" id="mainCourseTagWrap" onclick="document.getElementById('mainCourseTagInput').focus()">
+                        <input type="text" id="mainCourseTagInput" placeholder="#course name..."
+                               oninput="onCourseTagInput(this.value)"
+                               onkeydown="if(event.key==='Escape') hideDropdown('mainCourseDropdown')">
+                        <div class="autocomplete-dropdown" id="mainCourseDropdown"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn-submit" id="mainSubmitBtn"
+                            th:attr="data-parent-id=${thread.postId}"
+                            onclick="submitMainReply(this.getAttribute('data-parent-id'))">
+                        <i class="bi bi-send me-1"></i> Post Reply
+                    </button>
+                    <button class="btn-cancel-reply" onclick="toggleMainReply()">Cancel</button>
+                </div>
+            </div>
+
+            <!-- ══════════ REPLIES ══════════ -->
+            <div th:if="${!#lists.isEmpty(thread.replies)}" style="margin-top:2rem;">
+                <div class="replies-header">
+                    <i class="bi bi-chat-dots me-1"></i>
+                    <span th:text="${#lists.size(thread.replies)} + ' Replies'">Replies</span>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+
+                    <!-- LEVEL 1 -->
+                    <div th:each="r1 : ${thread.replies}" th:id="'post-' + ${r1.postId}">
+                        <div class="reply-card" th:classappend="${r1.isDeleted} ? ' deleted' : ''">
+                            <div class="post-avatar small"
+                                 th:text="${r1.authorUsername != null and !r1.authorUsername.isEmpty()} ? ${r1.authorUsername.substring(0,1)} : '?'"></div>
+                            <div class="reply-body">
+                                <div class="reply-author" th:text="${r1.authorUsername}">Author</div>
+                                <div class="reply-content"
+                                     th:classappend="${r1.isDeleted} ? ' deleted-text' : ''"
+                                     th:text="${r1.content}">Content</div>
+
+                                <div class="d-flex flex-wrap gap-1 mb-2"
+                                     th:if="${!#lists.isEmpty(r1.mentionedUsernames) or !#lists.isEmpty(r1.mentionedCourseNames)}">
+                                    <span th:each="u : ${r1.mentionedUsernames}" class="mention-chip" style="font-size:0.68rem;"><i class="bi bi-at" style="font-size:0.6rem;"></i><span th:text="${u}">u</span></span>
+                                    <span th:each="c : ${r1.mentionedCourseNames}" class="course-chip"  style="font-size:0.68rem;"><i class="bi bi-book" style="font-size:0.6rem;"></i><span th:text="${c}">c</span></span>
+                                </div>
+
+                                <div class="reply-meta">
+                                    <span th:text="${#temporals.format(r1.createdAt, 'MMM dd, yyyy · HH:mm')}">Date</span>
+
+                                    <!-- Reply button: any logged-in user on any non-deleted reply -->
+                                    <button th:if="${isLoggedIn and !r1.isDeleted}"
+                                            class="btn-reply-meta"
+                                            th:onclick="'toggleInlineReply(' + ${r1.postId} + ')'">
+                                        <i class="bi bi-reply"></i> Reply
+                                    </button>
+
+                                    <!-- Delete button: only the author of THIS reply -->
+                                    <button th:if="${isLoggedIn and !r1.isDeleted and currentUserId != null and r1.authorId == currentUserId}"
+                                            class="btn-delete-meta"
+                                            th:attr="data-post-id=${r1.postId}"
+                                            onclick="deletePost(this)">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+
+                                <div class="inline-reply-form" th:id="'inline-form-' + ${r1.postId}">
+                                    <textarea th:id="'inline-content-' + ${r1.postId}" rows="3"
+                                              th:placeholder="'Replying to @' + ${r1.authorUsername} + '...'"></textarea>
+                                    <div class="inline-reply-actions">
+                                        <button class="btn-inline-submit" th:onclick="'submitInlineReply(' + ${r1.postId} + ')'"><i class="bi bi-send me-1"></i> Reply</button>
+                                        <button class="btn-inline-cancel" th:onclick="'toggleInlineReply(' + ${r1.postId} + ')'">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LEVEL 2 -->
+                        <div th:if="${!#lists.isEmpty(r1.replies)}" class="nested-replies">
+                            <div th:each="r2 : ${r1.replies}" th:id="'post-' + ${r2.postId}">
+                                <div class="reply-card" th:classappend="${r2.isDeleted} ? ' deleted' : ''">
+                                    <div class="post-avatar small"
+                                         th:text="${r2.authorUsername != null and !r2.authorUsername.isEmpty()} ? ${r2.authorUsername.substring(0,1)} : '?'"></div>
+                                    <div class="reply-body">
+                                        <div class="reply-author" th:text="${r2.authorUsername}">Author</div>
+                                        <div class="reply-content"
+                                             th:classappend="${r2.isDeleted} ? ' deleted-text' : ''"
+                                             th:text="${r2.content}">Content</div>
+
+                                        <div class="d-flex flex-wrap gap-1 mb-2"
+                                             th:if="${!#lists.isEmpty(r2.mentionedUsernames) or !#lists.isEmpty(r2.mentionedCourseNames)}">
+                                            <span th:each="u : ${r2.mentionedUsernames}" class="mention-chip" style="font-size:0.68rem;"><i class="bi bi-at" style="font-size:0.6rem;"></i><span th:text="${u}">u</span></span>
+                                            <span th:each="c : ${r2.mentionedCourseNames}" class="course-chip"  style="font-size:0.68rem;"><i class="bi bi-book" style="font-size:0.6rem;"></i><span th:text="${c}">c</span></span>
+                                        </div>
+
+                                        <div class="reply-meta">
+                                            <span th:text="${#temporals.format(r2.createdAt, 'MMM dd, yyyy · HH:mm')}">Date</span>
+                                            <button th:if="${isLoggedIn and !r2.isDeleted}"
+                                                    class="btn-reply-meta"
+                                                    th:onclick="'toggleInlineReply(' + ${r2.postId} + ')'">
+                                                <i class="bi bi-reply"></i> Reply
+                                            </button>
+                                            <button th:if="${isLoggedIn and !r2.isDeleted and currentUserId != null and r2.authorId == currentUserId}"
+                                                    class="btn-delete-meta"
+                                                    th:attr="data-post-id=${r2.postId}"
+                                                    onclick="deletePost(this)">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </div>
+
+                                        <div class="inline-reply-form" th:id="'inline-form-' + ${r2.postId}">
+                                            <textarea th:id="'inline-content-' + ${r2.postId}" rows="3"
+                                                      th:placeholder="'Replying to @' + ${r2.authorUsername} + '...'"></textarea>
+                                            <div class="inline-reply-actions">
+                                                <button class="btn-inline-submit" th:onclick="'submitInlineReply(' + ${r2.postId} + ')'"><i class="bi bi-send me-1"></i> Reply</button>
+                                                <button class="btn-inline-cancel" th:onclick="'toggleInlineReply(' + ${r2.postId} + ')'">Cancel</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- LEVEL 3 -->
+                                <div th:if="${!#lists.isEmpty(r2.replies)}" class="nested-replies">
+                                    <div th:each="r3 : ${r2.replies}" th:id="'post-' + ${r3.postId}">
+                                        <div class="reply-card" th:classappend="${r3.isDeleted} ? ' deleted' : ''">
+                                            <div class="post-avatar small"
+                                                 th:text="${r3.authorUsername != null and !r3.authorUsername.isEmpty()} ? ${r3.authorUsername.substring(0,1)} : '?'"></div>
+                                            <div class="reply-body">
+                                                <div class="reply-author" th:text="${r3.authorUsername}">Author</div>
+                                                <div class="reply-content"
+                                                     th:classappend="${r3.isDeleted} ? ' deleted-text' : ''"
+                                                     th:text="${r3.content}">Content</div>
+
+                                                <div class="d-flex flex-wrap gap-1 mb-2"
+                                                     th:if="${!#lists.isEmpty(r3.mentionedUsernames) or !#lists.isEmpty(r3.mentionedCourseNames)}">
+                                                    <span th:each="u : ${r3.mentionedUsernames}" class="mention-chip" style="font-size:0.68rem;"><i class="bi bi-at" style="font-size:0.6rem;"></i><span th:text="${u}">u</span></span>
+                                                    <span th:each="c : ${r3.mentionedCourseNames}" class="course-chip"  style="font-size:0.68rem;"><i class="bi bi-book" style="font-size:0.6rem;"></i><span th:text="${c}">c</span></span>
+                                                </div>
+
+                                                <div class="reply-meta">
+                                                    <span th:text="${#temporals.format(r3.createdAt, 'MMM dd, yyyy · HH:mm')}">Date</span>
+                                                    <button th:if="${isLoggedIn and !r3.isDeleted}"
+                                                            class="btn-reply-meta"
+                                                            th:onclick="'toggleInlineReply(' + ${r3.postId} + ')'">
+                                                        <i class="bi bi-reply"></i> Reply
+                                                    </button>
+                                                    <button th:if="${isLoggedIn and !r3.isDeleted and currentUserId != null and r3.authorId == currentUserId}"
+                                                            class="btn-delete-meta"
+                                                            th:attr="data-post-id=${r3.postId}"
+                                                            onclick="deletePost(this)">
+                                                        <i class="bi bi-trash me-1"></i>Delete
+                                                    </button>
+                                                </div>
+
+                                                <div class="inline-reply-form" th:id="'inline-form-' + ${r3.postId}">
+                                                    <textarea th:id="'inline-content-' + ${r3.postId}" rows="3"
+                                                              th:placeholder="'Replying to @' + ${r3.authorUsername} + '...'"></textarea>
+                                                    <div class="inline-reply-actions">
+                                                        <button class="btn-inline-submit" th:onclick="'submitInlineReply(' + ${r3.postId} + ')'"><i class="bi bi-send me-1"></i> Reply</button>
+                                                        <button class="btn-inline-cancel" th:onclick="'toggleInlineReply(' + ${r3.postId} + ')'">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- end level 3 -->
+
+                            </div>
+                        </div>
+                        <!-- end level 2 -->
+
+                    </div>
+                </div>
+                <!-- end level 1 -->
+            </div>
+
+            <!-- ══════════ LOGIN NUDGE (guest) ══════════ -->
+            <div th:unless="${isLoggedIn}" class="login-nudge">
+                <p><i class="bi bi-lock me-1"></i> Log in to reply to this discussion.</p>
+                <a href="/login">Log in / Sign up</a>
+            </div>
+
+        </div>
+    </div>
+
+    <div th:replace="footer/index :: footer"></div>
+</div>
+
+<div class="disc-toast" id="discToast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const mainSelectedUsers   = [];
+    const mainSelectedCourses = [];
+
+    // Toggle main reply box
+    function toggleMainReply() {
+        const box = document.getElementById('mainReplyCompose');
+        if (!box) return;
+        box.classList.toggle('show');
+        if (box.classList.contains('show')) {
+            box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            document.getElementById('mainReplyContent').focus();
+        }
+    }
+
+    // Toggle inline reply form
+    function toggleInlineReply(postId) {
+        const form = document.getElementById('inline-form-' + postId);
+        if (!form) return;
+        form.classList.toggle('show');
+        if (form.classList.contains('show')) form.querySelector('textarea').focus();
+    }
+
+    // Delete post
+    // Note: server enforces author-only — this button is already hidden for
+    // non-authors by Thymeleaf, but the server double-checks anyway.
+    async function deletePost(btn) {
+        const postId = btn.getAttribute('data-post-id');
+        if (!confirm('Delete this post? Replies will remain but the content will be removed.')) return;
+        try {
+            const res  = await fetch(`/discussion/post/${postId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Could not delete.', 'error'); return; }
+            showToast('Post deleted.', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (e) { showToast('Request failed.', 'error'); }
+    }
+
+    // Submit main reply
+    async function submitMainReply(parentPostId) {
+        const content = document.getElementById('mainReplyContent').value.trim();
+        const btn     = document.getElementById('mainSubmitBtn');
+        if (!content) { showToast('Please write something before replying.', 'error'); return; }
+        btn.disabled = true; btn.textContent = 'Posting…';
+        try {
+            const res = await fetch('/discussion/post', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: null, content,
+                    parentPostId: parseInt(parentPostId),
+                    mentionedUserIds:   mainSelectedUsers.map(u => u.id),
+                    mentionedCourseIds: mainSelectedCourses.map(c => c.id)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to post.', 'error'); return; }
+            showToast('Reply posted!', 'success');
+            setTimeout(() => location.reload(), 700);
+        } catch (e) { showToast('Request failed.', 'error'); }
+        finally { btn.disabled = false; btn.textContent = 'Post Reply'; }
+    }
+
+    // Submit inline reply
+    async function submitInlineReply(parentPostId) {
+        const textarea = document.getElementById('inline-content-' + parentPostId);
+        const content  = textarea ? textarea.value.trim() : '';
+        if (!content) { showToast('Please write something.', 'error'); return; }
+        try {
+            const res = await fetch('/discussion/post', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: null, content,
+                    parentPostId: parentPostId,
+                    mentionedUserIds: [], mentionedCourseIds: []
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to post.', 'error'); return; }
+            showToast('Reply posted!', 'success');
+            setTimeout(() => location.reload(), 700);
+        } catch (e) { showToast('Request failed.', 'error'); }
+    }
+
+    // Tag chips
+    function renderMainChips(type) {
+        const wrapId  = type === 'user' ? 'mainUserTagWrap'  : 'mainCourseTagWrap';
+        const inputId = type === 'user' ? 'mainUserTagInput' : 'mainCourseTagInput';
+        const wrap    = document.getElementById(wrapId);
+        const input   = document.getElementById(inputId);
+        const data    = type === 'user' ? mainSelectedUsers : mainSelectedCourses;
+        wrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+        data.forEach((item, idx) => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip ' + (type === 'user' ? 'user-chip' : 'course-chip-tag');
+            chip.innerHTML = `${type === 'user' ? '@' + item.username : '#' + item.name} <button type="button" onclick="removeMainChip('${type}',${idx})">&#x2715;</button>`;
+            wrap.insertBefore(chip, input);
+        });
+    }
+
+    function removeMainChip(type, idx) {
+        (type === 'user' ? mainSelectedUsers : mainSelectedCourses).splice(idx, 1);
+        renderMainChips(type);
+    }
+
+    // Autocomplete
+    let userTimer = null, courseTimer = null;
+
+    function onUserTagInput(val) {
+        clearTimeout(userTimer);
+        if (!val.trim()) { hideDropdown('mainUserDropdown'); return; }
+        userTimer = setTimeout(async () => {
+            const data = await (await fetch(`/discussion/search/users?q=${encodeURIComponent(val)}`)).json();
+            showDropdown('mainUserDropdown', data.map(u => ({ label: '@' + u.username, icon: u.username.charAt(0).toUpperCase(), type: 'user', item: { id: u.id, username: u.username } })));
+        }, 200);
+    }
+
+    function onCourseTagInput(val) {
+        clearTimeout(courseTimer);
+        if (!val.trim()) { hideDropdown('mainCourseDropdown'); return; }
+        courseTimer = setTimeout(async () => {
+            const data = await (await fetch(`/discussion/search/courses?q=${encodeURIComponent(val)}`)).json();
+            showDropdown('mainCourseDropdown', data.map(c => ({ label: '#' + c.name, icon: c.name.charAt(0).toUpperCase(), type: 'course', item: { id: c.id, name: c.name } })));
+        }, 200);
+    }
+
+    function showDropdown(dropId, items) {
+        const dd = document.getElementById(dropId);
+        if (!dd || !items.length) { hideDropdown(dropId); return; }
+        dd.innerHTML = items.map(i => `<div class="autocomplete-item" onclick='selectMainItem(${JSON.stringify(i).replace(/'/g,"&#39;")})'><div class="ac-icon ${i.type}">${i.icon}</div><span>${i.label}</span></div>`).join('');
+        dd.classList.add('show');
+    }
+
+    function hideDropdown(dropId) {
+        const dd = document.getElementById(dropId);
+        if (dd) { dd.classList.remove('show'); dd.innerHTML = ''; }
+    }
+
+    function selectMainItem(i) {
+        const arr = i.type === 'user' ? mainSelectedUsers : mainSelectedCourses;
+        if (!arr.find(x => x.id === i.item.id)) arr.push(i.item);
+        renderMainChips(i.type);
+        document.getElementById(i.type === 'user' ? 'mainUserTagInput' : 'mainCourseTagInput').value = '';
+        hideDropdown(i.type === 'user' ? 'mainUserDropdown' : 'mainCourseDropdown');
+    }
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#mainUserTagWrap'))   hideDropdown('mainUserDropdown');
+        if (!e.target.closest('#mainCourseTagWrap')) hideDropdown('mainCourseDropdown');
+    });
+
+    // Toast
+    function showToast(msg, type) {
+        const t = document.getElementById('discToast');
+        t.textContent = msg;
+        t.className   = 'disc-toast ' + (type || '');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+</script>
+</body>
+</html>
