@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${course.courseName} + ' — Announcements'">Announcements</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
+
+        /* Announcement card */
+        .announcement-card {
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.15s;
+        }
+        .announcement-card:hover { box-shadow: var(--shadow-md); }
+
+        .announcement-stripe {
+            width: 4px;
+            flex-shrink: 0;
+            border-radius: 4px;
+            background: linear-gradient(180deg, #4a7c59, #34d399);
+            margin-right: 1.25rem;
+            align-self: stretch;
+        }
+
+        .announcement-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--color-text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .announcement-meta {
+            font-size: 0.78rem;
+            color: #9ca3af;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .announcement-content {
+            font-size: 0.92rem;
+            color: var(--color-text-primary);
+            line-height: 1.7;
+            /* Do not use pre-wrap — it would preserve blank lines from raw content.
+               Instead, the service strips surrounding blank lines from each text segment,
+               and the template renders inline so chapter link pills sit naturally in flow. */
+        }
+
+        /* Clickable chapter tag inside announcement content */
+        .chapter-tag-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #d1fae5;
+            color: #065f46;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border-radius: 99px;
+            padding: 1px 10px;
+            text-decoration: none;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .chapter-tag-link:hover {
+            background: #a7f3d0;
+            color: #064e3b;
+            text-decoration: none;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--color-text-secondary);
+        }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.35; }
+
+        /* New Announcement button */
+        .btn-new-announcement {
+            background: var(--color-accent);
+            color: white; border: none;
+            border-radius: var(--radius-md);
+            padding: 0.55rem 1.25rem;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .btn-new-announcement:hover { background: #3a6347; }
+
+        /* Compose modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 16px; padding: 2rem;
+            width: 100%; max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            position: relative; animation: slideUp 0.22s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: none; border: none; font-size: 1.3rem;
+            cursor: pointer; color: #6b7280; padding: 2px 6px; border-radius: 6px;
+        }
+        .modal-close:hover { background: #f3f4f6; color: #111; }
+        .modal-box h2 { font-size: 1.1rem; font-weight: 700; margin: 0 0 1.5rem; color: #111827; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: #374151; margin-bottom: 0.3rem; }
+        .form-group input,
+        .form-group textarea {
+            width: 100%; padding: 0.6rem 0.85rem;
+            border: 1.5px solid #e5e7eb; border-radius: 8px;
+            font-size: 0.9rem; font-family: inherit;
+            transition: border-color 0.15s; box-sizing: border-box;
+            background: #fafafa; resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: #4a7c59; background: #fff;
+            outline: none; box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+        }
+
+        /* Content textarea with chapter autocomplete */
+        .content-wrap { position: relative; }
+
+        /* Autocomplete dropdown for # chapter tags */
+        .chapter-autocomplete {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 10000; display: none; overflow: hidden;
+        }
+        .chapter-autocomplete.show { display: block; }
+        .chapter-autocomplete-item {
+            padding: 0.55rem 1rem; cursor: pointer; font-size: 0.88rem;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .chapter-autocomplete-item:hover { background: #f9fafb; }
+        .chapter-autocomplete-item .ch-icon {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #d1fae5; display: flex; align-items: center;
+            justify-content: center; color: #065f46; font-size: 0.8rem; flex-shrink: 0;
+        }
+
+        /* Tag pills preview inside compose */
+        .tagged-chapters-preview {
+            display: flex; flex-wrap: wrap; gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+        .tagged-chapter-pill {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #d1fae5; color: #065f46;
+            font-size: 0.75rem; font-weight: 700;
+            border-radius: 99px; padding: 2px 10px 2px 8px;
+        }
+        .tagged-chapter-pill button {
+            background: none; border: none; padding: 0; cursor: pointer;
+            font-size: 0.7rem; color: inherit; opacity: 0.65; line-height: 1;
+        }
+        .tagged-chapter-pill button:hover { opacity: 1; }
+
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-modal-submit {
+            flex: 1; padding: 0.65rem 1rem;
+            background: var(--color-accent); color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .btn-modal-submit:hover    { background: #3a6347; }
+        .btn-modal-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+        .btn-modal-cancel {
+            padding: 0.65rem 1rem; background: #f3f4f6; color: #374151;
+            border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+        }
+        .btn-modal-cancel:hover { background: #e5e7eb; }
+
+        /* Delete confirmation modal (same style as friends page) */
+        .delete-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        .delete-overlay.show { display: flex; }
+
+        /* Toast */
+        .ann-toast {
+            position: fixed; bottom: 1.5rem; left: 50%;
+            transform: translateX(-50%) translateY(12px);
+            background: #1f2937; color: #fff;
+            padding: 0.6rem 1.4rem; border-radius: 8px; font-size: 0.85rem;
+            font-family: inherit; z-index: 10001;
+            opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none; white-space: nowrap;
+        }
+        .ann-toast.show    { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .ann-toast.success { background: #166534; }
+        .ann-toast.error   { background: #991b1b; }
+    </style>
+</head>
+
+<body>
+<div class="container-fluid px-4 py-3">
+
+    <div th:replace="navigation/index :: topbar"></div>
+
+    <div class="row align-items-stretch">
+        <div class="col-auto">
+            <div th:replace="sidebar/index :: sidebar"></div>
+        </div>
+
+        <div class="col besides">
+
+            <!-- Breadcrumb -->
+            <div class="course-breadcrumb mb-1">
+                <a th:href="@{/your-courses}">Your Courses</a>
+                <span class="mx-1">/</span>
+                <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
+                   th:text="${course.courseName}">Course</a>
+                <span class="mx-1">/</span>
+                <span>Announcements</span>
+            </div>
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 page-header page-title">
+                <div>
+                    <h2 class="fw-bold mb-0">Announcements</h2>
+                    <p class="text-muted small mb-0" th:text="${course.courseName}">Course</p>
+                </div>
+                <!-- Only teachers see the New Announcement button -->
+                <button sec:authorize="hasRole('TEACHER')"
+                        class="btn-new-announcement"
+                        onclick="openComposeModal()">
+                    <i class="bi bi-megaphone"></i> New Announcement
+                </button>
+            </div>
+
+            <!-- ══════════ ANNOUNCEMENT LIST ══════════ -->
+            <div class="d-flex flex-column gap-3" th:if="${!#lists.isEmpty(announcements)}">
+                <div th:each="ann : ${announcements}" class="announcement-card d-flex">
+
+                    <div class="announcement-stripe"></div>
+
+                    <div style="flex:1; min-width:0;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="announcement-title" th:text="${ann.title}">Title</div>
+
+                            <!-- Delete button: only visible to the teacher who posted -->
+                            <button sec:authorize="hasRole('TEACHER')"
+                                    class="btn-delete-meta ms-3"
+                                    style="background:none;border:none;padding:0;color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;"
+                                    th:attr="data-ann-id=${ann.announcementId}"
+                                    onclick="openDeleteModal(this)">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </div>
+
+                        <div class="announcement-meta">
+                            <span><i class="bi bi-person me-1"></i><span th:text="${ann.authorUsername}">Teacher</span></span>
+                            <span><i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(ann.createdAt, 'MMM dd, yyyy · HH:mm')}">Date</span></span>
+                        </div>
+
+                        <!--
+                            Render the content as parsed segments.
+                            Plain text segments render as-is.
+                            Chapter link segments render as clickable green pills
+                            linking to /your-courses/{courseId}/chapters/{chapterId}/resources
+                        -->
+                        <div class="announcement-content">
+                            <th:block th:each="seg : ${ann.renderedSegments}">
+                                <th:block th:if="${seg.chapterId == null}"
+                                          th:text="${seg.text}"></th:block>
+                                <a th:if="${seg.chapterId != null}"
+                                   th:href="@{'/your-courses/' + ${seg.courseId} + '/chapters/' + ${seg.chapterId} + '/resources'}"
+                                   class="chapter-tag-link">
+                                    <i class="bi bi-hash" style="font-size:0.75rem;"></i>
+                                    <span th:text="${seg.text.startsWith('#') ? seg.text.substring(1) : seg.text}">Chapter</span>
+                                </a>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div th:if="${#lists.isEmpty(announcements)}" class="empty-state">
+                <i class="bi bi-megaphone"></i>
+                <p class="fw-semibold mb-1">No announcements yet</p>
+                <p class="small" sec:authorize="hasRole('TEACHER')">
+                    Click <strong>New Announcement</strong> to post one.
+                </p>
+                <p class="small" sec:authorize="hasRole('STUDENT')">
+                    Your teacher hasn't posted any announcements yet.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <div th:replace="footer/index :: footer"></div>
+</div>
+
+<!-- ══════════ COMPOSE MODAL (teacher only) ══════════ -->
+<div class="modal-overlay" id="composeOverlay" onclick="handleComposeOverlayClick(event)">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeComposeModal()">&#x2715;</button>
+        <h2><i class="bi bi-megaphone me-2"></i>New Announcement</h2>
+
+        <div class="form-group">
+            <label for="annTitle">Title <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="annTitle" placeholder="e.g. Important update on Chapter 3" maxlength="200">
+        </div>
+
+        <div class="form-group">
+            <label for="annContent">
+                Content <span style="color:#ef4444;">*</span>
+                <span style="color:#9ca3af;font-weight:400;font-size:0.78rem;">
+                    — type <strong>#</strong> to tag a chapter
+                </span>
+            </label>
+            <div class="content-wrap">
+                <textarea id="annContent" rows="6"
+                          placeholder="Write your announcement... Use #ChapterName to link a chapter."
+                          oninput="onContentInput(this)"></textarea>
+                <div class="chapter-autocomplete" id="chapterAutocomplete"></div>
+            </div>
+
+            <!-- Preview of currently tagged chapters -->
+            <div class="tagged-chapters-preview" id="taggedPreview"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeComposeModal()">Cancel</button>
+            <button class="btn-modal-submit" id="annSubmitBtn" onclick="submitAnnouncement()">
+                <i class="bi bi-send me-1"></i> Post Announcement
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ DELETE CONFIRMATION MODAL ══════════ -->
+<div class="delete-overlay" id="deleteOverlay">
+    <div style="background:white; border-radius:1rem; padding:2rem; max-width:380px;
+                width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.15); text-align:center;">
+        <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;
+                    display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+            <i class="bi bi-trash" style="color:#dc2626;font-size:1.4rem;"></i>
+        </div>
+        <div style="font-weight:700;font-size:1rem;margin-bottom:0.4rem;">Delete Announcement</div>
+        <div style="font-size:0.88rem;color:#6b7280;margin-bottom:1.5rem;">
+            Are you sure you want to delete this announcement? This cannot be undone.
+        </div>
+        <div style="display:flex;gap:0.75rem;justify-content:center;">
+            <button onclick="closeDeleteModal()"
+                    style="padding:0.5rem 1.25rem;border:1px solid #e5e7eb;border-radius:0.75rem;
+                           background:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
+                Cancel
+            </button>
+            <button id="confirmDeleteBtn"
+                    style="padding:0.5rem 1.25rem;border:none;border-radius:0.75rem;
+                           background:#dc2626;color:white;font-family:inherit;font-size:0.88rem;font-weight:600;cursor:pointer;">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="ann-toast" id="annToast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // Course ID and chapters list injected by Thymeleaf
+    const COURSE_ID = /*[[${course.courseId}]]*/ null;
+
+    // All chapters of this course — used for # autocomplete
+    // Uses chapterData (safe Map with only id+title) instead of full Chapter entities
+    // to avoid Jackson LocalDateTime serialization errors during Thymeleaf JS inlining
+    const ALL_CHAPTERS = /*[[${chapterData}]]*/ [];
+
+    // Tagged chapter state — { id, title }[]
+    const taggedChapters = [];
+
+    // Compose modal
+    function openComposeModal() {
+        document.getElementById('composeOverlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
+        document.getElementById('annTitle').focus();
+    }
+
+    function closeComposeModal() {
+        document.getElementById('composeOverlay').classList.remove('show');
+        document.body.style.overflow = '';
+        document.getElementById('annTitle').value   = '';
+        document.getElementById('annContent').value = '';
+        taggedChapters.length = 0;
+        renderTaggedPills();
+        hideAutocomplete();
+    }
+
+    function handleComposeOverlayClick(e) {
+        if (e.target === document.getElementById('composeOverlay')) closeComposeModal();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeComposeModal(); closeDeleteModal(); }
+    });
+
+    // # Chapter autocomplete inside content textarea
+    let currentHashQuery = null; // null means not in a # word right now
+
+    function onContentInput(textarea) {
+        const text   = textarea.value;
+        const cursor = textarea.selectionStart;
+
+        // Find the start of the current word being typed
+        let wordStart = cursor - 1;
+        while (wordStart >= 0 && text[wordStart] !== ' ' && text[wordStart] !== '\n') {
+            wordStart--;
+        }
+        wordStart++; // move past the space/newline
+
+        const currentWord = text.substring(wordStart, cursor);
+
+        if (currentWord.startsWith('#') && currentWord.length > 1) {
+            const query = currentWord.substring(1).toLowerCase();
+            currentHashQuery = { query, wordStart, wordEnd: cursor };
+
+            const matches = ALL_CHAPTERS.filter(ch =>
+                ch.chapterTitle && ch.chapterTitle.toLowerCase().includes(query)
+            ).slice(0, 6);
+
+            if (matches.length > 0) {
+                showAutocomplete(matches);
+            } else {
+                hideAutocomplete();
+            }
+        } else {
+            currentHashQuery = null;
+            hideAutocomplete();
+        }
+    }
+
+    function showAutocomplete(chapters) {
+        const dd = document.getElementById('chapterAutocomplete');
+        dd.innerHTML = chapters.map(ch => `
+            <div class="chapter-autocomplete-item" onclick="selectChapter(${ch.chapterId}, '${escapeHtml(ch.chapterTitle)}')">
+                <div class="ch-icon"><i class="bi bi-hash"></i></div>
+                <span>${escapeHtml(ch.chapterTitle)}</span>
+            </div>
+        `).join('');
+        dd.classList.add('show');
+    }
+
+    function hideAutocomplete() {
+        const dd = document.getElementById('chapterAutocomplete');
+        dd.classList.remove('show');
+        dd.innerHTML = '';
+    }
+
+    function selectChapter(chapterId, chapterTitle) {
+        const textarea = document.getElementById('annContent');
+        const text     = textarea.value;
+
+        if (currentHashQuery) {
+            // Replace the #partialInput with the full #ChapterTitle in the textarea
+            const before  = text.substring(0, currentHashQuery.wordStart);
+            const after   = text.substring(currentHashQuery.wordEnd);
+            textarea.value = before + '#' + chapterTitle + ' ' + after;
+            // Move cursor to end of inserted text
+            const newPos = currentHashQuery.wordStart + chapterTitle.length + 2;
+            textarea.setSelectionRange(newPos, newPos);
+            textarea.focus();
+        }
+
+        // Add to tagged list (no duplicates)
+        if (!taggedChapters.find(c => c.id === chapterId)) {
+            taggedChapters.push({ id: chapterId, title: chapterTitle });
+            renderTaggedPills();
+        }
+
+        currentHashQuery = null;
+        hideAutocomplete();
+    }
+
+    // Close autocomplete on click outside
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.content-wrap')) hideAutocomplete();
+    });
+
+    // Tagged chapter pills preview
+    function renderTaggedPills() {
+        const container = document.getElementById('taggedPreview');
+        container.innerHTML = taggedChapters.map((ch, idx) => `
+            <span class="tagged-chapter-pill">
+                <i class="bi bi-hash" style="font-size:0.7rem;"></i>${escapeHtml(ch.title)}
+                <button type="button" onclick="removeTaggedChapter(${idx})">&#x2715;</button>
+            </span>
+        `).join('');
+    }
+
+    function removeTaggedChapter(idx) {
+        taggedChapters.splice(idx, 1);
+        renderTaggedPills();
+    }
+
+    // Submit announcement
+    async function submitAnnouncement() {
+        const title   = document.getElementById('annTitle').value.trim();
+        const content = document.getElementById('annContent').value.trim();
+        const btn     = document.getElementById('annSubmitBtn');
+
+        if (!title)   { showToast('Please enter a title.',   'error'); return; }
+        if (!content) { showToast('Please enter the content.', 'error'); return; }
+
+        btn.disabled    = true;
+        btn.textContent = 'Posting…';
+
+        try {
+            const res = await fetch(`/your-courses/${COURSE_ID}/announcements`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title,
+                    content,
+                    taggedChapterIds: taggedChapters.map(c => c.id)
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Failed to post.', 'error'); return; }
+            closeComposeModal();
+            showToast('Announcement posted!', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (e) {
+            showToast('Request failed. Please try again.', 'error');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = 'Post Announcement';
+        }
+    }
+
+    // Delete modal
+    let pendingDeleteId = null;
+    const deleteOverlay = document.getElementById('deleteOverlay');
+
+    function openDeleteModal(btn) {
+        pendingDeleteId = btn.getAttribute('data-ann-id');
+        deleteOverlay.classList.add('show');
+    }
+
+    function closeDeleteModal() {
+        pendingDeleteId = null;
+        deleteOverlay.classList.remove('show');
+    }
+
+    deleteOverlay.addEventListener('click', e => {
+        if (e.target === deleteOverlay) closeDeleteModal();
+    });
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+        if (!pendingDeleteId) return;
+        const id = pendingDeleteId;
+        closeDeleteModal();
+        try {
+            const res  = await fetch(`/your-courses/${COURSE_ID}/announcements/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) { showToast(data.error || 'Could not delete.', 'error'); return; }
+            showToast('Announcement deleted.', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (e) { showToast('Request failed.', 'error'); }
+    });
+
+    // Toast
+    function showToast(msg, type) {
+        const t = document.getElementById('annToast');
+        t.textContent = msg;
+        t.className   = 'ann-toast ' + (type || '');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Utility
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+</script>
+</body>
+</html>

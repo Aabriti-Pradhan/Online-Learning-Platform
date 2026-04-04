@@ -371,8 +371,13 @@
                                 <div class="nav-subitems">
                                     <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                        class="nav-subitem"
-                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId + '/chapters')} ? ' active' : ''">
                                         <i class="bi bi-collection me-2"></i><span>Chapters</span>
+                                    </a>
+                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/announcements'}"
+                                       class="nav-subitem"
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId + '/announcements')} ? ' active' : ''">
+                                        <i class="bi bi-megaphone me-2"></i><span>Announcements</span>
                                     </a>
                                 </div>
                             </div>
@@ -455,8 +460,13 @@
                                 <div class="nav-subitems">
                                     <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                        class="nav-subitem"
-                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId)} ? ' active' : ''">
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId + '/chapters')} ? ' active' : ''">
                                         <i class="bi bi-collection me-2"></i><span>Chapters</span>
+                                    </a>
+                                    <a th:href="@{'/your-courses/' + ${course.courseId} + '/announcements'}"
+                                       class="nav-subitem"
+                                       th:classappend="${currentPath != null and currentPath.startsWith('/your-courses/' + course.courseId + '/announcements')} ? ' active' : ''">
+                                        <i class="bi bi-megaphone me-2"></i><span>Announcements</span>
                                     </a>
                                 </div>
                             </div>
