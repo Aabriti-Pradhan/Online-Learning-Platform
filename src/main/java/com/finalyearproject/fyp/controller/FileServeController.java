@@ -42,4 +42,19 @@ public class FileServeController {
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(file);
     }
+
+    @GetMapping("/files/profile-pics/{filename}")
+    public ResponseEntity<Resource> serveProfilePic(
+            @PathVariable String filename) throws Exception {
+
+        Resource file = storageService.load("profile-pics/" + filename);
+
+        String lower = filename.toLowerCase();
+        String contentType = lower.endsWith(".png") ? "image/png" : "image/jpeg";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(file);
+    }
 }

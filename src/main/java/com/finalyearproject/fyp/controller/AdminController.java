@@ -2,7 +2,9 @@ package com.finalyearproject.fyp.controller;
 
 import com.finalyearproject.fyp.dto.AdminCourseDTO;
 import com.finalyearproject.fyp.dto.AdminStatsDTO;
+import com.finalyearproject.fyp.entity.ContactMessage;
 import com.finalyearproject.fyp.entity.User;
+import com.finalyearproject.fyp.repository.ContactMessageRepository;
 import com.finalyearproject.fyp.service.AdminService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class AdminController {
 
     private final AdminService adminService;
+    private final ContactMessageRepository contactMessageRepository;
 
     // Dashboard (stats)
 
@@ -99,5 +102,37 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // Contact Messages
+
+    @GetMapping("/messages")
+    public String messages(Model model) {
+        List<ContactMessage> messages = contactMessageRepository.findAllByOrderBySentAtDesc();
+        long unreadCount = contactMessageRepository.countByIsReadFalse();
+        model.addAttribute("messages",    messages);
+        model.addAttribute("unreadCount", unreadCount);
+        model.addAttribute("currentPath", "/admin/messages");
+        return "admin/messages";
+    }
+
+    @PostMapping("/messages/{id}/read")
+    @ResponseBody
+    public ResponseEntity<?> markRead(@PathVariable Long id) {
+        return contactMessageRepository.findById(id).map(msg -> {
+            msg.setRead(true);
+            contactMessageRepository.save(msg);
+            return ResponseEntity.ok(Map.of("message", "Marked as read"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/messages/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteMessage(@PathVariable Long id) {
+        if (!contactMessageRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        contactMessageRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Message deleted"));
     }
 }

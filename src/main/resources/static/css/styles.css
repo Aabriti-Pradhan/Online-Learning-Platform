@@ -705,6 +705,7 @@ body {
 /* Footer */
 .page-footer {
     margin-top: var(--space-2xl);
+    margin-left: 320px; /* sidebar is fixed at left:30px, width:280px — push footer past it */
     border-top: 2px solid var(--color-border);
     display: flex;
     justify-content: space-between;

@@ -23,6 +23,8 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isActive = true;
 
+    private String profilePicture;
+
     @OneToMany(mappedBy = "user")
     private List<UserCourse> userCourses;
 

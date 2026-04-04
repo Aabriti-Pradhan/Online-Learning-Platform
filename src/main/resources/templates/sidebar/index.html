@@ -275,8 +275,13 @@
         <!-- ── Clickable user card ── -->
         <div class="sidebar-user-wrap">
             <button class="user-profile-btn" onclick="openProfileModal()" type="button">
-                <div class="avatar-circle" style="flex-shrink:0;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <div class="avatar-circle" style="flex-shrink:0;overflow:hidden;padding:0;">
+                    <img th:if="${loggedInUser != null and loggedInUser.profilePicture != null}"
+                         th:src="${loggedInUser.profilePicture}"
+                         alt="Profile"
+                         style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                    <svg th:if="${loggedInUser == null or loggedInUser.profilePicture == null}"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
@@ -336,6 +341,15 @@
                             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                         </svg>
                         <span>Courses</span>
+                    </a>
+
+                    <a href="/admin/messages" class="nav-item"
+                       th:classappend="${currentPath == '/admin/messages'} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <span>Messages</span>
                     </a>
                 </div>
 
@@ -539,6 +553,36 @@
             <p class="modal-subtitle"
                th:text="${loggedInUser != null} ? ${loggedInUser.email} : ''"></p>
 
+            <!-- Profile Picture -->
+            <div class="section-label">Profile picture</div>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+                <div id="avatarPreviewWrap" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #e5e7eb;flex-shrink:0;background:#f3f4f6;display:flex;align-items:center;justify-content:center;">
+                    <img th:if="${loggedInUser != null and loggedInUser.profilePicture != null}"
+                         th:src="${loggedInUser.profilePicture}"
+                         id="avatarPreviewImg"
+                         alt="Profile"
+                         style="width:100%;height:100%;object-fit:cover;">
+                    <svg th:if="${loggedInUser == null or loggedInUser.profilePicture == null}"
+                         id="avatarPreviewSvg"
+                         viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5"
+                         style="width:32px;height:32px;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <label for="profilePicInput"
+                           style="display:inline-block;padding:6px 14px;background:#f3f4f6;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;color:#374151;transition:background 0.15s;">
+                        <i class="bi bi-upload me-1"></i> Choose photo
+                    </label>
+                    <input type="file" id="profilePicInput" accept="image/*"
+                           style="display:none;" onchange="previewPic(this)">
+                    <div style="font-size:0.73rem;color:#9ca3af;margin-top:4px;">JPG, PNG · max 5 MB</div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
             <div class="section-label">Basic info</div>
             <div class="form-group">
                 <label for="profileUsername">Username</label>
@@ -620,6 +664,23 @@
             });
         });
 
+        /* ── Profile picture preview ────────────── */
+        function previewPic(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                showProfileToast('Image must be under 5 MB', 'error');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const wrap = document.getElementById('avatarPreviewWrap');
+                wrap.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+            };
+            reader.readAsDataURL(file);
+        }
+
         /* ── Profile modal ──────────────────────── */
         function openProfileModal() {
             document.getElementById('profileModalOverlay').classList.add('show');
@@ -629,9 +690,9 @@
         function closeProfileModal() {
             document.getElementById('profileModalOverlay').classList.remove('show');
             document.body.style.overflow = '';
-            // Clear password fields on close
             document.getElementById('profilePassword').value = '';
             document.getElementById('profileConfirmPassword').value = '';
+            document.getElementById('profilePicInput').value = '';
         }
 
         function handleOverlayClick(e) {
@@ -651,14 +712,14 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        /* ── Submit via fetch (no page reload) ──── */
+        /* ── Submit via fetch (multipart for picture) ── */
         async function submitProfile() {
             const username        = document.getElementById('profileUsername').value.trim();
             const password        = document.getElementById('profilePassword').value;
             const confirmPassword = document.getElementById('profileConfirmPassword').value;
+            const picInput        = document.getElementById('profilePicInput');
             const saveBtn         = document.getElementById('profileSaveBtn');
 
-            // Client-side validation
             if (password && password !== confirmPassword) {
                 showProfileToast('Passwords do not match', 'error');
                 return;
@@ -672,25 +733,34 @@
             saveBtn.textContent = 'Saving…';
 
             try {
-                const body = new URLSearchParams();
-                if (username)        body.append('username',        username);
-                if (password)        body.append('password',        password);
-                if (confirmPassword) body.append('confirmPassword', confirmPassword);
+                const formData = new FormData();
+                if (username)        formData.append('username',        username);
+                if (password)        formData.append('password',        password);
+                if (confirmPassword) formData.append('confirmPassword', confirmPassword);
+                if (picInput.files && picInput.files[0]) {
+                    formData.append('profilePicture', picInput.files[0]);
+                }
 
                 const res  = await fetch('/profile/update', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body:    body.toString()
+                    method: 'POST',
+                    body:   formData   // browser sets multipart/form-data automatically
                 });
                 const data = await res.json();
 
                 if (res.ok) {
                     closeProfileModal();
                     showProfileToast(data.message, 'success');
-                    // Update the displayed username in the sidebar without reload
+                    // Update displayed username without reload
                     if (username) {
                         const el = document.querySelector('.sidebar-user-wrap .username');
                         if (el) el.textContent = username;
+                    }
+                    // Update avatar in sidebar without reload
+                    if (data.profilePicture) {
+                        const avatarCircle = document.querySelector('.sidebar-user-wrap .avatar-circle');
+                        if (avatarCircle) {
+                            avatarCircle.innerHTML = '<img src="' + data.profilePicture + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+                        }
                     }
                 } else {
                     showProfileToast(data.message, 'error');

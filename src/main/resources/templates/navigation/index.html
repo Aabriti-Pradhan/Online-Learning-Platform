@@ -64,14 +64,20 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 0.95rem; flex-shrink: 0;
         }
-        .notif-icon.ENROLLMENT      { background: #ede9fe; color: #6c47ff; }
-        .notif-icon.NEW_CHAPTER     { background: #ccfbf1; color: #0d9488; }
-        .notif-icon.NEW_RESOURCE    { background: #fef3c7; color: #d97706; }
-        .notif-icon.NEW_TEST        { background: #dbeafe; color: #2563eb; }
-        .notif-icon.FRIEND_REQUEST  { background: #ffe4e6; color: #e11d48; }
-        .notif-icon.FRIEND_ACCEPTED { background: #dcfce7; color: #16a34a; }
-        .notif-icon.TEST_SUBMITTED  { background: #f3f4f6; color: #374151; }
-        .notif-icon.TEST_SHARED      { background: #e0f2fe; color: #0284c7; }
+        .notif-icon.ENROLLMENT         { background: #ede9fe; color: #6c47ff; }
+        .notif-icon.NEW_CHAPTER        { background: #ccfbf1; color: #0d9488; }
+        .notif-icon.NEW_RESOURCE       { background: #fef3c7; color: #d97706; }
+        .notif-icon.NEW_TEST           { background: #dbeafe; color: #2563eb; }
+        .notif-icon.FRIEND_REQUEST     { background: #ffe4e6; color: #e11d48; }
+        .notif-icon.FRIEND_ACCEPTED    { background: #dcfce7; color: #16a34a; }
+        .notif-icon.TEST_SUBMITTED     { background: #f3f4f6; color: #374151; }
+        .notif-icon.TEST_SHARED        { background: #e0f2fe; color: #0284c7; }
+        .notif-icon.CONTACT_MESSAGE    { background: #ede9fe; color: #7c3aed; }
+        /* Discussion notification icon colours */
+        .notif-icon.DISCUSSION_MENTION { background: #ede9fe; color: #6c47ff; }
+        .notif-icon.DISCUSSION_REPLY   { background: #d1fae5; color: #065f46; }
+        .notif-icon.COURSE_TAGGED      { background: #fef3c7; color: #d97706; }
+        .notif-icon.ANNOUNCEMENT       { background: #fce7f3; color: #9d174d; }
 
         .notif-content { flex: 1; min-width: 0; }
         .notif-title   { font-size: 0.82rem; font-weight: 700; color: var(--color-text-primary);
@@ -162,12 +168,12 @@
         updateDateTime();
         setInterval(updateDateTime, 1000);
 
-        // ── Motivation widget ──────────────────────────────────────────────
+        // Motivation widget
         function pollMotivation() {
             fetch('/prediction/motivation')
                 .then(r => r.ok ? r.json() : null)
                 .then(data => {
-                    if (!data || data.overallPct === 0) return; // no data yet, keep clock
+                    if (!data || data.overallPct === 0) return;
                     const container = document.getElementById('motivationContent');
                     const trendIcon = data.trend === 'UP' ? '<i class="bi bi-caret-up-fill"></i>' : data.trend === 'DOWN' ? '<i class="bi bi-caret-down-fill"></i>' : '<i class="bi bi-arrow-right"></i>';
                     const trendClass = data.trend === 'UP' ? 'motiv-trend-up' : data.trend === 'DOWN' ? 'motiv-trend-down' : 'motiv-trend-stable';
@@ -179,30 +185,34 @@
                             <div class="motiv-msg">${data.message}</div>
                         </div>`;
                 })
-                .catch(() => {}); // silently fail — keep showing clock
+                .catch(() => {});
         }
 
-        // Poll motivation every 5 minutes, first call after 2 seconds
         setTimeout(pollMotivation, 2000);
         setInterval(pollMotivation, 300000);
 
         //  Notification icons by type
         const TYPE_ICONS = {
-            ENROLLMENT:      'bi-person-plus',
-            NEW_CHAPTER:     'bi-collection',
-            NEW_RESOURCE:    'bi-file-earmark-pdf',
-            NEW_TEST:        'bi-patch-question',
-            FRIEND_REQUEST:  'bi-person-heart',
-            FRIEND_ACCEPTED: 'bi-people',
-            TEST_SUBMITTED:  'bi-check-circle',
-            TEST_SHARED:     'bi-share'
+            ENROLLMENT:         'bi-person-plus',
+            NEW_CHAPTER:        'bi-collection',
+            NEW_RESOURCE:       'bi-file-earmark-pdf',
+            NEW_TEST:           'bi-patch-question',
+            FRIEND_REQUEST:     'bi-person-heart',
+            FRIEND_ACCEPTED:    'bi-people',
+            TEST_SUBMITTED:     'bi-check-circle',
+            TEST_SHARED:        'bi-share',
+            CONTACT_MESSAGE:    'bi-envelope',
+            DISCUSSION_MENTION: 'bi-at',
+            DISCUSSION_REPLY:   'bi-reply',
+            COURSE_TAGGED:      'bi-megaphone',
+            ANNOUNCEMENT:       'bi-megaphone'
         };
 
         //  Relative time
         function relativeTime(isoString) {
             const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
-            if (diff < 60)   return 'Just now';
-            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 60)    return 'Just now';
+            if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
             if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
             return Math.floor(diff / 86400) + 'd ago';
         }
@@ -245,7 +255,7 @@
                     }
                     renderNotifications(data.notifications);
                 })
-                .catch(() => {}); // silently fail if not logged in
+                .catch(() => {});
         }
 
         pollNotifications();
@@ -264,26 +274,60 @@
             }
         });
 
-        //  Handle click on a notification
+        //  Handle click on a notification — routes to the right page based on type
         function handleNotifClick(notifId, type, referenceId) {
-            // Mark as read
+            // Mark as read first
             fetch(`/notifications/${notifId}/read`, { method: 'POST' })
                 .then(() => pollNotifications());
 
-            // Navigate based on type
-            // referenceId meanings:
-            // ENROLLMENT, NEW_CHAPTER, NEW_RESOURCE, NEW_TEST → courseId or chapterId
-            // FRIEND_REQUEST, FRIEND_ACCEPTED                 → userId
-            // TEST_SUBMITTED                                  → testId
+            document.getElementById('notifDropdown').classList.remove('open');
+
+            // Route by notification type
             if (type === 'FRIEND_REQUEST' || type === 'FRIEND_ACCEPTED') {
                 window.location.href = '/friends';
+
             } else if (type === 'TEST_SHARED') {
                 window.location.href = '/shared-tests';
+
+            } else if (type === 'CONTACT_MESSAGE') {
+                window.location.href = '/admin/messages';
+
+            } else if (type === 'DISCUSSION_MENTION' || type === 'DISCUSSION_REPLY') {
+                // referenceId = the ROOT thread's postId (set by DiscussionServiceImpl)
+                // Deep-link straight to that thread page
+                if (referenceId) {
+                    window.location.href = '/discussion/' + referenceId;
+                } else {
+                    window.location.href = '/discussion';
+                }
+
+            } else if (type === 'COURSE_TAGGED') {
+                // referenceId = the postId of the post that tagged the course
+                // The teacher is taken directly to that specific thread
+                if (referenceId) {
+                    window.location.href = '/discussion/' + referenceId;
+                } else {
+                    window.location.href = '/discussion';
+                }
+
+            } else if (type === 'ANNOUNCEMENT') {
+                // referenceId = announcementId
+                // The server-side redirect endpoint looks up the courseId and sends
+                // the user to /your-courses/{courseId}/announcements
+                if (referenceId) {
+                    window.location.href = '/announcement/' + referenceId + '/redirect';
+                } else {
+                    window.location.href = '/your-courses';
+                }
+
             } else if (referenceId) {
+                // All other types (ENROLLMENT, NEW_CHAPTER, NEW_RESOURCE, NEW_TEST, TEST_SUBMITTED)
+                // referenceId = courseId → go to that course's chapters page
+                window.location.href = '/your-courses/' + referenceId + '/chapters';
+
+            } else {
                 window.location.href = '/your-courses';
             }
-
-            document.getElementById('notifDropdown').classList.remove('open');
         }
 
         //  Mark all as read

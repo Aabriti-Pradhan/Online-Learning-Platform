@@ -6,6 +6,11 @@ import com.finalyearproject.fyp.dao.UserDAO;
 import com.finalyearproject.fyp.service.UserService;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -72,7 +77,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateProfile(String email, String newUsername, String newPassword) {
+    public User updateProfile(String email, String newUsername, String newPassword, MultipartFile profilePicture) {
         User user = userDao.findByEmail(email);
         if (user == null) {
             throw new RuntimeException("User not found");
@@ -82,6 +87,23 @@ public class UserServiceImpl implements UserService {
         }
         if (newPassword != null && !newPassword.isBlank()) {
             user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        }
+        if (profilePicture != null && !profilePicture.isEmpty()) {
+            try {
+                String ext = "";
+                String original = profilePicture.getOriginalFilename();
+                if (original != null && original.contains(".")) {
+                    ext = original.substring(original.lastIndexOf("."));
+                }
+                String filename = "user_" + user.getUserId() + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
+                Path dir = Paths.get("uploads", "profile-pics");
+                Files.createDirectories(dir);
+                Path dest = dir.resolve(filename);
+                Files.copy(profilePicture.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
+                user.setProfilePicture("/files/profile-pics/" + filename);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save profile picture: " + e.getMessage());
+            }
         }
         return userDao.save(user);
     }

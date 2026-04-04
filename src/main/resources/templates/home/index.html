@@ -486,15 +486,15 @@
                     <h5 style="font-weight:800;margin-bottom:1.5rem;">Send us a message</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <input class="contact-input" type="text" placeholder="Your Name">
+                            <input class="contact-input" id="contactName" type="text" placeholder="Your Name">
                         </div>
                         <div class="col-md-6">
-                            <input class="contact-input" type="email" placeholder="Your Email">
+                            <input class="contact-input" id="contactEmail" type="email" placeholder="Your Email">
                         </div>
                     </div>
-                    <input class="contact-input" type="text" placeholder="Phone (optional)" style="width:100%;">
-                    <textarea class="contact-input" rows="4" placeholder="Your message..." style="width:100%;resize:vertical;"></textarea>
-                    <button class="btn-contact">Send Message <i class="bi bi-send ms-2"></i></button>
+                    <input class="contact-input" id="contactPhone" type="text" placeholder="Phone (optional)" style="width:100%;">
+                    <div id="contactSuccess" style="display:none;background:#dcfce7;color:#166534;padding:0.85rem 1rem;border-radius:8px;font-weight:600;font-size:0.9rem;margin-bottom:1rem;"><i class="bi bi-check-circle me-2"></i>Your message was sent successfully!</div><div id="contactError" style="display:none;background:#fee2e2;color:#991b1b;padding:0.85rem 1rem;border-radius:8px;font-weight:600;font-size:0.9rem;margin-bottom:1rem;"></div><textarea class="contact-input" id="contactMessage" rows="4" placeholder="Your message..." style="width:100%;resize:vertical;"></textarea>
+                    <button class="btn-contact" id="contactBtn" onclick="sendContactMessage()">Send Message <i class="bi bi-send ms-2"></i></button>
                 </div>
             </div>
         </div>
@@ -580,6 +580,57 @@
     track.addEventListener('mouseenter', stopAuto);
     track.addEventListener('mouseleave', startAuto);
     window.addEventListener('resize', () => goTo(current));
+</script>
+
+<script>
+    async function sendContactMessage() {
+        const name    = document.getElementById('contactName').value.trim();
+        const email   = document.getElementById('contactEmail').value.trim();
+        const phone   = document.getElementById('contactPhone').value.trim();
+        const message = document.getElementById('contactMessage').value.trim();
+        const btn     = document.getElementById('contactBtn');
+        const success = document.getElementById('contactSuccess');
+        const error   = document.getElementById('contactError');
+
+        success.style.display = 'none';
+        error.style.display   = 'none';
+
+        if (!name)    { error.textContent = 'Please enter your name.';    error.style.display = 'block'; return; }
+        if (!email)   { error.textContent = 'Please enter your email.';   error.style.display = 'block'; return; }
+        if (!message) { error.textContent = 'Please enter your message.'; error.style.display = 'block'; return; }
+
+        btn.disabled    = true;
+        btn.textContent = 'Sending\u2026';
+
+        try {
+            const body = new URLSearchParams({ name, email, message });
+            if (phone) body.append('phone', phone);
+
+            const res  = await fetch('/contact/send', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body:    body.toString()
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                success.style.display = 'block';
+                document.getElementById('contactName').value    = '';
+                document.getElementById('contactEmail').value   = '';
+                document.getElementById('contactPhone').value   = '';
+                document.getElementById('contactMessage').value = '';
+            } else {
+                error.textContent   = data.message || 'Something went wrong.';
+                error.style.display = 'block';
+            }
+        } catch (e) {
+            error.textContent   = 'Request failed. Please try again.';
+            error.style.display = 'block';
+        } finally {
+            btn.disabled    = false;
+            btn.innerHTML   = 'Send Message <i class="bi bi-send ms-2"></i>';
+        }
+    }
 </script>
 </body>
 </html>

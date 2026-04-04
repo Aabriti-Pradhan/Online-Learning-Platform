@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -20,6 +21,7 @@ public class ProfileController {
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String password,
             @RequestParam(required = false) String confirmPassword,
+            @RequestParam(required = false) MultipartFile profilePicture,
             Authentication authentication) {
 
         String email = YourCoursesController.extractEmail(authentication);
@@ -37,8 +39,11 @@ public class ProfileController {
         }
 
         try {
-            userService.updateProfile(email, username, password);
-            return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
+            var updated = userService.updateProfile(email, username, password, profilePicture);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Profile updated successfully",
+                    "profilePicture", updated.getProfilePicture() != null ? updated.getProfilePicture() : ""
+            ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }

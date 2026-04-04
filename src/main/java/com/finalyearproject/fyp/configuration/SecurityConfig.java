@@ -41,7 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/login", "/register", "/select-role", "/repository",
                                 "/css/**", "/js/**", "/images/**", "/files/**",
-                                "/discussion", "/discussion/**"
+                                "/discussion", "/discussion/**",
+                                "/contact/send"
                         ).permitAll()
                         // Admin-only routes
                         .requestMatchers("/admin/**").hasRole("ADMIN")

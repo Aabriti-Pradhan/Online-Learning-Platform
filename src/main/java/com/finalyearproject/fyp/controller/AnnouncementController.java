@@ -2,8 +2,8 @@ package com.finalyearproject.fyp.controller;
 
 import com.finalyearproject.fyp.dto.AnnouncementDTO;
 import com.finalyearproject.fyp.dto.CreateAnnouncementRequest;
-import com.finalyearproject.fyp.entity.Chapter;
 import com.finalyearproject.fyp.entity.Course;
+import com.finalyearproject.fyp.repository.AnnouncementRepository;
 import com.finalyearproject.fyp.repository.ChapterRepository;
 import com.finalyearproject.fyp.repository.CourseRepository;
 import com.finalyearproject.fyp.service.AnnouncementService;
@@ -22,9 +22,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnnouncementController {
 
-    private final AnnouncementService announcementService;
-    private final CourseRepository    courseRepository;
-    private final ChapterRepository   chapterRepository;
+    private final AnnouncementService    announcementService;
+    private final CourseRepository       courseRepository;
+    private final ChapterRepository      chapterRepository;
+    private final AnnouncementRepository announcementRepository;
 
     // Announcements page for a course
 
@@ -39,7 +40,7 @@ public class AnnouncementController {
 
         // Only pass chapterId + chapterTitle to the view.
         // Passing full Chapter entities causes a Jackson LocalDateTime serialization
-        // error when Thymeleaf inlines them into JavaScript via /*[[${chapters}]]*/.
+        // error when Thymeleaf inlines them into JavaScript via /*[[${chapterData}]]*/.
         List<Map<String, Object>> chapterData = chapterRepository
                 .findByCourseOrderByChapterOrderAsc(course)
                 .stream()
@@ -53,10 +54,21 @@ public class AnnouncementController {
 
         model.addAttribute("course",        course);
         model.addAttribute("announcements", announcements);
-        model.addAttribute("chapterData",   chapterData);   // safe for JS inlining
+        model.addAttribute("chapterData",   chapterData);
         model.addAttribute("teacherEmail",  email);
         model.addAttribute("currentPath",   request.getRequestURI());
         return "announcements/index";
+    }
+
+    // Notification deep-link redirect
+    // When a student clicks an ANNOUNCEMENT notification, referenceId = announcementId.
+    // This endpoint looks up the course and redirects to the right announcements page.
+
+    @GetMapping("/announcement/{announcementId}/redirect")
+    public String announcementRedirect(@PathVariable Long announcementId) {
+        return announcementRepository.findById(announcementId)
+                .map(a -> "redirect:/your-courses/" + a.getCourse().getCourseId() + "/announcements")
+                .orElse("redirect:/your-courses");
     }
 
     // Create announcement (teacher only)
