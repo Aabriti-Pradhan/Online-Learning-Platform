@@ -3,6 +3,7 @@ package com.finalyearproject.fyp.configuration;
 import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.service.UserService;
 import com.finalyearproject.fyp.service.serviceImpl.CustomOidcUserService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,14 +53,31 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
                             String email = oauthUser.getAttribute("email");
+
                             User existing = userService.findByEmail(email);
 
                             if (existing == null) {
-                                response.sendRedirect("/select-role");
-                            } else if ("ADMIN".equals(existing.getRole())) {
+
+                                HttpSession session = request.getSession();
+                                String role = (String) session.getAttribute("selectedRole");
+
+                                if (role == null) {
+                                    response.sendRedirect("/select-role");
+                                    return;
+                                }
+
+                                String name = oauthUser.getAttribute("name");
+                                userService.registerOAuthUser(email, name, role);
+
+                                session.removeAttribute("selectedRole");
+
+                                response.sendRedirect("/login");
+                                return;
+                            }
+
+                            // Existing user
+                            if ("ADMIN".equals(existing.getRole())) {
                                 response.sendRedirect("/admin");
-                            } else if ("TEACHER".equals(existing.getRole())) {
-                                response.sendRedirect("/your-courses");
                             } else {
                                 response.sendRedirect("/your-courses");
                             }

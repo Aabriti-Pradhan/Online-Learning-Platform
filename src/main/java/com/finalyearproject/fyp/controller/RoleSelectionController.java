@@ -30,8 +30,14 @@ public class RoleSelectionController {
                              Authentication authentication,
                              HttpSession session) {
 
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
+        System.out.println("SETTING ROLE: " + role);
+        System.out.println("SESSION ID (select-role): " + session.getId());
+
+        System.out.println("AUTH: " + authentication);
+        System.out.println("PRINCIPAL TYPE: " +
+                (authentication != null ? authentication.getPrincipal().getClass() : "null"));
+
+        if (authentication == null || authentication.getPrincipal() instanceof String) {
             session.setAttribute("selectedRole", role);
             return "redirect:/register";
         }
@@ -39,8 +45,13 @@ public class RoleSelectionController {
         String email = null;
         String name  = null;
 
-        if (authentication.getPrincipal() instanceof OidcUser u)  { email = u.getEmail(); name = u.getFullName(); }
-        else if (authentication.getPrincipal() instanceof OAuth2User u) { email = u.getAttribute("email"); name = u.getAttribute("name"); }
+        if (authentication.getPrincipal() instanceof OidcUser u) {
+            email = u.getEmail();
+            name  = u.getFullName();
+        } else if (authentication.getPrincipal() instanceof OAuth2User u) {
+            email = u.getAttribute("email");
+            name  = u.getAttribute("name");
+        }
 
         if (email != null) {
             userService.registerOAuthUser(email, name, role);

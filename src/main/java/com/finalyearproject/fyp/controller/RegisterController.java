@@ -22,6 +22,9 @@ public class RegisterController {
 
     @GetMapping("/register")
     public String registerPage(HttpSession session, Model model) {
+        System.out.println("SESSION ID (register): " + session.getId());
+        System.out.println("ROLE IN SESSION: " + session.getAttribute("selectedRole"));
+
         if (session.getAttribute("selectedRole") == null) {
             return "redirect:/select-role";
         }
@@ -37,6 +40,7 @@ public class RegisterController {
             HttpSession session,
             Model model) {
         try {
+            System.out.println("ROLE FROM DTO: " + dto.role());
             if (result.hasErrors()) {
                 model.addAttribute("error", "Please correct the errors in the form");
                 return "register/index";
