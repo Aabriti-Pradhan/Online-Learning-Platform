@@ -32,6 +32,10 @@ public interface UserCourseTestQuestionAttemptRepository
     @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.course = :course")
     List<UserCourseTestQuestionAttempt> findByCourse(@Param("course") Course course);
 
+    // Used by unenroll — scoped to one student in one course
+    @Query("SELECT ucta FROM UserCourseTestQuestionAttempt ucta WHERE ucta.course = :course AND ucta.user = :user")
+    List<UserCourseTestQuestionAttempt> findByCourseAndUser(@Param("course") Course course, @Param("user") User user);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM UserCourseTestQuestionAttempt ucta WHERE ucta.course = :course")

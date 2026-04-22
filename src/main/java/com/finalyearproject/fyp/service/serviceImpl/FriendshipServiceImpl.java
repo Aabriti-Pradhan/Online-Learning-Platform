@@ -131,7 +131,6 @@ public class FriendshipServiceImpl implements FriendshipService {
     public void declineRequest(Long friendshipId, String addresseeEmail) {
         Friendship f  = getFriendshipById(friendshipId);
         User       me = getByEmail(addresseeEmail);
-
         if (!f.getAddressee().getUserId().equals(me.getUserId())) {
             throw new SecurityException("Only the addressee can decline this request");
         }

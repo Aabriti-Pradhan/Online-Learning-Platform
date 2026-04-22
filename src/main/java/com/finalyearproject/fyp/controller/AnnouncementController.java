@@ -38,9 +38,6 @@ public class AnnouncementController {
         Course               course        = getCourse(courseId);
         List<AnnouncementDTO> announcements = announcementService.getAnnouncementsForCourse(courseId);
 
-        // Only pass chapterId + chapterTitle to the view.
-        // Passing full Chapter entities causes a Jackson LocalDateTime serialization
-        // error when Thymeleaf inlines them into JavaScript via /*[[${chapterData}]]*/.
         List<Map<String, Object>> chapterData = chapterRepository
                 .findByCourseOrderByChapterOrderAsc(course)
                 .stream()
@@ -60,9 +57,6 @@ public class AnnouncementController {
         return "announcements/index";
     }
 
-    // Notification deep-link redirect
-    // When a student clicks an ANNOUNCEMENT notification, referenceId = announcementId.
-    // This endpoint looks up the course and redirects to the right announcements page.
 
     @GetMapping("/announcement/{announcementId}/redirect")
     public String announcementRedirect(@PathVariable Long announcementId) {

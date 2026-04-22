@@ -18,7 +18,7 @@ public record AnnouncementDTO(
         List<ContentSegment> renderedSegments
 ) {
     // A segment of the announcement content
-    // If chapterId is null → plain text; if not null → clickable chapter link
+    // If chapterId is null -> plain text; if not null -> clickable chapter link
     public record ContentSegment(
             String text,
             Long   chapterId,   // null for plain text

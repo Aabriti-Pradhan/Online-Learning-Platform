@@ -3,6 +3,7 @@ package com.finalyearproject.fyp.controller;
 import com.finalyearproject.fyp.dto.LoginDTO;
 import com.finalyearproject.fyp.entity.User;
 import com.finalyearproject.fyp.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +27,19 @@ public class LoginController {
     }
 
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(Model model, HttpSession session, Authentication authentication) {
+        System.out.println("SESSION ID (select-role GET): " + session.getId());
+        System.out.println("ROLE IN SESSION: " + session.getAttribute("selectedRole"));
+        System.out.println("AUTH OBJECT: " + authentication);
+
+        if (authentication != null) {
+            System.out.println("AUTH CLASS: " + authentication.getClass());
+            System.out.println("PRINCIPAL: " + authentication.getPrincipal());
+            System.out.println("IS AUTHENTICATED: " + authentication.isAuthenticated());
+        } else {
+            System.out.println("AUTH IS NULL");
+        }
+
         model.addAttribute("page", "login");
         model.addAttribute("loginDTO", new LoginDTO("",""));
         return "login/index";

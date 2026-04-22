@@ -244,6 +244,10 @@
         }
         .btn-profile-cancel:hover { background: #e5e7eb; }
 
+        .profile-card {
+            padding: 3rem 3rem 0 3rem;
+        }
+
         /* Sidebar-scoped toast (sits at bottom of viewport) */
         .profile-toast {
             position: fixed;
@@ -268,12 +272,21 @@
         }
         .profile-toast.success { background: #166534; }
         .profile-toast.error   { background: #991b1b; }
+
+        .course-name {
+            display: block;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 
     <div class="sidebar-trial">
 
         <!-- ── Clickable user card ── -->
-        <div class="sidebar-user-wrap">
+        <div sec:authorize="isAuthenticated()">
+            <div class="sidebar-user-wrap">
             <button class="user-profile-btn" onclick="openProfileModal()" type="button">
                 <div class="avatar-circle" style="flex-shrink:0;overflow:hidden;padding:0;">
                     <img th:if="${loggedInUser != null and loggedInUser.profilePicture != null}"
@@ -303,6 +316,22 @@
                          th:text="${loggedInUser.email}"></div>
                 </div>
             </button>
+        </div>
+        </div>
+
+        <div sec:authorize="!isAuthenticated()" class="profile-card text-center">
+            <div class="profile-avatar">
+                <i class="bi bi-person-circle" style="font-size:2rem;"></i>
+            </div>
+            <div class="profile-info">
+                <div style="font-weight:700;"><b>WELCOME</b></div>
+                <div style="font-size:0.85rem; color:#9ca3af;">
+                    Login to access your courses, notes, and progress.
+                </div>
+            </div>
+            <a href="/login" class="btn btn-dark mt-2 w-100" style="font-size:0.85rem;">
+                Login
+            </a>
         </div>
 
         <div class="sidebar-nav-wrap">
@@ -379,7 +408,7 @@
                                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                                     </svg>
-                                    <span th:text="${course.courseName}">Course</span>
+                                    <span class="course-name" th:text="${course.courseName}">Course</span>
                                     <i class="bi bi-chevron-down nav-chevron"></i>
                                 </button>
                                 <div class="nav-subitems">
@@ -430,6 +459,33 @@
                     </a>
                 </div>
 
+                <!-- ════════════ GUEST NAV (NO ROLE / NOT LOGGED IN) ════════════ -->
+                <div class="nav-section"
+                     sec:authorize="!isAuthenticated()">
+
+                    <div class="nav-label">Explore</div>
+
+                    <a href="/repository" class="nav-item"
+                       th:classappend="${currentPath == '/repository'} ? ' active' : ''">
+                        <i class="bi bi-search"></i>
+                        <span>Browse Courses</span>
+                    </a>
+
+                    <a href="/coming-soon" class="nav-item"
+                       th:classappend="${currentPath == '/coming-soon'} ? ' active' : ''">
+                        <i class="bi bi-journal-bookmark"></i>
+                        <span>Online Library</span>
+                    </a>
+
+                    <a href="/discussion" class="nav-item"
+                       th:classappend="${currentPath == '/discussion' or (currentPath != null and currentPath.startsWith('/discussion/'))} ? ' active' : ''">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Discussion</span>
+                    </a>
+                </div>
+
                 <!-- ════════════ STUDENT NAV ════════════ -->
                 <div class="nav-section" sec:authorize="hasRole('STUDENT')">
 
@@ -468,7 +524,7 @@
                                         <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
                                         <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                                     </svg>
-                                    <span th:text="${course.courseName}">Course</span>
+                                    <span class="course-name" th:text="${course.courseName}">Course</span>
                                     <i class="bi bi-chevron-down nav-chevron"></i>
                                 </button>
                                 <div class="nav-subitems">

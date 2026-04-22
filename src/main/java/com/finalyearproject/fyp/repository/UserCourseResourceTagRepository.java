@@ -27,4 +27,10 @@ public interface UserCourseResourceTagRepository
     @Transactional
     @Query("DELETE FROM UserCourseResourceTag t WHERE t.resource.resourceId IN :resourceIds")
     void deleteByResourceIds(@Param("resourceIds") Set<Long> resourceIds);
+
+    // Used by unenroll — only deletes tags belonging to the specific student
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM UserCourseResourceTag t WHERE t.resource.resourceId IN :resourceIds AND t.userId = :userId")
+    void deleteByResourceIdsAndUser(@Param("resourceIds") Set<Long> resourceIds, @Param("userId") Long userId);
 }

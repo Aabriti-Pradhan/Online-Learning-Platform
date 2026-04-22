@@ -67,22 +67,13 @@
             position: relative;
             overflow: hidden;
         }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            background: white; border: 1px solid #e5e7eb;
-            border-radius: 50px; padding: 0.4rem 1.1rem;
-            font-size: 0.82rem; font-weight: 600; color: #4a7c59;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .hero-badge span { width: 8px; height: 8px; background: #4a7c59; border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
 
         .hero-title {
             font-size: clamp(2.8rem, 6vw, 5.5rem);
             font-weight: 900; line-height: 1.1;
             color: #1a1a1a; margin-bottom: 1.5rem;
             font-family: 'Gabarito', sans-serif;
+            margin-top: 60px;
         }
         .hero-title em { font-style: italic; color: #4a7c59; }
         .hero-subtitle {
@@ -139,6 +130,12 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 1.4rem; margin-bottom: 1.1rem;
         }
+
+        .feature-icon i {
+            font-size: 1.4rem;
+            color: #4a7c59;
+        }
+
         .feature-icon.green  { background: #d1fae5; color: #065f46; }
         .feature-icon.purple { background: #ede9fe; color: #6c47ff; }
         .feature-icon.pink   { background: #fce7f3; color: #9d174d; }
@@ -246,6 +243,47 @@
         }
         .btn-cta:hover { background: #f0fdf4; color: #1a1a1a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
 
+        /* FEATURES */
+        .features {
+            padding: 4rem 2rem;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .features h2 {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-weight: 800;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .feature {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 14px;
+            border: 1px solid #eee;
+        }
+
+        .feature i {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #4a7c59;
+        }
+
+        .feature h5 {
+            font-weight: 700;
+        }
+
+        .feature p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
         /* Contact */
         .contact-card {
             background: white; border-radius: 24px; padding: 2.5rem;
@@ -298,27 +336,24 @@
         <a href="#about">About</a>
         <a href="#services">Services</a>
         <a href="#contact">Contact</a>
-        <a href="/repository">Repository</a>
+        <a href="/repository">Courses</a>
     </div>
     <a class="btn-get-started" href="/login">Get Started</a>
 </nav>
 
 <!-- ══════════ HERO ══════════ -->
 <section class="hero" id="hero">
-    <div class="hero-badge">
-        <span></span> Your all-in-one study platform is here
-    </div>
+    <span></span>
     <h1 class="hero-title">
-        Hunt ideas,<br>
-        <em>embrace challenges,</em><br>
-        grow with every lesson.
+        Learn better,<br>
+        <em>stay consistent,</em><br>
+        improve every day.
     </h1>
     <p class="hero-subtitle">
-        PrepHunt brings your notes, tests, resources, and progress into one focused place. Study smarter, collaborate better, and actually track your growth.
-    </p>
+        PrepHunt brings your courses, materials, and tests into one place. No switching tabs, no messy notes — just a clear way to study, track your progress, and stay consistent.    </p>
     <div class="hero-actions">
-        <a href="/login" class="btn-hero-primary"><i class="bi bi-rocket-takeoff me-2"></i>Get Started Free</a>
-        <a href="/repository" class="btn-hero-secondary"><i class="bi bi-search me-2"></i>Browse Courses</a>
+        <a href="/login" class="btn-hero-primary"><i class="bi bi-rocket-takeoff me-2"></i>Start Studying</a>
+        <a href="/repository" class="btn-hero-secondary"><i class="bi bi-search me-2"></i>Explore Courses</a>
     </div>
 
     <!-- Stats strip -->
@@ -340,7 +375,7 @@
 
 <!-- ══════════ SCROLLING TICKER ══════════ -->
 <div class="banner-section">
-    <h2 class="banner-title">Everything you need to <em>study smarter</em></h2>
+    <h2 class="banner-title">Tools that actually help you <em>study</em></h2>
     <div class="ticker-wrap">
         <div class="ticker">
             <!-- Items duplicated so the loop is seamless -->
@@ -385,10 +420,9 @@
             </div>
             <div>
                 <div class="section-tag">About PrepHunt</div>
-                <h2 class="section-title">Your all-in-one study hub</h2>
+                <h2 class="section-title">Everything in one place, finally</h2>
                 <p class="section-sub">
-                    PrepHunt consolidates scattered study materials into one unified platform — so you can focus on learning, not searching.
-                </p>
+                    Studying shouldn’t feel scattered. PrepHunt keeps your materials, tests, and progress organised so you can focus on actually understanding things.                </p>
                 <ul class="about-checklist">
                     <li><i class="bi bi-check-circle-fill"></i> Access course materials in a structured, organised way</li>
                     <li><i class="bi bi-check-circle-fill"></i> Take notes while your resources stay open side-by-side</li>
@@ -409,49 +443,58 @@
     <div style="max-width:1200px; margin:0 auto;">
         <div class="text-center mb-5">
             <div class="section-tag">Our Services</div>
-            <h2 class="section-title">Everything you need to ace your exams</h2>
-            <p class="section-sub mx-auto">Six powerful tools, one focused platform — designed around how students actually study.</p>
+            <h2 class="section-title">Simple tools that actually help</h2>
+            <p class="section-sub mx-auto">Built around how students actually study.</p>
         </div>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-icon green"><i class="bi bi-pencil-square"></i></div>
-                <div class="feature-title">Smart Note-Taking</div>
-                <div class="feature-desc">Jot down notes while your study material stays open side-by-side. Tag topics as you write and jump back exactly when revising.</div>
+        <section class="features">
+            <div class="feature-grid">
+
+                <div class="feature">
+                    <i class="bi bi-pencil-square"></i>
+                    <h5>Take Notes</h5>
+                    <p>Write notes while reading your materials without switching tabs.</p>
+                </div>
+
+                <div class="feature">
+                    <i class="bi bi-cloud-upload"></i>
+                    <h5>Upload Resources</h5>
+                    <p>Keep your PDFs and study files organised inside your courses.</p>
+                </div>
+
+                <div class="feature">
+                    <i class="bi bi-robot"></i>
+                    <h5>AI Tests</h5>
+                    <p>Generate quizzes instantly or take tests created by teachers.</p>
+                </div>
+
+                <div class="feature">
+                    <i class="bi bi-graph-up"></i>
+                    <h5>Track Progress</h5>
+                    <p>See how you're improving and where you need to focus more.</p>
+                </div>
+
+                <div class="feature">
+                    <i class="bi bi-people"></i>
+                    <h5>Collaborate</h5>
+                    <p>Connect with others, share tests, and learn together.</p>
+                </div>
+
+                <div class="feature">
+                    <i class="bi bi-megaphone"></i>
+                    <h5>Announcements</h5>
+                    <p>Stay updated with important course updates from teachers.</p>
+                </div>
+
             </div>
-            <div class="feature-card">
-                <div class="feature-icon purple"><i class="bi bi-cloud-arrow-up"></i></div>
-                <div class="feature-title">Upload Resources</div>
-                <div class="feature-desc">Drop in anything - PDFs, notes, whatever. All your study materials in one organised place, structured by course and chapter.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon pink"><i class="bi bi-robot"></i></div>
-                <div class="feature-title">AI-Powered Tests</div>
-                <div class="feature-desc">Generate quizzes instantly from your course content using AI, or take tests created by your teachers. Challenge yourself and the squad.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon blue"><i class="bi bi-graph-up-arrow"></i></div>
-                <div class="feature-title">Progress Tracking</div>
-                <div class="feature-desc">Track your performance and see your goals getting closer every day. Visual dashboards for students and teachers alike.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon amber"><i class="bi bi-people"></i></div>
-                <div class="feature-title">Collaboration</div>
-                <div class="feature-desc">Connect with friends, share tests, and discuss topics on community boards. Learning is better as a team.</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon rose"><i class="bi bi-megaphone"></i></div>
-                <div class="feature-title">Announcements</div>
-                <div class="feature-desc">Teachers can post course announcements with clickable chapter links. Students get notified instantly and can jump straight to the relevant section.</div>
-            </div>
-        </div>
+        </section>
     </div>
 </section>
 
 <!-- ══════════ CTA BANNER ══════════ -->
 <div class="cta-section">
-    <h2 class="cta-title">Ready to study smarter?</h2>
-    <p class="cta-sub">Join PrepHunt today - it's completely free to get started.</p>
-    <a href="/login" class="btn-cta"><i class="bi bi-rocket-takeoff me-2"></i>Start for Free</a>
+    <h2 class="cta-title">Ready to get serious about studying?</h2>
+    <p class="cta-sub">Start using PrepHunt and keep everything in one place.</p>
+    <a href="/login" class="btn-cta"><i class="bi bi-rocket-takeoff me-2"></i>Start Now</a>
 </div>
 
 <!-- ══════════ CONTACT ══════════ -->
@@ -462,18 +505,18 @@
                 <div class="section-tag">Contact Us</div>
                 <h2 class="section-title">Get in touch</h2>
                 <p class="section-sub">
-                    Questions, feedback, or just want to say hi? We'd love to hear from you. Reach out and we'll get back to you soon.
+                    Got a question or something not working right? Send a message and we’ll take a look.
                 </p>
                 <div class="mt-4 d-flex flex-column gap-3">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="feature-icon green" style="width:40px;height:40px;font-size:1rem;flex-shrink:0;"><i class="bi bi-envelope"></i></div>
+                        <div class="feature-icon" style="width:40px;height:40px;font-size:1rem;flex-shrink:0;"><i class="bi bi-envelope"></i></div>
                         <div>
                             <div style="font-weight:700;font-size:0.88rem;color:#1a1a1a;">Email</div>
-                            <div style="font-size:0.85rem;color:#6b7280;">xyz@gmail.com</div>
+                            <div style="font-size:0.85rem;color:#6b7280;">prephunt@gmail.com</div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-3">
-                        <div class="feature-icon purple" style="width:40px;height:40px;font-size:1rem;flex-shrink:0;"><i class="bi bi-geo-alt"></i></div>
+                        <div class="feature-icon" style="width:40px;height:40px;font-size:1rem;flex-shrink:0;"><i class="bi bi-geo-alt"></i></div>
                         <div>
                             <div style="font-weight:700;font-size:0.88rem;color:#1a1a1a;">Location</div>
                             <div style="font-size:0.85rem;color:#6b7280;">Kathmandu, Nepal</div>
@@ -511,7 +554,7 @@
                     PrepHunt
                 </a>
                 <p class="footer-brand-text">
-                    Turn your notes into knowledge, and knowledge into results. Your all-in-one study hub.
+                    Study better, stay organised, and keep improving.
                 </p>
             </div>
             <div>
@@ -529,7 +572,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <div class="footer-copy">© 2025 PrepHunt. All Rights Reserved.</div>
+            <div class="footer-copy">© 2026 PrepHunt. All Rights Reserved.</div>
             <div class="footer-socials">
                 <a href="https://linkedin.com" target="_blank" class="footer-social-link"><i class="bi bi-linkedin"></i></a>
                 <a href="https://instagram.com" target="_blank" class="footer-social-link"><i class="bi bi-instagram"></i></a>

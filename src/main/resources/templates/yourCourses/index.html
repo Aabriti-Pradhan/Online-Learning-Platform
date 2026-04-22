@@ -21,6 +21,8 @@
             width: 220px;
             display: flex;
             flex-direction: column;
+            position: relative;
+            overflow: visible !important;
         }
 
         .course-card {
@@ -50,7 +52,7 @@
             position: absolute;
             top: 14px;
             right: 12px;
-            z-index: 1000;
+            z-index: 9999;
         }
 
         .course-card-menu .dropdown-btn {
@@ -79,8 +81,8 @@
             border-radius: var(--radius-md);
             box-shadow: 0 4px 16px rgba(0,0,0,0.10);
             min-width: 120px;
-            z-index: 1000;
-            overflow: hidden;
+            z-index: 9999;
+            overflow: visible;
         }
 
         .course-card-menu .dropdown-content.open { display: block; }
@@ -95,12 +97,22 @@
             font-size: 0.85rem;
             cursor: pointer;
             transition: background 0.12s;
+            z-index: 9999;
+
+            color: #374151;
+            line-height: 1.4;
+        }
+
+        .course-card-menu .dropdown-item-action:hover {
+            background: #f9fafb;
+        }
+
+        .dropdown-item-action i {
+            width: 16px;
         }
 
         .course-card-menu .edit-course-btn   { color: #374151; }
         .course-card-menu .edit-course-btn:hover   { background: #f9fafb; }
-        .course-card-menu .delete-course-btn { color: #374151; }
-        .course-card-menu .delete-course-btn:hover { background: #f9fafb; }
 
         /* Card body */
         .course-card-body {
@@ -137,7 +149,9 @@
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            white-space: nowrap;
             overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .course-card-desc {
@@ -441,6 +455,7 @@
     document.querySelectorAll('.edit-course-btn').forEach(btn => {
         btn.addEventListener('click', e => {
             e.stopPropagation();
+            console.log("edit button clicked");
             editCourseId = btn.getAttribute('data-course-id');
             document.getElementById('editCourseNameInput').value = btn.getAttribute('data-course-name') || '';
             document.getElementById('editCourseDescInput').value = btn.getAttribute('data-course-desc') || '';

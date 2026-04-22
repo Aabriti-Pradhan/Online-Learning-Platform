@@ -94,7 +94,7 @@
         }
         .q-counter { font-size: 0.85rem; color: var(--color-text-secondary); }
 
-        /* ── Validation toast ── */
+        /* Validation toast */
         .val-toast {
             position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
             background: #1f2937; color: white;
@@ -194,7 +194,7 @@
     let   qCount       = 0;
     let   toastTimer   = null;
 
-    // ── Toast helper ──────────────────────────────────────────────────────────
+    // Toast helper
     function showToast(msg, type = 'error') {
         const toast = document.getElementById('valToast');
         const icon  = toast.querySelector('i');
@@ -208,7 +208,7 @@
         toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // ── Type selector ─────────────────────────────────────────────────────────
+    // Type selector
     function selectType(type, btn) {
         selectedType = type;
         document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
@@ -216,7 +216,7 @@
         document.getElementById('timerWrap').style.display = type === 'PRACTICE_EXAM' ? 'block' : 'none';
     }
 
-    // ── Add question ──────────────────────────────────────────────────────────
+    // Add question
     function addQuestion() {
         qCount++;
         updateCounter();
@@ -246,7 +246,7 @@
         div.querySelector('.q-text-input').focus();
     }
 
-    // ── Select correct answer ─────────────────────────────────────────────────
+    // Select correct answer
     function selectCorrect(idx, letter) {
         ['A','B','C','D'].forEach(l => {
             document.getElementById(`opt-${idx}-${l}`).classList.toggle('correct', l === letter);
@@ -254,7 +254,7 @@
         document.getElementById(`radio-${idx}-${letter}`).checked = true;
     }
 
-    // ── Remove question ───────────────────────────────────────────────────────
+    // Remove question
     function removeQuestion(idx) {
         document.getElementById('q-' + idx).remove();
         qCount--;
@@ -269,7 +269,7 @@
         document.getElementById('qCounter').innerText = n + ' question' + (n !== 1 ? 's' : '');
     }
 
-    // ── Save test ─────────────────────────────────────────────────────────────
+    // Save test
     async function saveTest() {
         const title = document.getElementById('testTitle').value.trim();
         if (!title) {

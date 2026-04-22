@@ -118,6 +118,10 @@
             box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
         .error-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .no-page-margin{
+            margin-left: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -132,7 +136,7 @@
         <a href="/#about">About</a>
         <a href="/#services">Services</a>
         <a href="/#contact">Contact</a>
-        <a href="/repository">Repository</a>
+        <a href="/repository">Courses</a>
     </div>
     <a class="btn-nav" href="/login">Log in</a>
 </nav>
@@ -153,7 +157,7 @@
             <input class="form-input" th:classappend="${#fields.hasErrors('username')} ? ' is-invalid' : ''"
                    type="text" id="username" name="username"
                    placeholder="Choose a username"
-                   th:value="${registerDTO.username}" required>
+                   th:value="${registerDTO.username}">
             <div th:if="${#fields.hasErrors('username')}" class="field-error">
                 <i class="bi bi-exclamation-circle"></i>
                 <span th:errors="*{username}">Error</span>
@@ -165,7 +169,7 @@
             <input class="form-input" th:classappend="${#fields.hasErrors('email')} ? ' is-invalid' : ''"
                    type="email" id="email" name="email"
                    placeholder="Enter your email"
-                   th:value="${registerDTO.email}" required>
+                   th:value="${registerDTO.email}">
             <div th:if="${#fields.hasErrors('email')}" class="field-error">
                 <i class="bi bi-exclamation-circle"></i>
                 <span th:errors="*{email}">Error</span>
@@ -176,7 +180,7 @@
             <label class="form-label-custom" for="password">Password</label>
             <input class="form-input" th:classappend="${#fields.hasErrors('password')} ? ' is-invalid' : ''"
                    type="password" id="password" name="password"
-                   placeholder="At least 6 characters" required>
+                   placeholder="At least 6 characters">
             <i class="bi bi-eye toggle-eye" data-target="password" style="cursor:pointer;"></i>
             <div th:if="${#fields.hasErrors('password')}" class="field-error">
                 <i class="bi bi-exclamation-circle"></i>
@@ -188,7 +192,7 @@
             <label class="form-label-custom" for="confirmPassword">Confirm Password</label>
             <input class="form-input"
                    type="password" id="confirmPassword" name="confirmPassword"
-                   placeholder="Repeat your password" required>
+                   placeholder="Repeat your password">
             <i class="bi bi-eye toggle-eye" data-target="confirmPassword" style="cursor:pointer;"></i>
         </div>
 
@@ -207,6 +211,8 @@
         Continue with Google
     </a>
 </div>
+
+<div th:replace="footer/index :: footer"></div>
 
 <!-- Toast: shown when server sends back a non-field error (e.g. email taken, passwords mismatch) -->
 <div class="error-toast" id="errorToast">

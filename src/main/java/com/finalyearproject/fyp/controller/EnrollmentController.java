@@ -39,6 +39,12 @@ public class EnrollmentController {
     @PostMapping("/enroll/{courseId}")
     @ResponseBody
     public ResponseEntity<?> enroll(@PathVariable Long courseId, Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("message", "Not authenticated"));
+        }
+
         try {
             String        email = YourCoursesController.extractEmail(authentication);
             EnrollmentDTO dto   = enrollmentService.enroll(email, courseId);

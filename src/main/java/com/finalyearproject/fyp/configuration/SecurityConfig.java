@@ -42,7 +42,7 @@ public class SecurityConfig {
                                 "/", "/login", "/register", "/select-role", "/repository",
                                 "/css/**", "/js/**", "/images/**", "/files/**",
                                 "/discussion", "/discussion/**",
-                                "/contact/send"
+                                "/contact/send", "/coming-soon"
                         ).permitAll()
                         // Admin-only routes
                         .requestMatchers("/admin/**").hasRole("ADMIN")

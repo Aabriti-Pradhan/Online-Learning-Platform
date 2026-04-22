@@ -11,7 +11,20 @@
     <style>
         body { background-color: #FFF9F9; font-family: 'Gabarito', sans-serif; }
 
-        /* Guest navbar — scoped only to this page, no conflict with styles.css */
+        #mainNavbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        #mainNavbar.scrolled {
+            background: rgba(255,249,249,0.95);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Guest navbar */
         .guest-navbar {
             display: flex; align-items: center; justify-content: space-between;
             padding: 1rem 0; margin-bottom: 2rem;
@@ -78,7 +91,11 @@
         }
         .enroll-btn.can-enroll   { background: var(--color-primary); color: white; }
         .enroll-btn.can-enroll:hover { background: #5a38e0; }
-        .enroll-btn.enrolled     { background: #d1fae5; color: #065f46; cursor: default; pointer-events: none; }
+        .enroll-btn.can-unenroll {
+            background: #fee2e2; color: #374151;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .enroll-btn.can-unenroll:hover { background: #fecaca; color: #991b1b; }
         .enroll-btn.login-to-enroll {
             background: white; color: #374151;
             border: 1.5px solid #e5e7eb;
@@ -102,7 +119,6 @@
         .empty-state { text-align: center; padding: 4rem 2rem; color: var(--color-text-secondary); }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 1rem; }
 
-        /* Guest login nudge banner */
         .login-nudge {
             background: linear-gradient(135deg, rgba(74,124,89,0.08), rgba(74,124,89,0.03));
             border: 1px solid rgba(74,124,89,0.2); border-radius: var(--radius-lg);
@@ -117,20 +133,98 @@
             font-size: 0.85rem; font-weight: 700; text-decoration: none;
         }
         .login-nudge a:hover { background: #3a6347; }
+
+        /* Unenroll confirmation modal */
+        .unenroll-modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .unenroll-modal-overlay.show { display: flex; }
+        .unenroll-modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 100%; max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            position: relative;
+            animation: modalSlideUp 0.2s ease;
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .unenroll-modal-icon {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: #fee2e2;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: #dc2626;
+            margin: 0 auto 1.1rem;
+        }
+        .unenroll-modal h3 {
+            text-align: center; font-size: 1.05rem;
+            font-weight: 700; color: #111827; margin: 0 0 0.5rem;
+        }
+        .unenroll-modal p {
+            text-align: center; font-size: 0.85rem;
+            color: #6b7280; margin: 0 0 1.5rem;
+            line-height: 1.5;
+        }
+        .unenroll-modal-actions { display: flex; gap: 0.75rem; }
+        .btn-cancel-unenroll {
+            flex: 1; padding: 0.6rem;
+            background: #f3f4f6; color: #374151;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .btn-cancel-unenroll:hover { background: #e5e7eb; }
+        .btn-confirm-unenroll {
+            flex: 1; padding: 0.6rem;
+            background: #dc2626; color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .btn-confirm-unenroll:hover    { background: #b91c1c; }
+        .btn-confirm-unenroll:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        /* Toast */
+        .repo-toast {
+            position: fixed;
+            bottom: 1.5rem; left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            padding: 0.65rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.88rem; font-weight: 600;
+            font-family: inherit; color: #fff;
+            z-index: 10000; opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            white-space: nowrap;
+        }
+        .repo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .repo-toast.success { background: #166534; }
+        .repo-toast.error   { background: #991b1b; }
     </style>
 </head>
 <body>
 
 <div class="container-fluid px-4 py-3">
 
-    <!-- Authenticated: use the standard app topbar -->
+    <!-- Authenticated topbar -->
     <div sec:authorize="isAuthenticated()">
         <div th:replace="navigation/index :: topbar"></div>
     </div>
 
-    <!-- Guest: use a self-contained navbar (no style.css conflicts) -->
+    <!-- Guest navbar -->
     <div sec:authorize="!isAuthenticated()">
-        <nav class="guest-navbar">
+        <nav class="guest-navbar" id="mainNavbar">
             <a class="guest-nav-brand" href="/">
                 <img src="/images/logo.png" alt="PrepHunt">
                 PrepHunt
@@ -139,7 +233,7 @@
                 <a href="/#about">About</a>
                 <a href="/#services">Services</a>
                 <a href="/#contact">Contact</a>
-                <a href="/repository" style="color:#fff; background:rgba(255,255,255,0.15);">Repository</a>
+                <a href="/repository" style="color:#fff; background:rgba(255,255,255,0.15);">Courses</a>
             </div>
             <a class="guest-nav-cta" href="/login">Get Started</a>
         </nav>
@@ -147,15 +241,12 @@
 
     <div class="row align-items-stretch">
 
-        <!-- SIDEBAR (authenticated only) -->
-        <div class="col-auto" sec:authorize="isAuthenticated()">
+        <div class="col-auto">
             <div th:replace="sidebar/index :: sidebar"></div>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="col besides">
+        <div class="col besides repo-content">
 
-            <!-- Page header -->
             <div class="d-flex justify-content-between align-items-center mb-3 page-header">
                 <div>
                     <h2 class="fw-bold mb-0">Course Repository</h2>
@@ -168,13 +259,6 @@
                 </div>
             </div>
 
-            <!-- Guest nudge -->
-            <div sec:authorize="!isAuthenticated()" class="login-nudge">
-                <p><i class="bi bi-info-circle me-1"></i>You're browsing as a guest. Log in to enroll in courses and access resources.</p>
-                <a href="/login">Log in / Sign up</a>
-            </div>
-
-            <!-- Stats row -->
             <div class="d-flex gap-3 mb-4">
                 <div class="stat-card">
                     <div class="stat-icon" style="background:#ede9fe; color:#6c47ff;"><i class="bi bi-collection"></i></div>
@@ -192,7 +276,6 @@
                 </div>
             </div>
 
-            <!-- Course grid -->
             <div class="row g-3" id="courseGrid" th:if="${!courses.isEmpty()}">
                 <div class="col-md-4 col-sm-6 course-col"
                      th:each="course : ${courses}"
@@ -214,20 +297,23 @@
                             <span th:text="${course.createdAt != null} ? ${#temporals.format(course.createdAt, 'MMM yyyy')} : 'Recently added'">Jan 2025</span>
                         </div>
 
-                        <!-- Student: enroll or already enrolled -->
+                        <!-- Student -->
                         <div sec:authorize="hasRole('STUDENT')">
                             <button th:if="${enrolledCourseIds == null or !enrolledCourseIds.contains(course.courseId)}"
                                     class="enroll-btn can-enroll"
-                                    th:attr="onclick='enrollCourse(' + ${course.courseId} + ', this)'">
+                                    th:data-course-id="${course.courseId}">
                                 <i class="bi bi-plus-circle me-1"></i> Enroll
                             </button>
-                            <span th:if="${enrolledCourseIds != null and enrolledCourseIds.contains(course.courseId)}"
-                                  class="enroll-btn enrolled">
+                            <button th:if="${enrolledCourseIds != null and enrolledCourseIds.contains(course.courseId)}"
+                                    class="enroll-btn can-unenroll"
+                                    th:data-course-id="${course.courseId}"
+                                    th:data-course-name="${course.courseName}">
                                 <i class="bi bi-check-circle me-1"></i> Enrolled
-                            </span>
+                                <span style="font-size:0.75rem; opacity:0.7;">&nbsp;(click to unenroll)</span>
+                            </button>
                         </div>
 
-                        <!-- Teacher: view course -->
+                        <!-- Teacher -->
                         <div sec:authorize="hasRole('TEACHER')">
                             <a th:href="@{'/your-courses/' + ${course.courseId} + '/chapters'}"
                                class="enroll-btn view-only">
@@ -235,7 +321,7 @@
                             </a>
                         </div>
 
-                        <!-- Not logged in -->
+                        <!-- Guest -->
                         <div sec:authorize="!isAuthenticated()">
                             <a href="/login" class="enroll-btn login-to-enroll">
                                 <i class="bi bi-lock"></i> Login to Enroll
@@ -245,14 +331,12 @@
                 </div>
             </div>
 
-            <!-- Empty state -->
             <div class="empty-state" th:if="${courses.isEmpty()}">
                 <i class="bi bi-journal-x"></i>
                 <p class="fw-semibold">No courses available yet.</p>
                 <p class="small">Check back later or ask your teacher to create a course.</p>
             </div>
 
-            <!-- No search results -->
             <div class="empty-state" id="noResults" style="display:none;">
                 <i class="bi bi-search"></i>
                 <p class="fw-semibold">No courses match your search.</p>
@@ -260,15 +344,167 @@
 
         </div>
     </div>
+
+    <div th:replace="footer/index :: footer"></div>
 </div>
+
+<!-- ══════════ UNENROLL MODAL ══════════ -->
+<div class="unenroll-modal-overlay" id="unenrollModalOverlay">
+    <div class="unenroll-modal">
+        <div class="unenroll-modal-icon">
+            <i class="bi bi-box-arrow-left"></i>
+        </div>
+        <h3>Unenroll from course?</h3>
+        <p id="unenrollModalMsg">Are you sure you want to unenroll? Your progress data will be removed.</p>
+        <div class="unenroll-modal-actions">
+            <button class="btn-cancel-unenroll" id="unenrollCancelBtn">Cancel</button>
+            <button class="btn-confirm-unenroll" id="unenrollConfirmBtn">Yes, unenroll</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ TOAST ══════════ -->
+<div class="repo-toast" id="repoToast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/js/script.js}"></script>
 <script>
+    /* Toast */
+    function showToast(msg, type) {
+        const t = document.getElementById('repoToast');
+        t.textContent = msg;
+        t.className   = 'repo-toast ' + type;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    /* Unenroll modal */
+    let pendingUnenrollBtn = null;
+
+    function openUnenrollModal(btn) {
+        pendingUnenrollBtn = btn;
+        const name = btn.dataset.courseName || 'this course';
+        document.getElementById('unenrollModalMsg').textContent =
+            'Are you sure you want to unenroll from "' + name + '"? Your progress data will be removed.';
+        document.getElementById('unenrollModalOverlay').classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeUnenrollModal() {
+        document.getElementById('unenrollModalOverlay').classList.remove('show');
+        document.body.style.overflow = '';
+        pendingUnenrollBtn = null;
+    }
+
+    document.getElementById('unenrollCancelBtn').addEventListener('click', closeUnenrollModal);
+
+    document.getElementById('unenrollModalOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeUnenrollModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeUnenrollModal();
+    });
+
+    document.getElementById('unenrollConfirmBtn').addEventListener('click', async function () {
+        if (!pendingUnenrollBtn) return;
+
+        const btn      = pendingUnenrollBtn;
+        const courseId = btn.dataset.courseId;
+        const confirmBtn = this;
+
+        confirmBtn.disabled    = true;
+        confirmBtn.textContent = 'Unenrolling...';
+
+        try {
+            const res = await fetch('/unenroll/' + courseId, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+
+            closeUnenrollModal();
+
+            // Swap back to enroll button
+            const enrollBtn = document.createElement('button');
+            enrollBtn.className        = 'enroll-btn can-enroll';
+            enrollBtn.dataset.courseId = courseId;
+            enrollBtn.innerHTML        = '<i class="bi bi-plus-circle me-1"></i> Enroll';
+            btn.replaceWith(enrollBtn);
+
+            // Hide enrolled pill
+            const card = enrollBtn.closest('.course-card');
+            if (card) {
+                const pill = card.querySelector('.enrolled-pill');
+                if (pill) pill.style.display = 'none';
+            }
+
+            showToast('Successfully unenrolled from course.', 'success');
+
+        } catch {
+            closeUnenrollModal();
+            showToast('Unenroll failed. Please try again.', 'error');
+        } finally {
+            confirmBtn.disabled    = false;
+            confirmBtn.textContent = 'Yes, unenroll';
+        }
+    });
+
+    /* Event delegation for enroll / unenroll */
+    document.addEventListener('click', async function (e) {
+
+        /* ENROLL */
+        const enrollBtn = e.target.closest('.can-enroll');
+        if (enrollBtn) {
+            const courseId = enrollBtn.dataset.courseId;
+            if (!courseId) return;
+
+            enrollBtn.disabled  = true;
+            enrollBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Enrolling...';
+
+            try {
+                const res = await fetch('/enroll/' + courseId, { method: 'POST' });
+                if (!res.ok) throw new Error();
+
+                const courseName = enrollBtn.closest('.course-card')
+                    ?.querySelector('.course-name')?.textContent?.trim() || '';
+
+                const unenrollBtn = document.createElement('button');
+                unenrollBtn.className          = 'enroll-btn can-unenroll';
+                unenrollBtn.dataset.courseId   = courseId;
+                unenrollBtn.dataset.courseName = courseName;
+                unenrollBtn.innerHTML =
+                    '<i class="bi bi-check-circle me-1"></i> Enrolled' +
+                    '<span style="font-size:0.75rem;opacity:0.7;">&nbsp;(click to unenroll)</span>';
+                enrollBtn.replaceWith(unenrollBtn);
+
+                // Show enrolled pill
+                const card = unenrollBtn.closest('.course-card');
+                if (card) {
+                    const pill = card.querySelector('.enrolled-pill');
+                    if (pill) pill.style.display = '';
+                }
+
+                showToast('Successfully enrolled!', 'success');
+
+            } catch {
+                enrollBtn.disabled  = false;
+                enrollBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Enroll';
+                showToast('Enrollment failed. Please try again.', 'error');
+            }
+            return;
+        }
+
+        /* UNENROLL — open modal */
+        const unenrollBtn = e.target.closest('.can-unenroll');
+        if (unenrollBtn) {
+            openUnenrollModal(unenrollBtn);
+            return;
+        }
+    });
+
+    /* Search */
     function filterCourses() {
-        const q     = document.getElementById('searchInput').value.toLowerCase();
-        const cols  = document.querySelectorAll('.course-col');
-        let   shown = 0;
+        const q    = document.getElementById('searchInput').value.toLowerCase();
+        const cols = document.querySelectorAll('.course-col');
+        let shown  = 0;
         cols.forEach(col => {
             const name  = (col.dataset.name || '').toLowerCase();
             const match = !q || name.includes(q);
@@ -278,17 +514,12 @@
         document.getElementById('noResults').style.display = (!shown && q) ? '' : 'none';
     }
 
-    async function enrollCourse(courseId, btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Enrolling...';
-        try {
-            const res = await fetch('/enroll/' + courseId, { method: 'POST' });
-            if (!res.ok) throw new Error();
-            btn.outerHTML = `<span class="enroll-btn enrolled"><i class="bi bi-check-circle me-1"></i> Enrolled</span>`;
-        } catch {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Enroll';
-        }
+    /* Guest navbar scroll */
+    const navbar = document.getElementById("mainNavbar");
+    if (navbar) {
+        window.addEventListener("scroll", () => {
+            navbar.classList.toggle("scrolled", window.scrollY > 10);
+        });
     }
 </script>
 </body>

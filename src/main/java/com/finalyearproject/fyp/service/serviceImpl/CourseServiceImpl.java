@@ -165,6 +165,10 @@ public class CourseServiceImpl implements CourseService {
             if (all.stream().noneMatch(o -> o.getCourseId().equals(c.getCourseId())))
                 all.add(c);
         });
+        all.forEach(c ->
+                System.out.println("Course ID: " + c.getCourseId() +
+                        ", Name: " + c.getCourseName())
+        );
         return all;
     }
 

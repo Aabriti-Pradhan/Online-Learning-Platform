@@ -60,8 +60,6 @@ public class DiscussionController {
         boolean isLoggedIn   = auth != null && auth.isAuthenticated();
         Long    currentUserId = null;
 
-        // Resolve the logged-in user's ID so the template can show delete
-        // only on posts that belong to the current user
         if (isLoggedIn) {
             String email = YourCoursesController.extractEmail(auth);
             Optional<User> userOpt = userRepository.findByEmail(email);
@@ -78,7 +76,7 @@ public class DiscussionController {
         model.addAttribute("allCourses",    allCourses);
         model.addAttribute("currentPath",   request.getRequestURI());
         model.addAttribute("isLoggedIn",    isLoggedIn);
-        model.addAttribute("currentUserId", currentUserId);   // ← NEW
+        model.addAttribute("currentUserId", currentUserId);
         return "discussion/thread";
     }
 

@@ -20,7 +20,10 @@ public class RoleSelectionController {
     private final UserService userService;
 
     @GetMapping("/select-role")
-    public String selectRolePage(Model model) {
+    public String selectRolePage(Model model, HttpSession session) {
+        System.out.println("SESSION ID (select-role GET): " + session.getId());
+        System.out.println("ROLE IN SESSION: " + session.getAttribute("selectedRole"));
+
         model.addAttribute("page", "select-role");
         return "selectRole/index";
     }
